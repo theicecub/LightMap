@@ -1,0 +1,443 @@
+  :root {
+    color-scheme: dark;
+    --ink: #0A0D14;
+    --topbar-bg: #0D1119;
+    --icon-color: #fff;
+    --panel: rgba(18, 22, 32, 0.72);
+    --panel-solid: #12151F;
+    --border: rgba(255,255,255,0.09);
+    --border-top: rgba(255,255,255,0.16);
+    --surface: rgba(255,255,255,0.035);
+    --surface-strong: rgba(255,255,255,0.07);
+    --text: #F5F7FA;
+    --text-dim: #8992A6;
+    --glare: #FF5A3C;
+    --caution: #FFB020;
+    --clear: #22D3A6;
+    --map-attrib-bg: rgba(10,13,20,.55);
+    --map-control-icon-filter: invert(1) brightness(1.7);
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink: #f4f7fb;
+    --topbar-bg: #ffffff;
+    --icon-color: #000;
+    --panel: rgba(255,255,255,0.82);
+    --panel-solid: #ffffff;
+    --border: rgba(15, 23, 42, 0.10);
+    --border-top: rgba(15, 23, 42, 0.14);
+    --surface: rgba(15, 23, 42, 0.04);
+    --surface-strong: rgba(15, 23, 42, 0.08);
+    --text: #111827;
+    --text-dim: #64748b;
+    --map-attrib-bg: rgba(255,255,255,.72);
+    --map-control-icon-filter: none;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--ink);
+    color: var(--text);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    animation: app-in .4s ease;
+  }
+  @keyframes app-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ===== Топ-панель ===== */
+  .topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    z-index: 20;
+    position: relative;
+  }
+  .topbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .brand-icon {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .brand-icon svg { width: 18px; height: 18px; position: relative; }
+  .brand h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin: 0;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .brand .subtitle {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin: 1px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 520px;
+  }
+
+  .stats {
+    display: flex;
+    flex: 0 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .stat-card {
+    background: transparent;
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+    padding: 4px 10px 5px;
+    min-width: 74px;
+    text-align: left;
+  }
+  .stat-card:first-child { border-left: 0; }
+  .stat-card .stat-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .stat-label {
+    display: block;
+    font-size: 9.5px;
+    color: var(--text-dim);
+    margin-top: 1px;
+    letter-spacing: 0;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+  .stat-card--danger .stat-value { color: var(--glare); }
+
+  /* ===== Фильтры ===== */
+  .filters {
+    display: flex;
+    gap: 2px;
+    flex: 0 0 auto;
+    min-width: 0;
+    margin-top: 0;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .filter-btn {
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { background: var(--surface-strong); color: var(--text); }
+  .filter-btn:focus-visible { outline: 2px solid var(--caution); outline-offset: 2px; }
+  .filter-btn.active { background: var(--text); color: var(--ink); }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: var(--surface-strong); transform: translateY(-1px); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--caution); outline-offset: 2px; }
+
+  /* ===== Карта ===== */
+  .map-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+  #map { position: absolute; inset: 0; }
+
+  /* ===== Легенда ===== */
+  .legend {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 10;
+    background: var(--panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-top-color: var(--border-top);
+    border-radius: 14px;
+    padding: 12px 16px;
+    max-width: 230px;
+  }
+  .legend h4 {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot--danger { background: var(--glare); }
+  .dot--warning { background: var(--caution); }
+  .dot--safe { background: var(--clear); }
+
+  /* ===== Маркеры ===== */
+  .marker {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid rgba(10,13,20,0.9);
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    transition: transform .15s ease;
+  }
+  .marker:hover { transform: scale(1.18); }
+  .marker--danger { background: var(--glare); animation: pulse 2.2s infinite; }
+  .marker--warning { background: var(--caution); }
+  .marker--safe { background: var(--clear); }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,90,60,.45), 0 2px 10px rgba(0,0,0,.5); }
+    50% { box-shadow: 0 0 0 8px rgba(255,90,60,0), 0 2px 10px rgba(0,0,0,.5); }
+  }
+
+  /* ===== Попап ===== */
+  .maplibregl-popup-content {
+    background: var(--panel-solid) !important;
+    color: var(--text) !important;
+    border-radius: 14px !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55) !important;
+    border: 1px solid var(--border) !important;
+    font-family: 'Inter', sans-serif !important;
+    min-width: 220px;
+    max-width: min(300px, 88vw) !important;
+  }
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--panel-solid) !important; }
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--panel-solid) !important; }
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--panel-solid) !important; }
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--panel-solid) !important; }
+  .maplibregl-popup-close-button {
+    color: var(--text-dim) !important;
+    font-size: 18px !important;
+    padding: 6px !important;
+    right: 2px !important;
+    top: 2px !important;
+  }
+  .maplibregl-popup-close-button:hover {
+    background: rgba(255,255,255,0.08) !important;
+    color: var(--text) !important;
+    border-radius: 6px;
+  }
+
+  .popup-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 9px;
+  }
+  .popup-badge--danger { background: rgba(255,90,60,.16); color: var(--glare); }
+  .popup-badge--warning { background: rgba(255,176,32,.16); color: var(--caution); }
+  .popup-badge--safe { background: rgba(34,211,166,.16); color: var(--clear); }
+
+  .popup-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+  .popup-address { font-size: 12.5px; color: var(--text-dim); margin: 0 0 10px; }
+  .popup-field {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .popup-field:first-of-type { border-top: none; padding-top: 0; }
+  .popup-field-label { color: var(--text-dim); flex-shrink: 0; }
+  .popup-field-value { font-weight: 600; text-align: right; }
+  .popup-field-value.lux { font-variant-numeric: tabular-nums; }
+
+  /* ===== Предупреждение об API-ключе ===== */
+  .key-warning {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,13,20,.72);
+    backdrop-filter: blur(6px);
+    padding: 20px;
+  }
+  .key-warning-card {
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    max-width: 380px;
+    text-align: center;
+  }
+  .key-warning-card strong { display: block; font-size: 15px; margin-bottom: 8px; color: var(--glare); }
+  .key-warning-card p { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin: 0; }
+  .key-warning-card code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+  /* ===== Тёмная тема для контролов MapLibre ===== */
+  .maplibregl-ctrl-attrib {
+    background: var(--map-attrib-bg) !important;
+    color: var(--text-dim) !important;
+    font-size: 11px !important;
+    transition: background .18s ease, color .18s ease;
+  }
+  .maplibregl-ctrl-attrib a { color: var(--text-dim) !important; }
+  .maplibregl-ctrl-group {
+    background: var(--panel-solid) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+    transition: background .18s ease, border-color .18s ease;
+  }
+  .maplibregl-ctrl-group button + button { border-top: 1px solid var(--border) !important; }
+  .maplibregl-ctrl-icon {
+    filter: var(--map-control-icon-filter);
+    transition: filter .18s ease;
+  }
+
+  /* ===== Доступность ===== */
+  @media (prefers-reduced-motion: reduce) {
+    #app { animation: none; }
+    .marker--danger { animation: none; }
+    * { transition-duration: .01ms !important; }
+  }
+
+  @media (max-width: 980px) {
+    .topbar {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .topbar-row { width: 100%; }
+    .brand .subtitle { max-width: 44vw; }
+    .filters {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .filter-btn { flex: 1 0 auto; }
+  }
+
+  /* ===== Мобильная адаптация ===== */
+  @media (max-width: 640px) {
+    .topbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 7px;
+      padding: 8px 10px;
+      overflow: hidden;
+    }
+    .topbar-row {
+      display: flex;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .brand {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+    .brand > div:last-child { min-width: 0; }
+    .brand .subtitle { display: none; }
+    .brand h1 { font-size: 14px; }
+    .brand-icon { width: 30px; height: 30px; border-radius: 8px; }
+    .brand-icon svg { width: 17px; height: 17px; }
+    .stats {
+      width: auto;
+      min-width: 0;
+      justify-content: space-between;
+    }
+    .stat-card { min-width: 0; padding: 5px 8px; text-align: center; flex: 1 1 0; }
+    .stat-card .stat-value { font-size: 13px; }
+    .stat-card .stat-label { display: none; }
+    .theme-toggle {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      justify-content: center;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+    .toggle-label { display: none; }
+    .filters {
+      width: 100%;
+      overflow: hidden;
+    }
+    .filter-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 7px 5px;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .legend { max-width: 175px; padding: 10px 12px; left: 10px; bottom: 10px; }
+    .legend h4 { font-size: 9.5px; }
+    .legend-item { font-size: 11px; }
+    .dot { width: 8px; height: 8px; }
+  }
