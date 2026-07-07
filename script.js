@@ -1,7 +1,3 @@
-  // =====================================================================
-  // НАСТРОЙКА: укажите свой API-ключ MapTiler.
-  // Получить бесплатный ключ: https://cloud.maptiler.com/account/keys/
-  // =====================================================================
   const MAPTILER_KEY = 'JBWS7gL5h6Ob9ya2vfNO';
   const MAP_STYLE = {
     dark: `https://api.maptiler.com/maps/streets-v4-dark/style.json?key=${MAPTILER_KEY}`,
@@ -13,6 +9,22 @@
 
   const CENTER = [71.43029781319242, 51.128310151593574]; // [lng, lat]
   const ZOOM = 13;
+  const MAP_PAINT = {
+    dark: {
+      stroke: 'rgba(12, 16, 24, 0.95)',
+    },
+    light: {
+      stroke: 'rgba(252, 252, 248, 0.96)',
+    },
+  };
+
+  function activeTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+
+  function mapPaint() {
+    return MAP_PAINT[activeTheme()] || MAP_PAINT.dark;
+  }
 
   function createBuildings(count = 20) {
     const baseBuildings = [
@@ -312,6 +324,7 @@
   function renderMarkers(filter) {
     activeMarkers.forEach(m => m.remove());
     activeMarkers = [];
+    const paint = mapPaint();
 
     if (!map.getSource('points')) {
       map.addSource('points', {
@@ -339,7 +352,7 @@
           ],
           'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 25, 28],
           'circle-stroke-width': 1.4,
-          'circle-stroke-color': 'rgba(10, 13, 20, 0.95)',
+          'circle-stroke-color': paint.stroke,
         },
       });
 
@@ -371,7 +384,7 @@
           ],
           'circle-radius': 8,
           'circle-stroke-width': 1.2,
-          'circle-stroke-color': 'rgba(10, 13, 20, 0.95)',
+          'circle-stroke-color': paint.stroke,
         },
       });
 
@@ -435,7 +448,28 @@
   const themeToggle = document.getElementById('themeToggle');
   const toggleIcon = themeToggle.querySelector('.toggle-icon');
   const toggleLabel = themeToggle.querySelector('.toggle-label');
+  const mapWrap = document.querySelector('.map-wrap');
   let currentTheme = initialTheme;
+  let themeChangeId = 0;
+  let themeFadeTimer = 0;
+  let themeLoadTimer = 0;
+
+  function beginMapThemeFade() {
+    if (!mapWrap) return;
+    window.clearTimeout(themeFadeTimer);
+    mapWrap.classList.remove('map-theme-settled');
+    mapWrap.classList.add('map-theme-swapping');
+  }
+
+  function endMapThemeFade() {
+    if (!mapWrap) return;
+    mapWrap.classList.add('map-theme-settled');
+    mapWrap.classList.remove('map-theme-swapping');
+    window.clearTimeout(themeFadeTimer);
+    themeFadeTimer = window.setTimeout(() => {
+      mapWrap.classList.remove('map-theme-settled');
+    }, 280);
+  }
 
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
@@ -449,11 +483,22 @@
       const zoom = map.getZoom();
       const bearing = map.getBearing();
       const pitch = map.getPitch();
+      const changeId = ++themeChangeId;
       currentTheme = theme;
-      map.setStyle(MAP_STYLE[theme] || MAP_STYLE.dark);
+      beginMapThemeFade();
+      window.clearTimeout(themeLoadTimer);
+      themeLoadTimer = window.setTimeout(() => {
+        if (changeId === themeChangeId) endMapThemeFade();
+      }, 1200);
+      window.requestAnimationFrame(() => {
+        map.setStyle(MAP_STYLE[theme] || MAP_STYLE.dark, { diff: false });
+      });
       map.once('style.load', () => {
+        if (changeId !== themeChangeId) return;
+        window.clearTimeout(themeLoadTimer);
         map.jumpTo({ center, zoom, bearing, pitch });
         renderMarkers(activeFilter);
+        window.requestAnimationFrame(endMapThemeFade);
       });
     }
   }
