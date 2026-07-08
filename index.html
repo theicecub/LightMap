@@ -38,29 +38,38 @@
         </div>
       </div>
 
-
-
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему" aria-pressed="false">
         <span class="toggle-icon" aria-hidden="true">☀️</span>
         <span class="toggle-label">Светлая тема</span>
       </button>
     </div>
 
-    <div class="filters" role="group" aria-label="Фильтр по времени суток">
-      <button class="filter-btn active" data-filter="all" aria-pressed="true">Все</button>
-      <button class="filter-btn" data-filter="morning" aria-pressed="false">Утро</button>
-      <button class="filter-btn" data-filter="evening" aria-pressed="false">Вечер</button>
+    <div class="topbar-secondary">
+      <div class="filters" role="group" aria-label="Фильтр по времени суток">
+        <button class="filter-btn active" data-filter="all" aria-pressed="true">Все</button>
+        <button class="filter-btn" data-filter="morning" aria-pressed="false">Утро</button>
+        <button class="filter-btn" data-filter="evening" aria-pressed="false">Вечер</button>
+      </div>
+
+      <div class="weather-strip" id="weatherStrip">
+        <div class="weather-strip-loading">
+          <span class="weather-spinner"></span>
+          <span>Загрузка погоды…</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="map-wrap">
     <div id="map"></div>
 
-    <div class="legend">
-      <h4>Уровень освещённости</h4>
-      <div class="legend-item"><i class="dot dot--danger"></i><span>Опасно — &gt; 50 000 лк</span></div>
-      <div class="legend-item"><i class="dot dot--warning"></i><span>Внимание — 10 000–50 000 лк</span></div>
-      <div class="legend-item"><i class="dot dot--safe"></i><span>Безопасно — &lt; 10 000 лк</span></div>
+    <div class="legend" id="legend">
+      <h4>Уровень опасности</h4>
+      <div class="legend-item"><i class="dot dot--danger"></i><span>Опасно</span></div>
+      <div class="legend-item"><i class="dot dot--warning"></i><span>Внимание</span></div>
+      <div class="legend-item"><i class="dot dot--safe"></i><span>Безопасно</span></div>
+      <div class="legend-sep"></div>
+      <div class="legend-note" id="legendNote">Уровень зависит от времени и погоды</div>
     </div>
 
   </main>
