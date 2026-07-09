@@ -444,12 +444,12 @@
  color: var(--text) !important;
  border-radius: 14px !important;
  padding: 16px 18px !important;
- box-shadow: none !important;
+ box-shadow: 0 16px 40px var(--shadow-strong) !important;
  border: 1px solid var(--border) !important;
  font-family: 'Inter', sans-serif !important;
  min-width: 220px;
  max-width: min(300px, 88vw) !important;
- transition-property: background, color, border-color;
+ transition-property: background, color, border-color, box-shadow;
  }
  .maplibregl-popup-anchor-top .maplibregl-popup-tip,
  .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
