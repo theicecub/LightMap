@@ -619,8 +619,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 // ═════════════════════════════════════════════
 
 const themeToggle  = document.getElementById('themeToggle');
-const toggleIcon   = themeToggle.querySelector('.toggle-icon');
-const toggleLabel  = themeToggle.querySelector('.toggle-label');
+const switchInput  = themeToggle.querySelector('.switch__input');
 const mapWrap      = document.querySelector('.map-wrap');
 let currentTheme   = initialTheme;
 let themeChangeId  = 0;
@@ -648,9 +647,7 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
   const isLight = theme === 'light';
-  toggleIcon.textContent = isLight ? '🌙' : '☀️';
-  toggleLabel.textContent = isLight ? 'Тёмная тема' : 'Светлая тема';
-  themeToggle.setAttribute('aria-pressed', String(isLight));
+  switchInput.checked = isLight;
   if (map && theme !== currentTheme) {
     const center  = map.getCenter();
     const zoom    = map.getZoom();
@@ -676,8 +673,8 @@ function applyTheme(theme) {
   }
 }
 
-themeToggle.addEventListener('click', () => {
-  const nextTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+switchInput.addEventListener('change', () => {
+  const nextTheme = switchInput.checked ? 'light' : 'dark';
   applyTheme(nextTheme);
 });
 
