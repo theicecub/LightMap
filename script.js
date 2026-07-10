@@ -445,6 +445,14 @@ map.on('error', (e) => {
 // ═════════════════════════════════════════════
 
 let activeMarkers = [];
+let currentPopup = null;
+
+function closePopup() {
+  if (currentPopup) {
+    currentPopup.remove();
+    currentPopup = null;
+  }
+}
 
 function popupHTML(b) {
   const bData = buildings.find(x => x.id === (typeof b.id === 'string' ? parseInt(b.id) : b.id));
@@ -578,11 +586,12 @@ function renderMarkers(filter) {
     map.on('click', 'unclustered-points', (e) => {
       const feature = e.features && e.features[0];
       if (!feature) return;
-      const popup = new maplibregl.Popup({ offset: 16, closeButton: true })
+      closePopup();
+      currentPopup = new maplibregl.Popup({ offset: 16, closeButton: true })
         .setLngLat(feature.geometry.coordinates)
         .setHTML(popupHTML(feature.properties))
         .addTo(map);
-      popup.on('close', () => popup.remove());
+      currentPopup.on('close', () => { currentPopup = null; });
     });
 
     map.on('mouseenter', 'clusters',          () => { map.getCanvas().style.cursor = 'pointer'; });
