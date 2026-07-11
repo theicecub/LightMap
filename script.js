@@ -125,7 +125,6 @@ const weatherState = {
   weatherCode:  0,    // WMO weather code
   temperature:  null, // °C
   visibility:   null, // метры
-  windSpeed:    null, // км/ч
   humidity:     null, // %
   loaded:       false,
   error:        false,
@@ -172,7 +171,7 @@ async function fetchWeather() {
   const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
     latitude:  ASTANA.lat,
     longitude: ASTANA.lng,
-    current:   'temperature_2m,relative_humidity_2m,weather_code,cloud_cover,is_day,wind_speed_10m',
+    current:   'temperature_2m,relative_humidity_2m,weather_code,cloud_cover,is_day',
     hourly:    'cloud_cover,weather_code,visibility,is_day',
     timezone:  'Asia/Almaty',
     forecast_days: 1,
@@ -189,7 +188,6 @@ async function fetchWeather() {
     weatherState.isDay        = c.is_day ?? 1;
     weatherState.weatherCode  = c.weather_code ?? 0;
     weatherState.temperature  = c.temperature_2m;
-    weatherState.windSpeed    = c.wind_speed_10m;
     weatherState.humidity     = c.relative_humidity_2m;
     weatherState.loaded       = true;
     weatherState.error        = false;
@@ -255,36 +253,6 @@ function getSunPosition(date, lat, lng) {
 //  КОЭФФИЦИЕНТ ОПАСНОСТИ: время + погода + ориентация
 // ═════════════════════════════════════════════
 
-function computeWeatherMultiplier() {
-  // Облачность снижает отражение (чем больше облаков — тем меньше бликов)
-  const cloud = weatherState.cloudCover;
-
-  // Базовый множитель от облачности:
-  // 0%   облаков → 1.0  (максимум бликов)
-  // 50%  облаков → 0.5
-  // 100% облаков → 0.10 (почти нет прямого солнечного света)
-  let cloudMul = 1.0 - cloud / 100 * 0.9;
-
-  // Коды осадков ещё сильнее снижают блики
-  const code = weatherState.weatherCode;
-  if (code >= 61 && code <= 67) cloudMul *= 0.3;  // дождь
-  else if (code >= 71 && code <= 77) cloudMul *= 0.2; // снег
-  else if (code >= 80 && code <= 82) cloudMul *= 0.25; // ливень
-  else if (code >= 95) cloudMul *= 0.15; // гроза
-  else if (code === 45 || code === 48) cloudMul *= 0.25; // туман
-  else if (code >= 51 && code <= 57) cloudMul *= 0.5; // морось
-
-  // Видимость: низкая видимость (< 5 км) снижает блики
-  if (weatherState.visibility != null) {
-    const vis = weatherState.visibility; // метры
-    if (vis < 1000) cloudMul *= 0.2;
-    else if (vis < 3000) cloudMul *= 0.5;
-    else if (vis < 5000) cloudMul *= 0.7;
-  }
-
-  return Math.max(0.05, cloudMul);
-}
-
 function computeTimeSunMultiplier(building) {
   const now = new Date();
   const sun = getSunPosition(now, ASTANA.lat, ASTANA.lng);
@@ -321,12 +289,8 @@ function computeTimeSunMultiplier(building) {
 }
 
 function computeEffectiveLux(building) {
-  const timeSunMul  = computeTimeSunMultiplier(building);
-  const weatherMul  = weatherState.loaded && !weatherState.error
-                        ? computeWeatherMultiplier()
-                        : 1.0; // Без погоды — используем базовые значения
-
-  return Math.round(building.baseLux * timeSunMul * weatherMul);
+  const timeSunMul = computeTimeSunMultiplier(building);
+  return Math.round(building.baseLux * timeSunMul);
 }
 
 function levelOf(lux) {
@@ -385,15 +349,8 @@ function renderWeatherStrip() {
   const wmo = getWMO(weatherState.weatherCode);
   const temp = weatherState.temperature != null ? `${Math.round(weatherState.temperature)}°C` : '—';
   const cloud = `${weatherState.cloudCover}%`;
-  const wind = weatherState.windSpeed != null ? `${Math.round(weatherState.windSpeed)} км/ч` : '—';
-  const weatherMul = computeWeatherMultiplier();
-  const dangerPct = Math.round(weatherMul * 100);
   const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
   const sunAlt = sun.altitude > 0 ? `${sun.altitude.toFixed(1)}°` : 'за горизонтом';
-
-  let dangerClass = 'safe';
-  if (dangerPct > 70) dangerClass = 'danger';
-  else if (dangerPct > 35) dangerClass = 'warning';
 
   strip.innerHTML = `
     <div class="weather-strip-content">
@@ -410,16 +367,8 @@ function renderWeatherStrip() {
         <span class="ws-value">${cloud}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">Ветер</span>
-        <span class="ws-value">${wind}</span>
-      </div>
-      <div class="ws-item">
         <span class="ws-label">Солнце</span>
         <span class="ws-value">${sunAlt}</span>
-      </div>
-      <div class="ws-item ws-danger-level">
-        <span class="ws-label">Блики</span>
-        <span class="ws-badge ws-badge--${dangerClass}">${dangerPct}%</span>
       </div>
     </div>`;
 }
@@ -532,15 +481,11 @@ function popupHTML(b) {
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
 
-  const weatherMul = computeWeatherMultiplier();
-  const pct = weatherState.loaded && !weatherState.error ? Math.round(weatherMul * 100) : null;
-
   let weatherLine = '';
-  if (pct !== null) {
+  if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">Погода сейчас</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, облачность ${weatherState.cloudCover}%</span></div>
-      <div class="popup-field"><span class="popup-field-label">Интенсивность бликов</span><span class="popup-field-value">${pct}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">Погода сейчас</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, облачность ${weatherState.cloudCover}%</span></div>`;
   }
 
   return `

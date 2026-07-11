@@ -237,7 +237,7 @@
   height: 1.25em;
  background-color: var(--text);
  transform: translateX(0);
- transition: transform 220ms cubic-bezier(.2, .8, .2, 1), background-color 200ms ease;
+ transition: transform 340ms cubic-bezier(.22, 1, .36, 1), background-color 220ms ease;
  }
  .switch__icon,
  .switch__icon-part {
@@ -256,7 +256,7 @@
  width: 1.25em;
  height: 1.25em;
  transform: translateX(0);
- transition: transform 220ms cubic-bezier(.2, .8, .2, 1), background-color 200ms ease;
+ transition: transform 340ms cubic-bezier(.22, 1, .36, 1), background-color 220ms ease;
  will-change: transform;
  }
  .switch__icon-part {
@@ -649,24 +649,6 @@
   font-weight: 500;
 }
 
-.ws-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 7px;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: .02em;
-}
-
-.ws-badge--safe    { background: rgba(50,210,171,.18); color: var(--clear);   }
-.ws-badge--warning { background: rgba(248,184,74,.18); color: var(--caution); }
-.ws-badge--danger  { background: rgba(255,90,60,.18);  color: var(--glare);   }
-
-.ws-danger-level {
-  margin-left: auto;
-}
-
 /* Legend updates */
 .legend-sep {
   height: 1px;
@@ -703,14 +685,10 @@
   .ws-label {
     font-size: 9px;
   }
-
-  .ws-danger-level {
-    margin-left: 0;
-  }
 }
 
 @media (max-width: 374px) {
-  .ws-item:not(.ws-condition):not(.ws-danger-level) {
+  .ws-item:not(.ws-condition) {
     display: none;
   }
 }
