@@ -9,6 +9,62 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+<script>
+(function () {
+  let theme = 'dark';
+
+  try {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      theme = savedTheme;
+    } else {
+      const attrTheme = document.documentElement.getAttribute('data-theme');
+      if (attrTheme === 'light' || attrTheme === 'dark') {
+        theme = attrTheme;
+      }
+    }
+  } catch (err) {
+    const attrTheme = document.documentElement.getAttribute('data-theme');
+    if (attrTheme === 'light' || attrTheme === 'dark') {
+      theme = attrTheme;
+    }
+  }
+
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+})();
+</script>
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #0C1018;
+    --topbar-bg: #101621;
+    --icon-color: #fff;
+    --panel: rgba(20, 27, 39, 0.76);
+    --panel-solid: #151B27;
+    --text: #F3F7FB;
+    --text-dim: #9AA6B8;
+    --glare: #FF705B;
+    --caution: #F8B84A;
+    --clear: #32D2AB;
+    --map-fade: rgba(12,16,24,.74);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink: #F4F7F2;
+    --topbar-bg: #FCFCF8;
+    --icon-color: #111827;
+    --panel: rgba(252,252,248,0.84);
+    --panel-solid: #FCFCF8;
+    --text: #172033;
+    --text-dim: #607085;
+    --map-fade: rgba(244,247,242,.74);
+  }
+  html, body {
+    background: var(--ink);
+    color: var(--text);
+  }
+</style>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>

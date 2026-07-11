@@ -343,7 +343,14 @@
 
 
  .map-wrap { position: relative; flex: 1 1 auto; min-height: 0; background: var(--ink); transition: background var(--theme-duration) var(--theme-ease); }
- #map { position: absolute; inset: 0; transition: opacity 180ms ease; }
+ #map {
+ position: absolute;
+ inset: 0;
+ opacity: 0;
+ background: var(--ink);
+ transition: opacity 180ms ease, background var(--theme-duration) var(--theme-ease);
+ }
+ #map.map-ready { opacity: 1; }
  .map-wrap::after {
  content: "";
  position: absolute;

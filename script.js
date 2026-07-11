@@ -8,9 +8,45 @@ const MAP_STYLE = {
   dark:  `https://api.maptiler.com/maps/streets-v4-dark/style.json?key=${MAPTILER_KEY}`,
   light: `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
 };
-const savedTheme = localStorage.getItem('theme');
-const initialTheme = savedTheme === 'light' ? 'light' : 'dark';
-document.documentElement.setAttribute('data-theme', initialTheme);
+
+function readStoredTheme() {
+  try {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  } catch (err) {
+    console.warn('[Theme] Could not read localStorage:', err);
+  }
+
+  const attrTheme = document.documentElement.getAttribute('data-theme');
+  if (attrTheme === 'light' || attrTheme === 'dark') return attrTheme;
+
+  return 'dark';
+}
+
+function writeStoredTheme(theme) {
+  try {
+    localStorage.setItem('theme', theme);
+  } catch (err) {
+    console.warn('[Theme] Could not save localStorage:', err);
+  }
+}
+
+const initialTheme = readStoredTheme();
+const rootEl = document.documentElement;
+
+function syncThemeState(theme) {
+  const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+  rootEl.setAttribute('data-theme', resolvedTheme);
+  rootEl.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
+  if (switchInput) {
+    switchInput.checked = resolvedTheme === 'light';
+  }
+  writeStoredTheme(resolvedTheme);
+  return resolvedTheme;
+}
+
+let switchInput = null;
+syncThemeState(initialTheme);
 
 const CENTER = [71.43029781319242, 51.128310151593574];
 const ZOOM   = 13;
@@ -310,12 +346,18 @@ function recalcDanger() {
 // Пересчёт каждую минуту
 setInterval(() => {
   recalcDanger();
-  renderMarkers();
+  if (map) {
+    renderMarkers();
+  }
   updateLegendNote();
 }, 60000);
 
 // Обновление погоды каждые 5 минут
-setInterval(fetchWeather, 300000);
+setInterval(() => {
+  if (document.readyState === 'complete') {
+    fetchWeather();
+  }
+}, 300000);
 
 
 // ═════════════════════════════════════════════
@@ -419,26 +461,53 @@ function updateLegendNote() {
 //  КАРТА
 // ═════════════════════════════════════════════
 
-recalcDanger(); // первичный расчёт до загрузки карты
+let map = null;
 
-const map = new maplibregl.Map({
-  container: 'map',
-  style: MAP_STYLE[initialTheme],
-  center: CENTER,
-  zoom: ZOOM,
-});
+function initUi() {
+  recalcDanger();
+  renderWeatherStrip();
+  updateLegendNote();
+}
 
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+function initMap() {
+  const mapContainer = document.getElementById('map');
+  if (!mapContainer) return;
 
-let keyWarningShown = false;
-map.on('error', (e) => {
-  console.error('MapLibre error:', e && e.error);
-  if (!keyWarningShown) {
-    keyWarningShown = true;
-    const warn = document.getElementById('keyWarning');
-    if (warn) warn.hidden = false;
-  }
-});
+  mapContainer.classList.remove('map-ready');
+  mapContainer.style.opacity = '0';
+
+  map = new maplibregl.Map({
+    container: 'map',
+    // The document theme is set synchronously in <head>. Read it here instead
+    // of using the value captured while this script was loading, so the map
+    // and the rest of the UI always start with the same theme.
+    style: MAP_STYLE[activeTheme()] || MAP_STYLE.dark,
+    center: CENTER,
+    zoom: ZOOM,
+  });
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+  let keyWarningShown = false;
+  map.on('error', (e) => {
+    console.error('MapLibre error:', e && e.error);
+    if (!keyWarningShown) {
+      keyWarningShown = true;
+      const warn = document.getElementById('keyWarning');
+      if (warn) warn.hidden = false;
+    }
+  });
+
+  map.on('load', () => {
+    currentTheme = activeTheme();
+    if (mapContainer) {
+      mapContainer.classList.add('map-ready');
+      mapContainer.style.opacity = '1';
+    }
+    renderMarkers();
+    fetchWeather(); // загрузить погоду после инициализации карты
+  });
+}
 
 // ═════════════════════════════════════════════
 //  МАРКЕРЫ
@@ -601,9 +670,9 @@ function renderMarkers() {
 // ═════════════════════════════════════════════
 
 const themeToggle  = document.getElementById('themeToggle');
-const switchInput  = themeToggle.querySelector('.switch__input');
+switchInput = themeToggle ? themeToggle.querySelector('.switch__input') : null;
 const mapWrap      = document.querySelector('.map-wrap');
-let currentTheme   = initialTheme;
+let currentTheme   = null;
 let themeChangeId  = 0;
 let themeFadeTimer = 0;
 let themeLoadTimer = 0;
@@ -626,24 +695,22 @@ function endMapThemeFade() {
 }
 
 function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
-  const isLight = theme === 'light';
-  switchInput.checked = isLight;
-  if (map && theme !== currentTheme) {
+  const resolvedTheme = syncThemeState(theme);
+  const isLight = resolvedTheme === 'light';
+  if (map && (currentTheme === null || resolvedTheme !== currentTheme)) {
     const center  = map.getCenter();
     const zoom    = map.getZoom();
     const bearing = map.getBearing();
     const pitch   = map.getPitch();
     const changeId = ++themeChangeId;
-    currentTheme = theme;
+    currentTheme = resolvedTheme;
     beginMapThemeFade();
     window.clearTimeout(themeLoadTimer);
     themeLoadTimer = window.setTimeout(() => {
       if (changeId === themeChangeId) endMapThemeFade();
     }, 1200);
     window.requestAnimationFrame(() => {
-      map.setStyle(MAP_STYLE[theme] || MAP_STYLE.dark, { diff: false });
+      map.setStyle(MAP_STYLE[resolvedTheme] || MAP_STYLE.dark, { diff: false });
     });
     map.once('style.load', () => {
       if (changeId !== themeChangeId) return;
@@ -660,6 +727,13 @@ switchInput.addEventListener('change', () => {
   applyTheme(nextTheme);
 });
 
+window.addEventListener('pageshow', () => {
+  const restoredTheme = readStoredTheme();
+  if (restoredTheme !== currentTheme) {
+    applyTheme(restoredTheme);
+  }
+});
+
 applyTheme(initialTheme);
 
 
@@ -667,7 +741,13 @@ applyTheme(initialTheme);
 //  ИНИЦИАЛИЗАЦИЯ
 // ═════════════════════════════════════════════
 
-map.on('load', () => {
-  renderMarkers();
-  fetchWeather(); // загрузить погоду после инициализации карты
-});
+function bootstrap() {
+  initUi();
+  initMap();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+} else {
+  window.addEventListener('load', bootstrap, { once: true });
+}
