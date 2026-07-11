@@ -68,7 +68,7 @@ function mapPaint() {
 //  ДАННЫЕ ЗДАНИЙ (baseLux — максимальная яркость при идеальных условиях)
 // ═════════════════════════════════════════════
 
-function createBuildings(count = 20) {
+function createBuildings(count = 19) {
   const baseBuildings = [
     { id:1,  name:'Abu Dhabi Plaza',                          address:'ул. Сыганак 60/5',                      lat:51.12257682152757,  lng:71.42800365052331, baseLux:62000,  period:'both',    dangerTime:'07:30–09:30 17:30-20:00', glass:'Ламинированное стекло',                              orientation:180 },
     { id:2,  name:'Talan Towers',                             address:'ул. Достык 16',                         lat:51.125043753584954, lng:71.43291321421682, baseLux:71500,  period:'evening', dangerTime:'17:30–19:00',              glass:'Высокоселективное стекло',                           orientation:250 },
@@ -89,6 +89,16 @@ function createBuildings(count = 20) {
     { id:17, name:'Зелёный квартал',                           address:'Есильский р-н',                         lat:51.13021814420195,  lng:71.39058525359164, baseLux:26000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Стеклянный навесной фасад',                         orientation:135 },
     { id:18, name:'Национальная библиотека (Библиотека Елбасы)',address:'пр. Тәуелсіздік',                      lat:51.127228110226795, lng:71.42738260411048, baseLux:47000,  period:'both',    dangerTime:'09:00–11:00 16:00–18:00', glass:'Сферический стеклянный купол',                       orientation:0   },
     { id:19, name:'Ж/д вокзал «Нұрлы Жол»',                   address:'Есильский р-н',                         lat:51.11160220466827,  lng:71.53105585708367, baseLux:30000,  period:'both',    dangerTime:'08:00–09:30 17:00–19:00', glass:'Стекло и металл, витражный фасад',                  orientation:170 },
+    { id:20, name:'Millennium Park',                           address:'ул. Касыма Аманжолова (жилой комплекс)', lat:51.12272659540985,  lng:71.47610002949703, baseLux:42000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Панорамные стеклопакеты, алюминиевые фасадные системы', orientation:0   },
+    { id:21, name:'Министерство финансов Республики Казахстан', address:'пр. Мәңгілік Ел, 8',                     lat:51.128226547862056, lng:71.43995731995513, baseLux:52000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Структурное остекление, Low-E стекло',                  orientation:0   },
+    { id:22, name:'Архив Президента Республики Казахстан',      address:'пр. Мәңгілік Ел, 15',                    lat:51.11823643312307,  lng:71.4336439869567,  baseLux:38000,  period:'both',    dangerTime:'08:30–10:00 17:00–18:30', glass:'Панорамное архитектурное стекло',                     orientation:0   },
+    { id:23, name:'Казмедиа орталығы',                          address:'ул. Д. Кунаева, 4',                      lat:51.131731694374906, lng:71.42046953541535, baseLux:68000,  period:'both',    dangerTime:'08:00–10:00 17:00–18:30', glass:'Панорамное селективное Low-E стекло',                orientation:0   },
+    { id:24, name:'КазМунайГаз',                                address:'пр. Кабанбай батыра, 19',                lat:51.13215109245026,  lng:71.41315271579835, baseLux:72000,  period:'both',    dangerTime:'08:00–09:30 17:00–19:00', glass:'Высокоселективное стекло, навесной фасад',            orientation:0   },
+    { id:25, name:'Дом министерств',                            address:'пр. Мәңгілік Ел, 8',                     lat:51.128103084024126, lng:71.43932538408556, baseLux:56000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Стеклянный навесной фасад, Low-E стеклопакеты',       orientation:0   },
+    { id:26, name:'БЦ SAAD',                                    address:'ул. Достык, 2',                          lat:51.128797015082874, lng:71.40743293222327, baseLux:65000,  period:'both',    dangerTime:'08:00–10:00 17:00–19:00', glass:'Панорамное селективное стекло',                       orientation:0   },
+    { id:27, name:'Бизнес-центр Санкт-Петербург',               address:'ул. Достык, 20',                         lat:51.124492690997485, lng:71.43609212621853, baseLux:70000,  period:'both',    dangerTime:'08:00–10:00 17:00–19:00', glass:'Зеркальное фасадное стекло',                          orientation:0   },
+    { id:28, name:'Beijing Palace Soluxe Hotel Astana',         address:'ул. Сыганак, 45',                        lat:51.12341980479718,  lng:71.43294683605592, baseLux:52000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Панорамное архитектурное стекло',                     orientation:0   },
+    { id:29, name:'Highvill Ishim',                             address:'ул. Жумекена Нажимеденова, 4',           lat:51.12029787114182,  lng:71.45899528461447, baseLux:50000,  period:'both',    dangerTime:'08:00–09:30 17:00–18:30', glass:'Панорамное остекление, Low-E стеклопакеты',           orientation:0   },
   ];
 
   const generated = Array.from({ length: Math.max(0, count - baseBuildings.length) }, (_, index) => {
@@ -112,7 +122,7 @@ function createBuildings(count = 20) {
   return [...baseBuildings, ...generated];
 }
 
-const buildings = createBuildings(19);
+const buildings = createBuildings(29);
 
 
 // ═════════════════════════════════════════════
