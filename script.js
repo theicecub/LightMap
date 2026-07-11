@@ -181,7 +181,7 @@ async function fetchWeather() {
 
   renderWeatherStrip();
   recalcDanger();
-  renderMarkers(activeFilter);
+  renderMarkers();
   updateLegendNote();
 }
 
@@ -310,7 +310,7 @@ function recalcDanger() {
 // Пересчёт каждую минуту
 setInterval(() => {
   recalcDanger();
-  renderMarkers(activeFilter);
+  renderMarkers();
   updateLegendNote();
 }, 60000);
 
@@ -483,18 +483,10 @@ function popupHTML(b) {
   `;
 }
 
-function matchesFilter(b, filter) {
-  if (filter === 'all') return true;
-  if (filter === 'morning') return b.period === 'morning' || b.period === 'both';
-  if (filter === 'evening') return b.period === 'evening' || b.period === 'both';
-  return true;
-}
-
-function buildGeoJson(filter) {
-  const visible = buildings.filter(b => matchesFilter(b, filter));
+function buildGeoJson() {
   return {
     type: 'FeatureCollection',
-    features: visible.map(b => ({
+    features: buildings.map(b => ({
       type: 'Feature',
       geometry: {
         type: 'Point',
@@ -515,7 +507,7 @@ function buildGeoJson(filter) {
   };
 }
 
-function renderMarkers(filter) {
+function renderMarkers() {
   activeMarkers.forEach(m => m.remove());
   activeMarkers = [];
   const paint = mapPaint();
@@ -523,7 +515,7 @@ function renderMarkers(filter) {
   if (!map.getSource('points')) {
     map.addSource('points', {
       type: 'geojson',
-      data: buildGeoJson(filter),
+      data: buildGeoJson(),
       cluster: true,
       clusterMaxZoom: 14,
       clusterRadius: 50,
@@ -599,28 +591,9 @@ function renderMarkers(filter) {
     map.on('mouseenter', 'unclustered-points', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'unclustered-points', () => { map.getCanvas().style.cursor = ''; });
   } else {
-    map.getSource('points').setData(buildGeoJson(filter));
+    map.getSource('points').setData(buildGeoJson());
   }
 }
-
-
-// ═════════════════════════════════════════════
-//  ФИЛЬТРЫ
-// ═════════════════════════════════════════════
-
-let activeFilter = 'all';
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => {
-      b.classList.remove('active');
-      b.setAttribute('aria-pressed', 'false');
-    });
-    btn.classList.add('active');
-    btn.setAttribute('aria-pressed', 'true');
-    activeFilter = btn.dataset.filter;
-    renderMarkers(activeFilter);
-  });
-});
 
 
 // ═════════════════════════════════════════════
@@ -676,7 +649,7 @@ function applyTheme(theme) {
       if (changeId !== themeChangeId) return;
       window.clearTimeout(themeLoadTimer);
       map.jumpTo({ center, zoom, bearing, pitch });
-      renderMarkers(activeFilter);
+      renderMarkers();
       window.requestAnimationFrame(endMapThemeFade);
     });
   }
@@ -695,6 +668,6 @@ applyTheme(initialTheme);
 // ═════════════════════════════════════════════
 
 map.on('load', () => {
-  renderMarkers(activeFilter);
+  renderMarkers();
   fetchWeather(); // загрузить погоду после инициализации карты
 });

@@ -65,8 +65,6 @@
  .stats,
  .stat-card,
  .stat-card .stat-label,
- .filters,
- .filter-btn,
  .switch,
  .switch__input,
  .switch__icon,
@@ -206,36 +204,6 @@
  }
  .stat-card--danger .stat-value { color: var(--glare); }
 
-
- .filters {
- display: flex;
- gap: 2px;
- flex: 0 0 auto;
- min-width: 0;
- margin-top: 0;
- padding: 3px;
- background: var(--surface);
- border: 1px solid var(--border);
- border-radius: 8px;
- transition-property: background, border-color;
- }
- .filter-btn {
- background: transparent;
- border: 0;
- color: var(--text-dim);
- font-family: inherit;
- font-size: 12px;
- font-weight: 600;
- line-height: 1;
- padding: 7px 10px;
- border-radius: 6px;
- cursor: pointer;
- transition-property: background, color;
- white-space: nowrap;
- }
- .filter-btn:hover { background: var(--surface-strong); color: var(--text); }
- .filter-btn:focus-visible { outline: 2px solid var(--caution); outline-offset: 2px; }
- .filter-btn.active { background: var(--text); color: var(--ink); }
 
  /* ═══ Dark Mode Switch ═══ */
  .switch,
@@ -572,11 +540,6 @@
  }
  .topbar-row { width: 100%; }
  .brand .subtitle { max-width: 44vw; }
- .filters {
- width: 100%;
- overflow-x: auto;
- }
- .filter-btn { flex: 1 0 auto; }
  }
 
 
@@ -613,18 +576,6 @@
  .stat-card .stat-label { display: none; }
  .switch__input {
  font-size: 12px;
- }
- .filters {
- width: 100%;
- overflow: hidden;
- }
- .filter-btn {
- flex: 1 1 0;
- min-width: 0;
- padding: 7px 5px;
- font-size: 11px;
- overflow: hidden;
- text-overflow: ellipsis;
  }
  .legend { max-width: 175px; padding: 10px 12px; left: 10px; bottom: 10px; }
  .legend h4 { font-size: 9.5px; }
