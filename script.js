@@ -197,7 +197,10 @@ async function fetchWeather() {
 
     // Получим видимость из ближайшего часа
     if (data.hourly && data.hourly.visibility) {
-      const now = new Date();
+      // API timestamps are expressed in the requested timezone. Compare them
+      // with the timestamp returned by that same response so a visitor in a
+      // different timezone still gets the correct hourly visibility value.
+      const now = c.time ? new Date(c.time) : new Date();
       const times = data.hourly.time.map(t => new Date(t));
       let closest = 0;
       let minDiff = Infinity;
@@ -746,8 +749,8 @@ function bootstrap() {
   initMap();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+if (document.readyState === 'complete') {
+  bootstrap();
 } else {
   window.addEventListener('load', bootstrap, { once: true });
 }
