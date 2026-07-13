@@ -224,6 +224,27 @@ function getSunPosition(date, lat, lng) {
 //  КОЭФФИЦИЕНТ ОПАСНОСТИ: время + погода + ориентация
 // ═════════════════════════════════════════════
 
+// НОВОЕ: погодный множитель — раньше weatherState загружался и показывался
+// в UI, но никак не влиял на расчёт люксов. Теперь дождь/снег/туман реально
+// гасят блик, а облачность плавно его ослабляет.
+function computeWeatherMultiplier() {
+  if (!weatherState.loaded || weatherState.error) return 1; // нет данных — не искажаем расчёт
+
+  const code = weatherState.weatherCode;
+
+  // Туман/изморозь — сильное рассеивание, солнце едва пробивается
+  const fogCodes = new Set([45, 48]);
+  if (fogCodes.has(code)) return 0.15;
+
+  // Осадки любой интенсивности и грозы — прямого солнца практически нет
+  const precipCodes = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
+  if (precipCodes.has(code)) return 0.05;
+
+  // Ясно / переменная облачность — линейное затухание по проценту облачности
+  const cloud = weatherState.cloudCover ?? 0;
+  return Math.max(0.1, 1 - (cloud / 100) * 0.9);
+}
+
 function computeTimeSunMultiplier(building) {
   const now = new Date();
   const sun = getSunPosition(now, ASTANA.lat, ASTANA.lng);
@@ -259,9 +280,9 @@ function computeTimeSunMultiplier(building) {
   return altMul;
 }
 
-function computeEffectiveLux(building) {
+function computeEffectiveLux(building, weatherMul) {
   const timeSunMul = computeTimeSunMultiplier(building);
-  return Math.round(building.baseLux * timeSunMul);
+  return Math.round(building.baseLux * timeSunMul * weatherMul);
 }
 
 function levelOf(lux) {
@@ -274,9 +295,11 @@ function levelLabel(level) {
 }
 
 function recalcDanger() {
+  const weatherMul = computeWeatherMultiplier();
   buildings.forEach(b => {
-    b.lux   = computeEffectiveLux(b);
-    b.level = levelOf(b.lux);
+    b.lux        = computeEffectiveLux(b, weatherMul);
+    b.level      = levelOf(b.lux);
+    b.weatherMul = weatherMul; // сохраняем, чтобы показать в попапе без повторного пересчёта
   });
   updateStats();
 }
@@ -322,6 +345,7 @@ function renderWeatherStrip() {
   const cloud = `${weatherState.cloudCover}%`;
   const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
   const sunAlt = sun.altitude > 0 ? `${sun.altitude.toFixed(1)}°` : 'за горизонтом';
+  const glarePct = Math.round(computeWeatherMultiplier() * 100);
 
   strip.innerHTML = `
     <div class="weather-strip-content">
@@ -340,6 +364,10 @@ function renderWeatherStrip() {
       <div class="ws-item">
         <span class="ws-label">Солнце</span>
         <span class="ws-value">${sunAlt}</span>
+      </div>
+      <div class="ws-item">
+        <span class="ws-label">Фактор бликов</span>
+        <span class="ws-value">${glarePct}%</span>
       </div>
     </div>`;
 }
@@ -371,7 +399,8 @@ function updateLegendNote() {
 
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
-    el.textContent = `Обновлено ${timeStr} · ${wmo.text}, облачность ${weatherState.cloudCover}%`;
+    const glarePct = Math.round(computeWeatherMultiplier() * 100);
+    el.textContent = `Обновлено ${timeStr} · ${wmo.text}, облачность ${weatherState.cloudCover}% · фактор бликов ${glarePct}%`;
   } else if (weatherState.error) {
     el.textContent = `${timeStr} · Погода недоступна — используются базовые данные`;
   } else {
@@ -455,8 +484,13 @@ function popupHTML(b) {
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
+    const weatherMul = (bData && typeof bData.weatherMul === 'number')
+      ? bData.weatherMul
+      : computeWeatherMultiplier();
+    const weatherMulPct = Math.round(weatherMul * 100);
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">Погода сейчас</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, облачность ${weatherState.cloudCover}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">Погода сейчас</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, облачность ${weatherState.cloudCover}%</span></div>
+      <div class="popup-field"><span class="popup-field-label">Погодный фактор бликов</span><span class="popup-field-value">${weatherMulPct}%</span></div>`;
   }
 
   return `
