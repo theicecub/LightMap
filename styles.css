@@ -119,6 +119,48 @@
  flex: 1 1 auto;
  min-width: 0;
  }
+ .topbar-controls {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ flex-shrink: 0;
+ }
+ .lang-switcher {
+ display: flex;
+ align-items: center;
+ gap: 4px;
+ padding: 3px;
+ border-radius: 10px;
+ background: var(--surface);
+ border: 1px solid var(--border);
+ }
+ .lang-btn {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ width: 30px;
+ height: 26px;
+ border: none;
+ border-radius: 7px;
+ background: transparent;
+ cursor: pointer;
+ padding: 0;
+ transition: background 180ms ease, transform 120ms ease;
+ }
+ .lang-btn:hover {
+ background: var(--surface-strong);
+ }
+ .lang-btn:active {
+ transform: scale(0.92);
+ }
+ .lang-btn--active {
+ background: var(--surface-strong);
+ box-shadow: 0 0 0 1px var(--border-top);
+ }
+ .lang-flag {
+ font-size: 16px;
+ line-height: 1;
+ }
  .brand {
  display: flex;
  align-items: center;

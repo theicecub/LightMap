@@ -9,7 +9,10 @@
     "period": "both",
     "dangerTime": "07:30–09:30 17:30-20:00",
     "glass": "Ламинированное стекло",
-    "orientation": 180
+    "orientation": 180,
+    "name_en": "Abu Dhabi Plaza",
+    "address_en": "Syganak St. 60/5",
+    "glass_en": "Laminated glass"
   },
   {
     "id": 2,
@@ -21,7 +24,10 @@
     "period": "evening",
     "dangerTime": "17:30–19:00",
     "glass": "Высокоселективное стекло",
-    "orientation": 250
+    "orientation": 250,
+    "name_en": "Talan Towers",
+    "address_en": "Dostyk St. 16",
+    "glass_en": "High-selective glass"
   },
   {
     "id": 3,
@@ -33,7 +39,10 @@
     "period": "morning",
     "dangerTime": "07:00–08:00",
     "glass": "Трехслойная мембрана",
-    "orientation": 120
+    "orientation": 120,
+    "name_en": "Khan Shatyr",
+    "address_en": "Turan Ave. 37",
+    "glass_en": "Three-layer membrane"
   },
   {
     "id": 4,
@@ -45,7 +54,10 @@
     "period": "evening",
     "dangerTime": "17:00–18:15",
     "glass": "Панорамное фасадное стекло",
-    "orientation": 270
+    "orientation": 270,
+    "name_en": "\"Moscow\" Business Center",
+    "address_en": "Dostyk St. 18",
+    "glass_en": "Panoramic facade glass"
   },
   {
     "id": 5,
@@ -57,7 +69,10 @@
     "period": "morning",
     "dangerTime": "08:00-10:00",
     "glass": "Зеркальное архитектурное стекло",
-    "orientation": 90
+    "orientation": 90,
+    "name_en": "Severnoye Siyaniye (Northern Lights)",
+    "address_en": "Dostyk St. 5",
+    "glass_en": "Mirrored architectural glass"
   },
   {
     "id": 6,
@@ -69,7 +84,10 @@
     "period": "morning",
     "dangerTime": "08:00-09:30",
     "glass": "Стеклянный навесной фасад",
-    "orientation": 110
+    "orientation": 110,
+    "name_en": "\"Astanalyk\" Business Center",
+    "address_en": "Dinmukhamed Konayev St. 33",
+    "glass_en": "Curtain-wall glass facade"
   },
   {
     "id": 7,
@@ -81,7 +99,10 @@
     "period": "morning",
     "dangerTime": "08:00-10:00",
     "glass": "Панорамное архитетктурное стекло",
-    "orientation": 100
+    "orientation": 100,
+    "name_en": "\"Altyn-Orda\" Business Center",
+    "address_en": "Mangilik El Ave. 8/2",
+    "glass_en": "Panoramic architectural glass"
   },
   {
     "id": 8,
@@ -93,7 +114,10 @@
     "period": "both",
     "dangerTime": "08:00-09:30 17:30–19:00",
     "glass": "Зеркальное стекло",
-    "orientation": 160
+    "orientation": 160,
+    "name_en": "Emerald Quarter (Towers A/B)",
+    "address_en": "Dinmukhamed Konayev St. 8",
+    "glass_en": "Mirrored glass"
   },
   {
     "id": 9,
@@ -105,7 +129,10 @@
     "period": "both",
     "dangerTime": "08:00-10:00 17:00–19:30",
     "glass": "Зеркальные стеклопакеты",
-    "orientation": 145
+    "orientation": 145,
+    "name_en": "\"Triumph of Astana\" Residential Complex",
+    "address_en": "Kabanbay Batyr Ave. 11",
+    "glass_en": "Mirrored double-glazed units"
   },
   {
     "id": 10,
@@ -117,7 +144,10 @@
     "period": "both",
     "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Тонированное стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Baiterek",
+    "address_en": "Nurzhol Boulevard 14",
+    "glass_en": "Tinted glass"
   },
   {
     "id": 11,
@@ -129,7 +159,10 @@
     "period": "both",
     "dangerTime": "08:30–10:30 17:00–19:00",
     "glass": "Стеклянная сферическая оболочка",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Nur Alem (EXPO sphere)",
+    "address_en": "EXPO grounds, Mangilik El Ave.",
+    "glass_en": "Spherical glass shell"
   },
   {
     "id": 12,
@@ -141,7 +174,10 @@
     "period": "both",
     "dangerTime": "09:00–11:00 16:30–18:00",
     "glass": "Стеклянная трапеция с металлической решёткой",
-    "orientation": 200
+    "orientation": 200,
+    "name_en": "Palace of Independence",
+    "address_en": "Tauelsizdik Ave.",
+    "glass_en": "Glass trapezoid with metal grid"
   },
   {
     "id": 13,
@@ -153,7 +189,10 @@
     "period": "both",
     "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Стеклянные грани пирамиды",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Palace of Peace and Reconciliation (Pyramid)",
+    "address_en": "Tauelsizdik Ave.",
+    "glass_en": "Glass faces of the pyramid"
   },
   {
     "id": 14,
@@ -165,7 +204,10 @@
     "period": "both",
     "dangerTime": "08:30–10:00 17:00–18:30",
     "glass": "Стеклянный конусообразный фасад",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "\"Shabyt\" Palace of Creativity",
+    "address_en": "Kabanbay Batyr Ave.",
+    "glass_en": "Cone-shaped glass facade"
   },
   {
     "id": 15,
@@ -177,7 +219,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Витражное остекление офисного фасада",
-    "orientation": 220
+    "orientation": 220,
+    "name_en": "\"Temir Zholy\" Tower (KTZ / Kazakhstan Railways)",
+    "address_en": "Mangilik El Ave.",
+    "glass_en": "Stained-glass office facade"
   },
   {
     "id": 16,
@@ -189,7 +234,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:30–19:00",
     "glass": "Панорамное стекло, структурный фасад",
-    "orientation": 180
+    "orientation": 180,
+    "name_en": "Astana Tower",
+    "address_en": "Yesil District",
+    "glass_en": "Panoramic glass, structural facade"
   },
   {
     "id": 17,
@@ -201,7 +249,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Стеклянный навесной фасад",
-    "orientation": 135
+    "orientation": 135,
+    "name_en": "Green Quarter",
+    "address_en": "Yesil District",
+    "glass_en": "Curtain-wall glass facade"
   },
   {
     "id": 18,
@@ -213,7 +264,10 @@
     "period": "both",
     "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Сферический стеклянный купол",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "National Library (Elbasy Library)",
+    "address_en": "Tauelsizdik Ave.",
+    "glass_en": "Spherical glass dome"
   },
   {
     "id": 19,
@@ -225,7 +279,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Стекло и металл, витражный фасад",
-    "orientation": 170
+    "orientation": 170,
+    "name_en": "\"Nurly Zhol\" Railway Station",
+    "address_en": "Yesil District",
+    "glass_en": "Glass and metal stained facade"
   },
   {
     "id": 20,
@@ -237,7 +294,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Панорамные стеклопакеты, алюминиевые фасадные системы",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Millennium Park",
+    "address_en": "Kasym Amanzholov St. (residential complex)",
+    "glass_en": "Panoramic double-glazed units, aluminum facade systems"
   },
   {
     "id": 21,
@@ -249,7 +309,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Структурное остекление, Low-E стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Ministry of Finance of the Republic of Kazakhstan",
+    "address_en": "Mangilik El Ave. 8",
+    "glass_en": "Structural glazing, Low-E glass"
   },
   {
     "id": 22,
@@ -261,7 +324,10 @@
     "period": "both",
     "dangerTime": "08:30–10:00 17:00–18:30",
     "glass": "Панорамное архитектурное стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Presidential Archive of the Republic of Kazakhstan",
+    "address_en": "Mangilik El Ave. 15",
+    "glass_en": "Panoramic architectural glass"
   },
   {
     "id": 23,
@@ -273,7 +339,10 @@
     "period": "both",
     "dangerTime": "08:00–10:00 17:00–18:30",
     "glass": "Панорамное селективное Low-E стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Kazmedia Center",
+    "address_en": "D. Kunayev St. 4",
+    "glass_en": "Panoramic selective Low-E glass"
   },
   {
     "id": 24,
@@ -285,7 +354,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Высокоселективное стекло, навесной фасад",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "KazMunayGas",
+    "address_en": "Kabanbay Batyr Ave. 19",
+    "glass_en": "High-selective glass, curtain-wall facade"
   },
   {
     "id": 25,
@@ -297,7 +369,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Стеклянный навесной фасад, Low-E стеклопакеты",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "House of Ministries",
+    "address_en": "Mangilik El Ave. 8",
+    "glass_en": "Glass curtain-wall facade, Low-E double-glazed units"
   },
   {
     "id": 26,
@@ -309,7 +384,10 @@
     "period": "both",
     "dangerTime": "08:00–10:00 17:00–19:00",
     "glass": "Панорамное селективное стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "SAAD Business Center",
+    "address_en": "Dostyk St. 2",
+    "glass_en": "Panoramic selective glass"
   },
   {
     "id": 27,
@@ -321,7 +399,10 @@
     "period": "both",
     "dangerTime": "08:00–10:00 17:00–19:00",
     "glass": "Зеркальное фасадное стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "\"Saint Petersburg\" Business Center",
+    "address_en": "Dostyk St. 20",
+    "glass_en": "Mirrored facade glass"
   },
   {
     "id": 28,
@@ -333,7 +414,10 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Панорамное архитектурное стекло",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Beijing Palace Soluxe Hotel Astana",
+    "address_en": "Syganak St. 45",
+    "glass_en": "Panoramic architectural glass"
   },
   {
     "id": 29,
@@ -345,6 +429,9 @@
     "period": "both",
     "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Панорамное остекление, Low-E стеклопакеты",
-    "orientation": 0
+    "orientation": 0,
+    "name_en": "Highvill Ishim",
+    "address_en": "Zhumeken Nazhimedenov St. 4",
+    "glass_en": "Panoramic glazing, Low-E double-glazed units"
   }
 ]

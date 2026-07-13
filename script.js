@@ -1,13 +1,234 @@
-// ═══════════════════════════════════════════════════════════════
-//  LightMap — Световые блики Астаны
+// ════════════════════════════════════════════════════════════════════════════
+//  LightMap — Световые блики Астаны / Astana facade glare
 //  Опасность точек зависит от времени суток + погоды (Open-Meteo)
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 const MAPTILER_KEY = 'JBWS7gL5h6Ob9ya2vfNO';
 const MAP_STYLE = {
   dark:  `https://api.maptiler.com/maps/streets-v4-dark/style.json?key=${MAPTILER_KEY}`,
   light: `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
 };
+
+// ════════════════════════════════════════════════════════════════════════════
+//  i18n — ЛОКАЛИЗАЦИЯ
+// ════════════════════════════════════════════════════════════════════════════
+
+const I18N = {
+  ru: {
+    // Meta
+    metaDescription: 'Интерактивная карта опасных световых бликов от фасадов зданий Астаны для водителей',
+    // Header
+    subtitle: 'Карта опасных световых зон от фасадов зданий для водителей',
+    darkMode: 'Dark Mode',
+    // Weather strip
+    loadingWeather: 'Загрузка погоды…',
+    weatherUnavailable: 'Погода недоступна',
+    temp: 'Темп.',
+    cloudCover: 'Облачность',
+    sun: 'Солнце',
+    glareFactor: 'Фактор бликов',
+    belowHorizon: 'за горизонтом',
+    // Legend
+    dangerLevel: 'Уровень опасности',
+    dangerous: 'Опасно',
+    caution: 'Внимание',
+    safe: 'Безопасно',
+    levelDepends: 'Уровень зависит от времени и погоды',
+    // Legend note
+    legendUpdated: (time, condition, cloud, glare) =>
+      `Обновлено ${time} · ${condition}, облачность ${cloud}% · фактор бликов ${glare}%`,
+    legendWeatherUnavailable: (time) =>
+      `${time} · Погода недоступна — используются базовые данные`,
+    legendLoading: 'Загрузка данных о погоде…',
+    // Popup
+    maxIlluminance: 'Макс. освещённость',
+    currentWeatherAdjusted: 'Сейчас (с учётом погоды)',
+    dangerWindow: 'Опасное время',
+    glassType: 'Тип стекла',
+    currentWeather: 'Погода сейчас',
+    weatherGlareFactor: 'Погодный фактор бликов',
+    luxUnit: 'лк',
+    // WMO weather codes
+    wmo: {
+      0:  'Ясно',
+      1:  'Малооблачно',
+      2:  'Переменная облачность',
+      3:  'Пасмурно',
+      45: 'Туман',
+      48: 'Изморозь',
+      51: 'Морось слабая',
+      53: 'Морось',
+      55: 'Морось сильная',
+      56: 'Ледяная морось',
+      57: 'Ледяная морось',
+      61: 'Дождь слабый',
+      63: 'Дождь',
+      65: 'Ливень',
+      66: 'Ледяной дождь',
+      67: 'Ледяной ливень',
+      71: 'Снег слабый',
+      73: 'Снег',
+      75: 'Снегопад',
+      77: 'Снежная крупа',
+      80: 'Ливневый дождь',
+      81: 'Ливень',
+      82: 'Сильный ливень',
+      85: 'Снегопад',
+      86: 'Сильный снегопад',
+      95: 'Гроза',
+      96: 'Гроза с градом',
+      99: 'Гроза с сильным градом',
+    },
+    unknown: 'Неизвестно',
+    // Locale for number formatting
+    locale: 'ru-RU',
+    // Timezone for time display
+    timeTimezone: 'Asia/Almaty',
+  },
+  en: {
+    // Meta
+    metaDescription: 'Interactive map of hazardous facade glare in Astana for drivers',
+    // Header
+    subtitle: 'Map of hazardous glare zones from building facades for drivers',
+    darkMode: 'Dark Mode',
+    // Weather strip
+    loadingWeather: 'Loading weather…',
+    weatherUnavailable: 'Weather unavailable',
+    temp: 'Temp.',
+    cloudCover: 'Cloud cover',
+    sun: 'Sun',
+    glareFactor: 'Glare factor',
+    belowHorizon: 'below horizon',
+    // Legend
+    dangerLevel: 'Danger level',
+    dangerous: 'Dangerous',
+    caution: 'Caution',
+    safe: 'Safe',
+    levelDepends: 'Level depends on time and weather',
+    // Legend note
+    legendUpdated: (time, condition, cloud, glare) =>
+      `Updated ${time} · ${condition}, cloud cover ${cloud}% · glare factor ${glare}%`,
+    legendWeatherUnavailable: (time) =>
+      `${time} · Weather unavailable — using baseline data`,
+    legendLoading: 'Loading weather data…',
+    // Popup
+    maxIlluminance: 'Max illuminance',
+    currentWeatherAdjusted: 'Current (weather-adjusted)',
+    dangerWindow: 'Danger window',
+    glassType: 'Glass type',
+    currentWeather: 'Current weather',
+    weatherGlareFactor: 'Weather glare factor',
+    luxUnit: 'lx',
+    // WMO weather codes
+    wmo: {
+      0:  'Clear',
+      1:  'Mostly clear',
+      2:  'Partly cloudy',
+      3:  'Overcast',
+      45: 'Fog',
+      48: 'Depositing rime fog',
+      51: 'Light drizzle',
+      53: 'Drizzle',
+      55: 'Dense drizzle',
+      56: 'Freezing drizzle',
+      57: 'Freezing drizzle',
+      61: 'Slight rain',
+      63: 'Rain',
+      65: 'Rain showers',
+      66: 'Freezing rain',
+      67: 'Heavy freezing rain',
+      71: 'Slight snow fall',
+      73: 'Snow fall',
+      75: 'Heavy snow fall',
+      77: 'Snow grains',
+      80: 'Rain showers',
+      81: 'Rain showers',
+      82: 'Violent rain showers',
+      85: 'Heavy snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with hail',
+      99: 'Thunderstorm with heavy hail',
+    },
+    unknown: 'Unknown',
+    // Locale for number formatting
+    locale: 'en-US',
+    // Timezone for time display
+    timeTimezone: 'Asia/Almaty',
+  },
+};
+
+let currentLang = 'ru';
+try {
+  const savedLang = localStorage.getItem('lang');
+  if (savedLang === 'ru' || savedLang === 'en') currentLang = savedLang;
+} catch (err) {
+  console.warn('[Lang] Could not read localStorage:', err);
+}
+
+function t(key) {
+  const val = I18N[currentLang][key];
+  return val !== undefined ? val : key;
+}
+
+function writeStoredLang(lang) {
+  try {
+    localStorage.setItem('lang', lang);
+  } catch (err) {
+    console.warn('[Lang] Could not save localStorage:', err);
+  }
+}
+
+function setLang(lang) {
+  if (lang !== 'ru' && lang !== 'en') return;
+  currentLang = lang;
+  writeStoredLang(lang);
+  document.documentElement.lang = lang;
+  applyLangToStaticText();
+  renderWeatherStrip();
+  updateLegendNote();
+  recalcDanger();
+  renderMarkers();
+  // Update active flag
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('lang-btn--active', btn.dataset.lang === lang);
+  });
+}
+
+function applyLangToStaticText() {
+  const tr = I18N[currentLang];
+
+  // Meta description
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) metaDesc.setAttribute('content', tr.metaDescription);
+
+  // Subtitle
+  const subtitle = document.querySelector('.subtitle');
+  if (subtitle) subtitle.textContent = tr.subtitle;
+
+  // Dark mode label
+  const srLabel = document.querySelector('.switch__sr');
+  if (srLabel) srLabel.textContent = tr.darkMode;
+
+  // Weather strip loading
+  const wsLoading = document.querySelector('.weather-strip-loading span:last-child');
+  if (wsLoading) wsLoading.textContent = tr.loadingWeather;
+
+  // Legend
+  const legendTitle = document.querySelector('.legend h4');
+  if (legendTitle) legendTitle.textContent = tr.dangerLevel;
+
+  const legendItems = document.querySelectorAll('.legend-item span');
+  if (legendItems.length >= 3) {
+    legendItems[0].textContent = tr.dangerous;
+    legendItems[1].textContent = tr.caution;
+    legendItems[2].textContent = tr.safe;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ТЕМА (Dark / Light)
+// ════════════════════════════════════════════════════════════════════════════
 
 function readStoredTheme() {
   try {
@@ -64,9 +285,9 @@ function mapPaint() {
   return MAP_PAINT[activeTheme()] || MAP_PAINT.dark;
 }
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  ДАННЫЕ ЗДАНИЙ (baseLux — максимальная яркость при идеальных условиях)
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 let buildings = [];
 
@@ -86,9 +307,9 @@ async function loadBuildings() {
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  ПОГОДА — Open-Meteo API
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 const weatherState = {
   cloudCover:   0,    // 0-100 %
@@ -102,40 +323,42 @@ const weatherState = {
   lastUpdate:   null,
 };
 
-// WMO weather codes → описание + иконка
+// WMO weather codes → иконка (text comes from i18n)
 const WMO_CODES = {
-  0:  { text:'Ясно',                icon:'☀️' },
-  1:  { text:'Малооблачно',         icon:'🌤️' },
-  2:  { text:'Переменная облачность',icon:'⛅' },
-  3:  { text:'Пасмурно',            icon:'☁️' },
-  45: { text:'Туман',               icon:'🌫️' },
-  48: { text:'Изморозь',            icon:'🌫️' },
-  51: { text:'Морось слабая',       icon:'🌦️' },
-  53: { text:'Морось',              icon:'🌦️' },
-  55: { text:'Морось сильная',      icon:'🌧️' },
-  56: { text:'Ледяная морось',      icon:'🌧️' },
-  57: { text:'Ледяная морось',      icon:'🌧️' },
-  61: { text:'Дождь слабый',        icon:'🌧️' },
-  63: { text:'Дождь',               icon:'🌧️' },
-  65: { text:'Ливень',              icon:'🌧️' },
-  66: { text:'Ледяной дождь',       icon:'🌧️' },
-  67: { text:'Ледяной ливень',      icon:'🌧️' },
-  71: { text:'Снег слабый',         icon:'🌨️' },
-  73: { text:'Снег',                icon:'🌨️' },
-  75: { text:'Снегопад',            icon:'🌨️' },
-  77: { text:'Снежная крупа',       icon:'🌨️' },
-  80: { text:'Ливневый дождь',      icon:'🌦️' },
-  81: { text:'Ливень',              icon:'🌧️' },
-  82: { text:'Сильный ливень',      icon:'🌧️' },
-  85: { text:'Снегопад',            icon:'🌨️' },
-  86: { text:'Сильный снегопад',    icon:'🌨️' },
-  95: { text:'Гроза',               icon:'⛈️' },
-  96: { text:'Гроза с градом',      icon:'⛈️' },
-  99: { text:'Гроза с сильным градом',icon:'⛈️' },
+  0:  { icon:'☀️' },
+  1:  { icon:'🌤️' },
+  2:  { icon:'⛅' },
+  3:  { icon:'☁️' },
+  45: { icon:'🌫️' },
+  48: { icon:'🌫️' },
+  51: { icon:'🌦️' },
+  53: { icon:'🌦️' },
+  55: { icon:'🌧️' },
+  56: { icon:'🌧️' },
+  57: { icon:'🌧️' },
+  61: { icon:'🌧️' },
+  63: { icon:'🌧️' },
+  65: { icon:'🌧️' },
+  66: { icon:'🌧️' },
+  67: { icon:'🌧️' },
+  71: { icon:'🌨️' },
+  73: { icon:'🌨️' },
+  75: { icon:'🌨️' },
+  77: { icon:'🌨️' },
+  80: { icon:'🌦️' },
+  81: { icon:'🌧️' },
+  82: { icon:'🌧️' },
+  85: { icon:'🌨️' },
+  86: { icon:'🌨️' },
+  95: { icon:'⛈️' },
+  96: { icon:'⛈️' },
+  99: { icon:'⛈️' },
 };
 
 function getWMO(code) {
-  return WMO_CODES[code] || { text:'Неизвестно', icon:'❓' };
+  const entry = WMO_CODES[code] || { icon: '❓' };
+  const text = I18N[currentLang].wmo[code] || I18N[currentLang].unknown;
+  return { text, icon: entry.icon };
 }
 
 async function fetchWeather() {
@@ -194,9 +417,9 @@ async function fetchWeather() {
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  РАСЧЁТ ПОЛОЖЕНИЯ СОЛНЦА (упрощённый)
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 function getSunPosition(date, lat, lng) {
   const rad = Math.PI / 180;
@@ -220,9 +443,9 @@ function getSunPosition(date, lat, lng) {
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  КОЭФФИЦИЕНТ ОПАСНОСТИ: время + погода + ориентация
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 // НОВОЕ: погодный множитель — раньше weatherState загружался и показывался
 // в UI, но никак не влиял на расчёт люксов. Теперь дождь/снег/туман реально
@@ -254,7 +477,7 @@ function computeTimeSunMultiplier(building) {
 
   // Наиболее опасны низкие углы солнца (< 30°) — слепят водителей на уровне глаз
   let altMul;
-  if (sun.altitude < 5) altMul = 0.7;        // Солнце слишком низко, блик в строну
+  if (sun.altitude < 5) altMul = 0.7;        // Солнце слишком низко, блик в сторону
   else if (sun.altitude < 15) altMul = 1.0;   // Самый опасный угол
   else if (sun.altitude < 30) altMul = 0.85;  // Всё ещё опасно
   else if (sun.altitude < 50) altMul = 0.5;   // Умеренно
@@ -291,7 +514,8 @@ function levelOf(lux) {
   return 'safe';
 }
 function levelLabel(level) {
-  return { danger: 'Опасно', warning: 'Внимание', safe: 'Безопасно' }[level];
+  const tr = I18N[currentLang];
+  return { danger: tr.dangerous, warning: tr.caution, safe: tr.safe }[level];
 }
 
 function recalcDanger() {
@@ -321,19 +545,21 @@ setInterval(() => {
 }, 300000);
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  UI — ПОГОДНАЯ ПОЛОСА
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 function renderWeatherStrip() {
   const strip = document.getElementById('weatherStrip');
   if (!strip) return;
 
+  const tr = I18N[currentLang];
+
   if (weatherState.error) {
     strip.innerHTML = `
       <div class="weather-strip-error">
         <span>⚠️</span>
-        <span>Погода недоступна</span>
+        <span>${tr.weatherUnavailable}</span>
       </div>`;
     return;
   }
@@ -344,7 +570,7 @@ function renderWeatherStrip() {
   const temp = weatherState.temperature != null ? `${Math.round(weatherState.temperature)}°C` : '—';
   const cloud = `${weatherState.cloudCover}%`;
   const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
-  const sunAlt = sun.altitude > 0 ? `${sun.altitude.toFixed(1)}°` : 'за горизонтом';
+  const sunAlt = sun.altitude > 0 ? `${sun.altitude.toFixed(1)}°` : tr.belowHorizon;
   const glarePct = Math.round(computeWeatherMultiplier() * 100);
 
   strip.innerHTML = `
@@ -354,28 +580,28 @@ function renderWeatherStrip() {
         <span class="ws-value">${wmo.text}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">Темп.</span>
+        <span class="ws-label">${tr.temp}</span>
         <span class="ws-value">${temp}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">Облачность</span>
+        <span class="ws-label">${tr.cloudCover}</span>
         <span class="ws-value">${cloud}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">Солнце</span>
+        <span class="ws-label">${tr.sun}</span>
         <span class="ws-value">${sunAlt}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">Фактор бликов</span>
+        <span class="ws-label">${tr.glareFactor}</span>
         <span class="ws-value">${glarePct}%</span>
       </div>
     </div>`;
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  UI — СТАТИСТИКА
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 function updateStats() {
   const danger  = buildings.filter(b => b.level === 'danger').length;
@@ -394,28 +620,39 @@ function updateLegendNote() {
   const el = document.getElementById('legendNote');
   if (!el) return;
 
+  const tr = I18N[currentLang];
   const now = new Date();
-  const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Almaty' });
+  const timeStr = now.toLocaleTimeString(tr.locale, { hour: '2-digit', minute: '2-digit', timeZone: tr.timeTimezone });
 
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
     const glarePct = Math.round(computeWeatherMultiplier() * 100);
-    el.textContent = `Обновлено ${timeStr} · ${wmo.text}, облачность ${weatherState.cloudCover}% · фактор бликов ${glarePct}%`;
+    el.textContent = tr.legendUpdated(timeStr, wmo.text, weatherState.cloudCover, glarePct);
   } else if (weatherState.error) {
-    el.textContent = `${timeStr} · Погода недоступна — используются базовые данные`;
+    el.textContent = tr.legendWeatherUnavailable(timeStr);
   } else {
-    el.textContent = `Загрузка данных о погоде…`;
+    el.textContent = tr.legendLoading;
   }
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  КАРТА
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 let map = null;
 
 function initUi() {
+  // Apply language to static text first
+  document.documentElement.lang = currentLang;
+  applyLangToStaticText();
+
+  // Language switcher
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('lang-btn--active', btn.dataset.lang === currentLang);
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+
   recalcDanger();
   renderWeatherStrip();
   updateLegendNote();
@@ -461,9 +698,9 @@ function initMap() {
   });
 }
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  МАРКЕРЫ
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 let activeMarkers = [];
 let currentPopup = null;
@@ -476,10 +713,17 @@ function closePopup() {
 }
 
 function popupHTML(b) {
+  const tr = I18N[currentLang];
+  const isEn = currentLang === 'en';
   const bData = buildings.find(x => x.id === (typeof b.id === 'string' ? parseInt(b.id) : b.id));
   const baseLux = bData ? bData.baseLux : b.lux;
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
+
+  // Localised building fields: fall back to Russian if English is missing
+  const bName    = (isEn && bData && bData.name_en)    ? bData.name_en    : b.name;
+  const bAddress = (isEn && bData && bData.address_en) ? bData.address_en : b.address;
+  const bGlass   = (isEn && bData && bData.glass_en)   ? bData.glass_en   : b.glass;
 
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
@@ -489,18 +733,18 @@ function popupHTML(b) {
       : computeWeatherMultiplier();
     const weatherMulPct = Math.round(weatherMul * 100);
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">Погода сейчас</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, облачность ${weatherState.cloudCover}%</span></div>
-      <div class="popup-field"><span class="popup-field-label">Погодный фактор бликов</span><span class="popup-field-value">${weatherMulPct}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>
+      <div class="popup-field"><span class="popup-field-label">${tr.weatherGlareFactor}</span><span class="popup-field-value">${weatherMulPct}%</span></div>`;
   }
 
   return `
     <div class="popup-badge popup-badge--${level}">${levelLabel(level)}</div>
-    <h3 class="popup-title">${b.name}</h3>
-    <p class="popup-address">${b.address}</p>
-    <div class="popup-field"><span class="popup-field-label">Макс. освещённость</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString('ru-RU')} лк</span></div>
-    <div class="popup-field"><span class="popup-field-label">Сейчас (с учётом погоды)</span><span class="popup-field-value lux">${Number(effLux).toLocaleString('ru-RU')} лк</span></div>
-    <div class="popup-field"><span class="popup-field-label">Опасное время</span><span class="popup-field-value">${b.dangerTime}</span></div>
-    <div class="popup-field"><span class="popup-field-label">Тип стекла</span><span class="popup-field-value">${b.glass}</span></div>
+    <h3 class="popup-title">${bName}</h3>
+    <p class="popup-address">${bAddress}</p>
+    <div class="popup-field"><span class="popup-field-label">${tr.maxIlluminance}</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${tr.currentWeatherAdjusted}</span><span class="popup-field-value lux">${Number(effLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${tr.dangerWindow}</span><span class="popup-field-value">${b.dangerTime}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${tr.glassType}</span><span class="popup-field-value">${bGlass}</span></div>
     ${weatherLine}
   `;
 }
@@ -517,12 +761,15 @@ function buildGeoJson() {
       properties: {
         id: b.id,
         name: b.name,
+        name_en: b.name_en || b.name,
         address: b.address,
+        address_en: b.address_en || b.address,
+        glass: b.glass,
+        glass_en: b.glass_en || b.glass,
         lux: b.lux,
         baseLux: b.baseLux,
         period: b.period,
         dangerTime: b.dangerTime,
-        glass: b.glass,
         level: b.level,
       },
     })),
@@ -618,9 +865,9 @@ function renderMarkers() {
 }
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 const themeToggle  = document.getElementById('themeToggle');
 switchInput = themeToggle ? themeToggle.querySelector('.switch__input') : null;
@@ -690,9 +937,9 @@ window.addEventListener('pageshow', () => {
 applyTheme(initialTheme);
 
 
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  ИНИЦИАЛИЗАЦИЯ
-// ═════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 async function bootstrap() {
   try {

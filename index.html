@@ -44,7 +44,17 @@
         </div>
       </div>
 
-      <label class="switch" id="themeToggle">
+      <div class="topbar-controls">
+        <div class="lang-switcher" id="langSwitcher">
+          <button class="lang-btn lang-btn--active" data-lang="ru" aria-label="Русский" title="Русский">
+            <span class="lang-flag">🇷🇺</span>
+          </button>
+          <button class="lang-btn" data-lang="en" aria-label="English" title="English">
+            <span class="lang-flag">🇬🇧</span>
+          </button>
+        </div>
+
+        <label class="switch" id="themeToggle">
 	<input class="switch__input" type="checkbox" role="switch" />
 	<span class="switch__icon">
 		<span class="switch__icon-part switch__icon-part--1"></span>
@@ -60,7 +70,8 @@
 		<span class="switch__icon-part switch__icon-part--11"></span>
 	</span>
 	<span class="switch__sr">Dark Mode</span>
-      </label>
+        </label>
+      </div>
     </div>
 
     <div class="topbar-secondary">
