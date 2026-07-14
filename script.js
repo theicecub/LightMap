@@ -189,6 +189,7 @@ function setLang(lang) {
   updateLegendNote();
   recalcDanger();
   renderMarkers();
+  refreshOpenPopup();
   // Update active flag
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('lang-btn--active', btn.dataset.lang === lang);
@@ -414,6 +415,7 @@ async function fetchWeather() {
   recalcDanger();
   renderMarkers();
   updateLegendNote();
+  refreshOpenPopup();
 }
 
 
@@ -535,6 +537,7 @@ setInterval(() => {
     renderMarkers();
   }
   updateLegendNote();
+  refreshOpenPopup();
 }, 60000);
 
 // Обновление погоды каждые 5 минут
@@ -704,12 +707,24 @@ function initMap() {
 
 let activeMarkers = [];
 let currentPopup = null;
+let currentPopupBuildingId = null;
 
 function closePopup() {
   if (currentPopup) {
     currentPopup.remove();
     currentPopup = null;
   }
+  currentPopupBuildingId = null;
+}
+
+// Перегенерирует HTML уже открытого попапа (вызывается при смене языка,
+// пересчёте опасности и обновлении погоды), иначе попап "застывает" на
+// тех данных/языке, что были на момент клика по маркеру.
+function refreshOpenPopup() {
+  if (!currentPopup || currentPopupBuildingId == null) return;
+  const bData = buildings.find(b => b.id === currentPopupBuildingId);
+  if (!bData) return;
+  currentPopup.setHTML(popupHTML(featureProperties(bData)));
 }
 
 function popupHTML(b) {
@@ -749,6 +764,23 @@ function popupHTML(b) {
   `;
 }
 
+function featureProperties(b) {
+  return {
+    id: b.id,
+    name: b.name,
+    name_en: b.name_en || b.name,
+    address: b.address,
+    address_en: b.address_en || b.address,
+    glass: b.glass,
+    glass_en: b.glass_en || b.glass,
+    lux: b.lux,
+    baseLux: b.baseLux,
+    period: b.period,
+    dangerTime: b.dangerTime,
+    level: b.level,
+  };
+}
+
 function buildGeoJson() {
   return {
     type: 'FeatureCollection',
@@ -758,20 +790,7 @@ function buildGeoJson() {
         type: 'Point',
         coordinates: [b.lng, b.lat],
       },
-      properties: {
-        id: b.id,
-        name: b.name,
-        name_en: b.name_en || b.name,
-        address: b.address,
-        address_en: b.address_en || b.address,
-        glass: b.glass,
-        glass_en: b.glass_en || b.glass,
-        lux: b.lux,
-        baseLux: b.baseLux,
-        period: b.period,
-        dangerTime: b.dangerTime,
-        level: b.level,
-      },
+      properties: featureProperties(b),
     })),
   };
 }
@@ -848,11 +867,15 @@ function renderMarkers() {
       const feature = e.features && e.features[0];
       if (!feature) return;
       closePopup();
+      currentPopupBuildingId = feature.properties.id;
       currentPopup = new maplibregl.Popup({ offset: 16, closeButton: true })
         .setLngLat(feature.geometry.coordinates)
         .setHTML(popupHTML(feature.properties))
         .addTo(map);
-      currentPopup.on('close', () => { currentPopup = null; });
+      currentPopup.on('close', () => {
+        currentPopup = null;
+        currentPopupBuildingId = null;
+      });
     });
 
     map.on('mouseenter', 'clusters',          () => { map.getCanvas().style.cursor = 'pointer'; });
