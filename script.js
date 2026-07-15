@@ -594,10 +594,6 @@ function renderWeatherStrip() {
         <span class="ws-label">${tr.sun}</span>
         <span class="ws-value">${sunAlt}</span>
       </div>
-      <div class="ws-item">
-        <span class="ws-label">${tr.glareFactor}</span>
-        <span class="ws-value">${glarePct}%</span>
-      </div>
     </div>`;
 }
 
@@ -748,8 +744,7 @@ function popupHTML(b) {
       : computeWeatherMultiplier();
     const weatherMulPct = Math.round(weatherMul * 100);
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>
-      <div class="popup-field"><span class="popup-field-label">${tr.weatherGlareFactor}</span><span class="popup-field-value">${weatherMulPct}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
   }
 
   return `
