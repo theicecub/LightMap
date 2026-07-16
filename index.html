@@ -87,13 +87,45 @@
   <main class="map-wrap">
     <div id="map"></div>
 
-    <div class="legend" id="legend">
-      <h4>Уровень опасности</h4>
-      <div class="legend-item"><i class="dot dot--danger"></i><span>Опасно</span></div>
-      <div class="legend-item"><i class="dot dot--warning"></i><span>Внимание</span></div>
-      <div class="legend-item"><i class="dot dot--safe"></i><span>Безопасно</span></div>
-      <div class="legend-sep"></div>
-      <div class="legend-note" id="legendNote">Уровень зависит от времени и погоды</div>
+    <!-- Safe Route Panel -->
+    <div class="route-panel" id="routePanel">
+      <div class="route-panel-header">
+        <h3 class="route-panel-title">Безопасный маршрут</h3>
+        <button class="route-panel-toggle" id="routePanelToggle" aria-label="Toggle route panel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="route-panel-content" id="routePanelContent">
+        <div class="route-input-group">
+          <div class="route-input-row">
+            <span class="route-input-pin route-input-pin--a">A</span>
+            <input type="text" id="routeInputA" class="route-input" placeholder="Откуда" autocomplete="off" />
+            <button class="route-pick-btn" data-pick="A" title="Выбрать на карте">📍</button>
+            <div class="route-suggestions" id="routeSuggestionsA"></div>
+          </div>
+
+          <div class="route-input-row">
+            <span class="route-input-pin route-input-pin--b">B</span>
+            <input type="text" id="routeInputB" class="route-input" placeholder="Куда" autocomplete="off" />
+            <button class="route-pick-btn" data-pick="B" title="Выбрать на карте">📍</button>
+            <div class="route-suggestions" id="routeSuggestionsB"></div>
+          </div>
+        </div>
+
+        <div class="route-actions">
+          <button class="route-btn route-btn--primary" id="routeBuildBtn">Построить маршрут</button>
+          <button class="route-btn route-btn--secondary" id="routeClearBtn">Очистить</button>
+        </div>
+
+        <div class="route-error" id="routeError" style="display:none;"></div>
+
+        <div class="route-panel-body" id="routePanelBody">
+          <div class="route-idle">Безопасный маршрут</div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -102,5 +134,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script src="script.js"></script>
+<script src="route.js"></script>
 </body>
 </html>

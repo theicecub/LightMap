@@ -777,9 +777,11 @@ function featureProperties(b) {
 }
 
 function buildGeoJson() {
+  // Filter out safe buildings — they disappear when glare is not dangerous
+  const visible = buildings.filter(b => b.level === 'danger' || b.level === 'warning');
   return {
     type: 'FeatureCollection',
-    features: buildings.map(b => ({
+    features: visible.map(b => ({
       type: 'Feature',
       geometry: {
         type: 'Point',
@@ -796,44 +798,16 @@ function renderMarkers() {
   const paint = mapPaint();
 
   if (!map.getSource('points')) {
+    // No clustering — every dangerous/warning building is its own point
     map.addSource('points', {
       type: 'geojson',
       data: buildGeoJson(),
-      cluster: true,
-      clusterMaxZoom: 14,
-      clusterRadius: 50,
-    });
-
-    map.addLayer({
-      id: 'clusters',
-      type: 'circle',
-      source: 'points',
-      filter: ['has', 'point_count'],
-      paint: {
-        'circle-color': [
-          'step', ['get', 'point_count'],
-          '#22D3A6', 10, '#FFB020', 25, '#FF5A3C',
-        ],
-        'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 25, 28],
-        'circle-stroke-width': 1.4,
-        'circle-stroke-color': paint.stroke,
-      },
-    });
-
-    map.addLayer({
-      id: 'cluster-count',
-      type: 'symbol',
-      source: 'points',
-      filter: ['has', 'point_count'],
-      layout: { 'text-field': ['get', 'point_count'], 'text-size': 11 },
-      paint: { 'text-color': '#ffffff' },
     });
 
     map.addLayer({
       id: 'unclustered-points',
       type: 'circle',
       source: 'points',
-      filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': [
           'case',
@@ -845,17 +819,6 @@ function renderMarkers() {
         'circle-stroke-width': 1.2,
         'circle-stroke-color': paint.stroke,
       },
-    });
-
-    map.on('click', 'clusters', (e) => {
-      const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-      if (!features.length) return;
-      const clusterId = features[0].properties.cluster_id;
-      const source = map.getSource('points');
-      source.getClusterExpansionZoom(clusterId, (error, zoom) => {
-        if (error || typeof zoom !== 'number') return;
-        map.easeTo({ center: features[0].geometry.coordinates, zoom });
-      });
     });
 
     map.on('click', 'unclustered-points', (e) => {
@@ -873,8 +836,6 @@ function renderMarkers() {
       });
     });
 
-    map.on('mouseenter', 'clusters',          () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'clusters',          () => { map.getCanvas().style.cursor = ''; });
     map.on('mouseenter', 'unclustered-points', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'unclustered-points', () => { map.getCanvas().style.cursor = ''; });
   } else {
