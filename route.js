@@ -117,6 +117,9 @@ const ROUTE_CONFIG = {
   apiKey: MAPTILER_KEY,
   debounceMs: 350,
   proximity: [71.430, 51.128], // Astana center — bias geocoding results
+  // Astana bounding box [west, south, east, north] — hard-restrict geocoding to city only
+  cityBbox: [71.10, 50.95, 71.80, 51.30],
+  country: 'kz',
   searchRadius: 300,           // meters — building proximity to route
   dangerLuxThreshold: 50000,   // lux — above this is considered dangerous
   sunAngleTolerance: 30,       // degrees — movement vs sun direction ±
@@ -165,21 +168,29 @@ async function geocodeSearch(query) {
   const cached = getCachedGeocode(trimmed);
   if (cached) return cached;
 
+  const bbox = ROUTE_CONFIG.cityBbox.join(',');
   const url = `${ROUTE_CONFIG.geocodeUrl}/${encodeURIComponent(trimmed)}.json?key=${ROUTE_CONFIG.apiKey}` +
     `&autocomplete=true` +
     `&limit=${ROUTE_CONFIG.maxSuggestions}` +
-    `&proximity=${ROUTE_CONFIG.proximity[0]},${ROUTE_CONFIG.proximity[1]}`;
+    `&proximity=${ROUTE_CONFIG.proximity[0]},${ROUTE_CONFIG.proximity[1]}` +
+    `&country=${ROUTE_CONFIG.country}` +
+    `&bbox=${bbox}`;
 
   try {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
-    const results = (data.features || []).map(f => ({
-      lng: f.center[0],
-      lat: f.center[1],
-      label: f.text || f.place_name || '',
-      place: f.place_name || f.text || '',
-    }));
+    const [west, south, east, north] = ROUTE_CONFIG.cityBbox;
+    // Defense-in-depth: even though we sent bbox to MapTiler, drop any result
+    // whose coordinates fall outside Astana's bounding box.
+    const results = (data.features || [])
+      .map(f => ({
+        lng: f.center[0],
+        lat: f.center[1],
+        label: f.text || f.place_name || '',
+        place: f.place_name || f.text || '',
+      }))
+      .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north);
     setCachedGeocode(trimmed, results);
     return results;
   } catch (err) {
