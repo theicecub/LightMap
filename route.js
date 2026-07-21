@@ -55,6 +55,8 @@ const ROUTE_I18N = {
     around: 'ок.',
     alternativesCount: 'Найдено маршрутов',
     selectRoute: 'Выбрать',
+    luxUnit: 'лк',
+    locale: 'ru-RU',
   },
   en: {
     safeRoute: 'Safe Route',
@@ -107,6 +109,8 @@ const ROUTE_I18N = {
     around: '~',
     alternativesCount: 'Routes found',
     selectRoute: 'Select',
+    luxUnit: 'lx',
+    locale: 'en-US',
   },
 };
 
@@ -134,6 +138,8 @@ const ROUTE_CONFIG = {
   segmentChunkSize: 100,       // meters — chunk route into segments for coloring
   maxSuggestions: 6,
   cacheTTL: 5 * 60 * 1000,     // 5 min geocoding cache
+  detourOffsets: [450, -450, 850, -850], // meters — perpendicular detours to synthesize alternatives
+  maxAlternatives: 3,          // max routes to present (including the main one)
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -193,6 +199,10 @@ async function geocodeSearch(query) {
     // whose coordinates fall outside Astana's bounding box.
     const results = (data.features || [])
       .map(f => {
+        // f.text is just the street/place name (e.g. "Достык"); the house
+        // number lives in a separate f.address field for address-type
+        // results. Combine them so exact addresses keep their number
+        // instead of collapsing to the bare street name after selection.
         const streetLabel = f.address ? `${f.text} ${f.address}` : (f.text || '');
         const fullName = f.place_name || streetLabel || '';
         return {
@@ -215,8 +225,9 @@ async function geocodeSearch(query) {
 // ROUTING — MapTiler Directions API with alternatives
 // ════════════════════════════════════════════════════════════════════════════
 
-async function fetchRoutes(pointA, pointB) {
-  const coords = `${pointA.lng},${pointA.lat};${pointB.lng},${pointB.lat}`;
+// Request a single OSRM route through an ordered list of {lng, lat} waypoints
+async function fetchOsrmRoute(waypoints) {
+  const coords = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
   const url = `${ROUTE_CONFIG.directionsUrl}/${coords}` +
     `?alternatives=true` +
     `&steps=true` +
@@ -233,6 +244,39 @@ async function fetchRoutes(pointA, pointB) {
     console.warn('[Routing] Failed:', err);
     return [];
   }
+}
+
+// Build a detour waypoint offset perpendicular to the A→B line at the given fraction
+function detourWaypoint(pointA, pointB, frac, perpMeters) {
+  const mLng = pointA.lng + (pointB.lng - pointA.lng) * frac;
+  const mLat = pointA.lat + (pointB.lat - pointA.lat) * frac;
+  const brng = Math.atan2(pointB.lng - pointA.lng, pointB.lat - pointA.lat);
+  const perp = brng + Math.PI / 2;
+  const dLat = (perpMeters * Math.cos(perp)) / 110540;
+  const dLng = (perpMeters * Math.sin(perp)) / (111320 * Math.cos(mLat * Math.PI / 180));
+  return { lng: mLng + dLng, lat: mLat + dLat };
+}
+
+// Fetch routes. The public OSRM server rarely returns real alternatives, so we
+// synthesize them by routing through perpendicular detour waypoints, then dedupe.
+async function fetchRoutes(pointA, pointB) {
+  const requests = [fetchOsrmRoute([pointA, pointB])];
+  ROUTE_CONFIG.detourOffsets.forEach(perp => {
+    requests.push(fetchOsrmRoute([pointA, detourWaypoint(pointA, pointB, 0.5, perp), pointB]));
+  });
+
+  const results = await Promise.all(requests);
+  const all = results.flat().filter(r => r && r.geometry && r.geometry.coordinates);
+
+  // Dedupe: skip a route whose distance is within 2% of one already kept
+  const unique = [];
+  for (const r of all) {
+    const dup = unique.some(u => Math.abs(u.distance - r.distance) / Math.max(u.distance, 1) < 0.02);
+    if (!dup) unique.push(r);
+  }
+
+  unique.sort((a, b) => a.distance - b.distance);
+  return unique.slice(0, ROUTE_CONFIG.maxAlternatives);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -571,7 +615,7 @@ const ROUTE_COLORS = {
 
 function removeRouteLayers() {
   if (!map) return;
-  ['route-alt', 'route-safe', 'route-warning', 'route-danger', 'route-casing', 'route-points'].forEach(id => {
+  ['route-alt', 'route-safe', 'route-warning', 'route-danger', 'route-hitarea-danger', 'route-hitarea-warning', 'route-casing', 'route-points'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id);
   });
   ['route-alternatives', 'route-segments', 'route-endpoints'].forEach(id => {
@@ -691,6 +735,24 @@ function renderRouteOnMap() {
     });
   });
 
+  // Invisible, much wider hit-area lines over the danger/warning segments.
+  // The visible line above is only 5px, which is hard to hit precisely with
+  // a finger — hover/tap for the explanatory tooltip binds to these instead.
+  ['danger', 'warning'].forEach(level => {
+    map.addLayer({
+      id: `route-hitarea-${level}`,
+      type: 'line',
+      source: 'route-segments',
+      filter: ['==', ['get', 'level'], level],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#000000',
+        'line-width': 24,
+        'line-opacity': 0,
+      },
+    });
+  });
+
   // Endpoint markers
   const endpointFeatures = [
     {
@@ -722,7 +784,8 @@ function renderRouteOnMap() {
     },
   });
 
-  // Tooltip on hover for dangerous/warning segments
+  // Tooltip for dangerous/warning segments — shown on hover (desktop) AND on
+  // tap (mobile/touch, which never fires mouseenter/mouseleave at all).
   const tooltipPopup = new maplibregl.Popup({
     offset: 16,
     closeButton: false,
@@ -730,30 +793,34 @@ function renderRouteOnMap() {
     maxWidth: '300px',
   });
 
-  ['route-danger', 'route-warning'].forEach(layerId => {
+  function buildSegmentTooltipHtml(p) {
+    const level = p.level;
+    const levelLabel = level === 'danger' ? rt('segmentDanger') : rt('segmentWarning');
+
+    let html = `<div class="route-tooltip">`;
+    html += `<div class="route-tooltip-level route-tooltip-level--${level}">${levelLabel}</div>`;
+    if (p.buildingName) {
+      html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${p.buildingName}</strong></div>`;
+      html += `<div class="route-tooltip-row"><span>${rt('luxAtBuilding')}</span><span>${Number(p.buildingLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>`;
+      html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
+      html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
+      html += `<div class="route-tooltip-row"><span>${rt('visibilityCoef')}</span><span>${(p.visCoef).toFixed(2)}</span></div>`;
+      html += `<div class="route-tooltip-reason">${rt('directionMatch')} (±${ROUTE_CONFIG.sunAngleTolerance}°)</div>`;
+    } else {
+      html += `<div class="route-tooltip-row">${rt('noRiskZones')}</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  const tooltipHitLayers = ['route-hitarea-danger', 'route-hitarea-warning'];
+
+  tooltipHitLayers.forEach(layerId => {
     map.on('mouseenter', layerId, (e) => {
       map.getCanvas().style.cursor = 'pointer';
       const f = e.features && e.features[0];
       if (!f) return;
-      const p = f.properties;
-      const level = p.level;
-      const levelLabel = level === 'danger' ? rt('segmentDanger') : rt('segmentWarning');
-
-      let html = `<div class="route-tooltip">`;
-      html += `<div class="route-tooltip-level route-tooltip-level--${level}">${levelLabel}</div>`;
-      if (p.buildingName) {
-        html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${p.buildingName}</strong></div>`;
-        html += `<div class="route-tooltip-row"><span>${rt('luxAtBuilding')}</span><span>${Number(p.buildingLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>`;
-        html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
-        html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
-        html += `<div class="route-tooltip-row"><span>${rt('visibilityCoef')}</span><span>${(p.visCoef).toFixed(2)}</span></div>`;
-        html += `<div class="route-tooltip-reason">${rt('directionMatch')} (±${ROUTE_CONFIG.sunAngleTolerance}°)</div>`;
-      } else {
-        html += `<div class="route-tooltip-row">${rt('noRiskZones')}</div>`;
-      }
-      html += `</div>`;
-
-      tooltipPopup.setHTML(html);
+      tooltipPopup.setHTML(buildSegmentTooltipHtml(f.properties));
       tooltipPopup.setLngLat(e.lngLat).addTo(map);
     });
 
@@ -761,6 +828,20 @@ function renderRouteOnMap() {
       map.getCanvas().style.cursor = '';
       tooltipPopup.remove();
     });
+
+    // Touch devices have no hover state, so bind the same tooltip to tap.
+    map.on('click', layerId, (e) => {
+      const f = e.features && e.features[0];
+      if (!f) return;
+      tooltipPopup.setHTML(buildSegmentTooltipHtml(f.properties));
+      tooltipPopup.setLngLat(e.lngLat).addTo(map);
+    });
+  });
+
+  // Tapping anywhere else on the map dismisses the tap-opened tooltip.
+  map.on('click', (e) => {
+    const hits = map.queryRenderedFeatures(e.point, { layers: tooltipHitLayers });
+    if (hits.length === 0) tooltipPopup.remove();
   });
 
   // Fit bounds to include ALL routes (so alternatives are visible too)
@@ -793,10 +874,11 @@ function updateRoutePanel() {
     return;
   }
 
-if (!routeState.active || routeState.routes.length === 0) {
-  panel.innerHTML = '';
-  return;
-}
+  if (!routeState.active || routeState.routes.length === 0) {
+    panel.innerHTML = '';
+    return;
+  }
+
   const route = routeState.routes[routeState.selectedRouteIdx];
   const hasAlt = routeState.routes.length > 1;
 
@@ -1077,8 +1159,39 @@ function initRouteModule() {
   // Init map click picker
   initMapClickPicker();
 
+  // Apply current language (handles a saved English preference on reload)
+  applyRouteLangText();
+
   // Initial panel state
   updateRoutePanel();
+}
+
+// Apply the current language to the route panel's static text (title,
+// placeholders, buttons). Called both on initial load — so a saved English
+// preference is respected immediately, since the page-load path applies
+// language via applyLangToStaticText() directly and never calls setLang() —
+// and again whenever the user switches language afterwards.
+function applyRouteLangText() {
+  const tr = ROUTE_I18N[currentLang];
+  if (!tr) return;
+
+  const inputA = document.getElementById('routeInputA');
+  const inputB = document.getElementById('routeInputB');
+  if (inputA) inputA.placeholder = tr.placeholderA;
+  if (inputB) inputB.placeholder = tr.placeholderB;
+
+  const titleEl = document.querySelector('.route-panel-title');
+  if (titleEl) titleEl.textContent = tr.safeRoute;
+
+  const buildBtn = document.getElementById('routeBuildBtn');
+  if (buildBtn) buildBtn.textContent = tr.buildRoute;
+
+  const clearBtn = document.getElementById('routeClearBtn');
+  if (clearBtn) clearBtn.textContent = tr.clearRoute;
+
+  document.querySelectorAll('.route-pick-btn').forEach(btn => {
+    btn.textContent = tr.pickOnMap;
+  });
 }
 
 // Initialize after map is loaded
@@ -1120,22 +1233,7 @@ if (_origSetLang) {
   const _patchedSetLang = function(lang) {
     _origSetLang(lang);
     updateRoutePanel();
-    // Update input placeholders
-    const tr = ROUTE_I18N[currentLang];
-    const inputA = document.getElementById('routeInputA');
-    const inputB = document.getElementById('routeInputB');
-    if (inputA) inputA.placeholder = tr.placeholderA;
-    if (inputB) inputB.placeholder = tr.placeholderB;
-    // Update static labels
-    const titleEl = document.querySelector('.route-panel-title');
-    if (titleEl) titleEl.textContent = tr.safeRoute;
-    const buildBtn = document.getElementById('routeBuildBtn');
-    if (buildBtn) buildBtn.textContent = tr.buildRoute;
-    const clearBtn = document.getElementById('routeClearBtn');
-    if (clearBtn) clearBtn.textContent = tr.clearRoute;
-    document.querySelectorAll('.route-pick-btn').forEach(btn => {
-      btn.textContent = tr.pickOnMap;
-    });
+    applyRouteLangText();
     // Re-render route on map to update tooltips
     if (routeState.active) renderRouteOnMap();
   };
