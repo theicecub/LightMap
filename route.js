@@ -134,8 +134,6 @@ const ROUTE_CONFIG = {
   segmentChunkSize: 100,       // meters — chunk route into segments for coloring
   maxSuggestions: 6,
   cacheTTL: 5 * 60 * 1000,     // 5 min geocoding cache
-  detourOffsets: [450, -450, 850, -850], // meters — perpendicular detours to synthesize alternatives
-  maxAlternatives: 3,          // max routes to present (including the main one)
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -213,9 +211,8 @@ async function geocodeSearch(query) {
 // ROUTING — MapTiler Directions API with alternatives
 // ════════════════════════════════════════════════════════════════════════════
 
-// Request a single OSRM route through an ordered list of {lng, lat} waypoints
-async function fetchOsrmRoute(waypoints) {
-  const coords = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
+async function fetchRoutes(pointA, pointB) {
+  const coords = `${pointA.lng},${pointA.lat};${pointB.lng},${pointB.lat}`;
   const url = `${ROUTE_CONFIG.directionsUrl}/${coords}` +
     `?alternatives=true` +
     `&steps=true` +
@@ -232,39 +229,6 @@ async function fetchOsrmRoute(waypoints) {
     console.warn('[Routing] Failed:', err);
     return [];
   }
-}
-
-// Build a detour waypoint offset perpendicular to the A→B line at the given fraction
-function detourWaypoint(pointA, pointB, frac, perpMeters) {
-  const mLng = pointA.lng + (pointB.lng - pointA.lng) * frac;
-  const mLat = pointA.lat + (pointB.lat - pointA.lat) * frac;
-  const brng = Math.atan2(pointB.lng - pointA.lng, pointB.lat - pointA.lat);
-  const perp = brng + Math.PI / 2;
-  const dLat = (perpMeters * Math.cos(perp)) / 110540;
-  const dLng = (perpMeters * Math.sin(perp)) / (111320 * Math.cos(mLat * Math.PI / 180));
-  return { lng: mLng + dLng, lat: mLat + dLat };
-}
-
-// Fetch routes. The public OSRM server rarely returns real alternatives, so we
-// synthesize them by routing through perpendicular detour waypoints, then dedupe.
-async function fetchRoutes(pointA, pointB) {
-  const requests = [fetchOsrmRoute([pointA, pointB])];
-  ROUTE_CONFIG.detourOffsets.forEach(perp => {
-    requests.push(fetchOsrmRoute([pointA, detourWaypoint(pointA, pointB, 0.5, perp), pointB]));
-  });
-
-  const results = await Promise.all(requests);
-  const all = results.flat().filter(r => r && r.geometry && r.geometry.coordinates);
-
-  // Dedupe: skip a route whose distance is within 2% of one already kept
-  const unique = [];
-  for (const r of all) {
-    const dup = unique.some(u => Math.abs(u.distance - r.distance) / Math.max(u.distance, 1) < 0.02);
-    if (!dup) unique.push(r);
-  }
-
-  unique.sort((a, b) => a.distance - b.distance);
-  return unique.slice(0, ROUTE_CONFIG.maxAlternatives);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -825,11 +789,10 @@ function updateRoutePanel() {
     return;
   }
 
-  if (!routeState.active || routeState.routes.length === 0) {
-    panel.innerHTML = `<div class="route-idle">${tr.safeRoute}</div>`;
-    return;
-  }
-
+if (!routeState.active || routeState.routes.length === 0) {
+  panel.innerHTML = '';
+  return;
+}
   const route = routeState.routes[routeState.selectedRouteIdx];
   const hasAlt = routeState.routes.length > 1;
 
