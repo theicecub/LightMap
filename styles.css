@@ -1127,9 +1127,17 @@
 
 .route-comparison-stats {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.route-comparison-count {
+  font-weight: 600;
+  color: var(--clear);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .route-comparison-risk {
