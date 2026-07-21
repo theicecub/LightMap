@@ -51,6 +51,10 @@ const ROUTE_I18N = {
     noRiskZones: 'Опасных зон не обнаружено',
     routeSafe: 'Маршрут безопасен',
     routeHasRisks: 'На маршруте есть риски',
+    eta: 'Прибытие',
+    around: 'ок.',
+    alternativesCount: 'Найдено маршрутов',
+    selectRoute: 'Выбрать',
   },
   en: {
     safeRoute: 'Safe Route',
@@ -99,6 +103,10 @@ const ROUTE_I18N = {
     noRiskZones: 'No danger zones detected',
     routeSafe: 'Route is safe',
     routeHasRisks: 'Route has risks',
+    eta: 'Arrival',
+    around: '~',
+    alternativesCount: 'Routes found',
+    selectRoute: 'Select',
   },
 };
 
@@ -294,6 +302,24 @@ function fmtDur(s) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return `${h}ч ${m}${tr.minutes}`;
+}
+
+// Format distance strictly in kilometers (расстояние в километрах)
+function fmtKm(m) {
+  const tr = ROUTE_I18N[currentLang];
+  const km = m / 1000;
+  // Show 2 decimals under 10 km for city-scale precision, else 1 decimal
+  const val = km < 10 ? km.toFixed(2) : km.toFixed(1);
+  return `${val} ${tr.km}`;
+}
+
+// Estimated time of arrival — current time + travel duration (примерное время прибытия)
+function fmtETA(durationS) {
+  const tr = ROUTE_I18N[currentLang];
+  const arrival = new Date(Date.now() + durationS * 1000);
+  const hh = String(arrival.getHours()).padStart(2, '0');
+  const mm = String(arrival.getMinutes()).padStart(2, '0');
+  return `${tr.around} ${hh}:${mm}`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -541,10 +567,10 @@ const ROUTE_COLORS = {
 
 function removeRouteLayers() {
   if (!map) return;
-  ['route-safe', 'route-warning', 'route-danger', 'route-casing', 'route-points'].forEach(id => {
+  ['route-alt', 'route-safe', 'route-warning', 'route-danger', 'route-casing', 'route-points'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id);
   });
-  ['route-segments', 'route-endpoints'].forEach(id => {
+  ['route-alternatives', 'route-segments', 'route-endpoints'].forEach(id => {
     if (map.getSource(id)) map.removeSource(id);
   });
 }
@@ -582,6 +608,49 @@ function renderRouteOnMap() {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: segmentFeatures },
   });
+
+  // Ghost lines for alternative (non-selected) routes — drawn UNDER the active route
+  const altFeatures = routeState.routes
+    .map((r, i) => ({ r, i }))
+    .filter(({ i }) => i !== routeState.selectedRouteIdx)
+    .map(({ r, i }) => ({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: r.coordinates },
+      properties: { routeIdx: i },
+    }));
+
+  if (altFeatures.length > 0) {
+    map.addSource('route-alternatives', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: altFeatures },
+    });
+    map.addLayer({
+      id: 'route-alt',
+      type: 'line',
+      source: 'route-alternatives',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': mapPaint().stroke,
+        'line-width': 4,
+        'line-opacity': 0.35,
+        'line-dasharray': [2, 2],
+      },
+    });
+
+    // Click a ghost alternative to select it
+    map.on('click', 'route-alt', (e) => {
+      const f = e.features && e.features[0];
+      if (!f) return;
+      const idx = f.properties.routeIdx;
+      if (typeof idx === 'number' && idx !== routeState.selectedRouteIdx) {
+        routeState.selectedRouteIdx = idx;
+        renderRouteOnMap();
+        updateRoutePanel();
+      }
+    });
+    map.on('mouseenter', 'route-alt', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'route-alt', () => { map.getCanvas().style.cursor = ''; });
+  }
 
   // Casing layer (dark outline under colored segments)
   map.addLayer({
@@ -690,10 +759,9 @@ function renderRouteOnMap() {
     });
   });
 
-  // Fit bounds to route
-  const bounds = route.coordinates.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(
-    route.coordinates[0], route.coordinates[0]
-  ));
+  // Fit bounds to include ALL routes (so alternatives are visible too)
+  const bounds = new maplibregl.LngLatBounds(route.coordinates[0], route.coordinates[0]);
+  routeState.routes.forEach(r => r.coordinates.forEach(c => bounds.extend(c)));
   map.fitBounds(bounds, { padding: 60 });
 }
 
@@ -733,7 +801,7 @@ function updateRoutePanel() {
   let comparisonHTML = '';
   if (hasAlt) {
     comparisonHTML = `<div class="route-comparison">
-      <h5>${tr.comparison}</h5>
+      <h5>${tr.comparison} <span class="route-comparison-count">${tr.alternativesCount}: ${routeState.routes.length}</span></h5>
       <div class="route-comparison-grid">`;
 
     routeState.routes.forEach((r, i) => {
@@ -743,8 +811,9 @@ function updateRoutePanel() {
         <button class="route-comparison-card ${isSel ? 'route-comparison-card--active' : ''}" data-route-idx="${i}">
           <div class="route-comparison-label">${label}</div>
           <div class="route-comparison-stats">
-            <span>${fmtDist(r.distance)}</span>
-            <span>${fmtDur(r.duration)}</span>
+            <span title="${tr.routeDistance}">📏 ${fmtKm(r.distance)}</span>
+            <span title="${tr.routeDuration}">⏱ ${fmtDur(r.duration)}</span>
+            <span title="${tr.eta}">🕒 ${fmtETA(r.duration)}</span>
           </div>
           <div class="route-comparison-risk">
             <span class="route-risk-dot route-risk-dot--${r.dangerZoneCount > 0 ? 'danger' : r.warningZoneCount > 0 ? 'warning' : 'safe'}"></span>
@@ -770,11 +839,15 @@ function updateRoutePanel() {
       <div class="route-stats">
         <div class="route-stat">
           <span class="route-stat-label">${tr.routeDistance}</span>
-          <span class="route-stat-value">${fmtDist(route.distance)}</span>
+          <span class="route-stat-value">${fmtKm(route.distance)}</span>
         </div>
         <div class="route-stat">
           <span class="route-stat-label">${tr.routeDuration}</span>
           <span class="route-stat-value">${fmtDur(route.duration)}</span>
+        </div>
+        <div class="route-stat">
+          <span class="route-stat-label">${tr.eta}</span>
+          <span class="route-stat-value">${fmtETA(route.duration)}</span>
         </div>
         <div class="route-stat">
           <span class="route-stat-label">${tr.dangerZones}</span>
