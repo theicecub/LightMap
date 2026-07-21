@@ -756,6 +756,7 @@
   padding: 10px 14px;
   cursor: pointer;
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .route-panel-title {
@@ -798,6 +799,35 @@
 
 .route-panel--collapsed .route-panel-content {
   display: none;
+}
+
+/* Scrollable results area (error + stats + comparison cards). Kept separate
+   from the input/suggestions area above so the autocomplete dropdown (which
+   opens upward, outside normal flow) is never clipped. */
+.route-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.route-results:empty {
+  max-height: 0;
+}
+
+.route-results::-webkit-scrollbar {
+  width: 5px;
+}
+
+.route-results::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 /* Input group */
@@ -848,6 +878,16 @@
   font-family: 'Inter', sans-serif;
   outline: none;
   transition: border-color 200ms ease, background 200ms ease;
+  touch-action: manipulation;
+}
+
+/* iOS Safari auto-zooms the whole page on focus if an input's font-size is
+   under 16px. Force 16px on touch-sized screens so tapping "From"/"To"
+   doesn't unexpectedly zoom the map/panel. */
+@media (max-width: 600px) {
+  .route-input {
+    font-size: 16px;
+  }
 }
 
 .route-input::placeholder {
@@ -935,6 +975,7 @@
   cursor: pointer;
   transition: all 200ms ease;
   border: 1px solid transparent;
+  touch-action: manipulation;
 }
 
 .route-btn--primary {
@@ -1108,6 +1149,7 @@
   transition: all 200ms ease;
   text-align: left;
   font-family: 'Inter', sans-serif;
+  touch-action: manipulation;
 }
 
 .route-comparison-card:hover {
@@ -1245,16 +1287,25 @@
 @media (max-width: 600px) {
   .route-panel {
     bottom: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     left: 8px;
     right: 8px;
     width: auto;
     max-width: none;
-    max-height: 50vh;
+    /* The inner .route-results area is independently scroll-bounded, so this
+       max-height is a generous safety net rather than the main constraint —
+       it should rarely be hit, avoiding the old bug where long comparison
+       lists silently overflowed past the card's visible edge. */
+    max-height: 78vh;
     border-radius: 12px;
   }
 
   .route-panel--collapsed {
     max-height: 42px;
+  }
+
+  .route-results {
+    max-height: 34vh;
   }
 
   .route-panel-header {
@@ -1282,7 +1333,7 @@
 
   .route-input {
     padding: 6px 9px;
-    font-size: 12px;
+    /* font-size intentionally left at 16px (set above) to prevent iOS zoom */
     border-radius: 6px;
   }
 
@@ -1291,6 +1342,7 @@
     height: 28px;
     font-size: 12px;
     border-radius: 6px;
+    touch-action: manipulation;
   }
 
   .route-btn {
@@ -1344,9 +1396,14 @@
 @media (max-width: 374px) {
   .route-panel {
     bottom: 4px;
+    bottom: max(4px, env(safe-area-inset-bottom));
     left: 4px;
     right: 4px;
-    max-height: 55vh;
+    max-height: 80vh;
+  }
+
+  .route-results {
+    max-height: 30vh;
   }
 
   .route-panel-header {
@@ -1360,12 +1417,13 @@
 
   .route-input {
     padding: 5px 8px;
-    font-size: 11.5px;
+    /* font-size stays 16px (set at the 600px breakpoint) to prevent iOS zoom */
   }
 
   .route-pick-btn {
     width: 26px;
     height: 26px;
+    touch-action: manipulation;
   }
 
   .route-actions {
