@@ -192,12 +192,16 @@ async function geocodeSearch(query) {
     // Defense-in-depth: even though we sent bbox to MapTiler, drop any result
     // whose coordinates fall outside Astana's bounding box.
     const results = (data.features || [])
-      .map(f => ({
-        lng: f.center[0],
-        lat: f.center[1],
-        label: f.text || f.place_name || '',
-        place: f.place_name || f.text || '',
-      }))
+      .map(f => {
+        const streetLabel = f.address ? `${f.text} ${f.address}` : (f.text || '');
+        const fullName = f.place_name || streetLabel || '';
+        return {
+          lng: f.center[0],
+          lat: f.center[1],
+          label: streetLabel || fullName,
+          place: fullName,
+        };
+      })
       .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north);
     setCachedGeocode(trimmed, results);
     return results;
