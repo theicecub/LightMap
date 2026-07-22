@@ -13,6 +13,43 @@ const MAP_STYLE = {
 //  i18n — ЛОКАЛИЗАЦИЯ
 // ════════════════════════════════════════════════════════════════════════════
 
+const BUILDING_LABELS_KK = {
+  'Abu Dhabi Plaza': 'Abu Dhabi Plaza',
+  'Talan Towers': 'Talan Towers',
+  'Хан Шатыр': 'Хан Шатыр',
+  'Бизнес-центр «Москва»': 'Бизнес-орталық «Москва»',
+  'Северное Сияние': 'Северное Сияние',
+  'Бизнес-центр «Астаналык»': 'Бизнес-орталық «Астаналық»',
+  'Бизнес-центр «Алтын-Орда»': 'Бизнес-орталық «Алтын Орда»',
+  'Бизнес-центр «Алтын Орда»': 'Бизнес-орталық «Алтын Орда»',
+  'Изумрудный квартал (башни A/B)': '«Изумрудный квартал»',
+  'Изумрудный квартал': '«Изумрудный квартал»',
+  'ЖК «Триумф Астаны»': 'ТК «Триумф Астаны»',
+  'Байтерек': 'Бәйтерек',
+  'Нур Алем (сфера EXPO)': 'Нұр Әлем',
+  'Нур Алем': 'Нұр Әлем',
+  'Дворец Независимости': 'Тәуелсіздік сарайы',
+  'Дворец Мира и Согласия (Пирамида)': 'Бейбітшілік және келісім сарайы',
+  'Дворец Мира и Согласия': 'Бейбітшілік және келісім сарайы',
+  'Дворец творчества «Шабыт»': '«Шабыт» шығармашылық сарайы',
+  'Башня «Темір Жолы» (КТЖ)': '«Темір Жолы» мұнарасы',
+  'Башня «Темір Жолы»': '«Темір Жолы» мұнарасы',
+  'Astana Tower': 'Astana Tower',
+  'Зелёный квартал': '«Зелёный квартал»',
+  'Национальная библиотека': 'Ұлттық кітапхана',
+  'Ж/д вокзал «Нұрлы Жол»': '«Нұрлы Жол» теміржол вокзалы',
+  'Millennium Park': 'Millennium Park',
+  'Министерство финансов Республики Казахстан': 'Қазақстан Республикасы Қаржы министрлігі',
+  'Архив Президента Республики Казахстан': 'Қазақстан Республикасы Президентінің архиві',
+  'Казмедиа орталығы': '«Қазмедиа» орталығы',
+  'КазМунайГаз': 'ҚазМұнайГаз',
+  'Дом министерств': 'Министрліктер үйі',
+  'БЦ SAAD': 'SAAD бизнес-орталығы',
+  'Бизнес-центр «Санкт-Петербург»': 'Бизнес-орталық «Санкт-Петербург»',
+  'Beijing Palace Soluxe Hotel Astana': 'Beijing Palace Soluxe Hotel Astana',
+  'Highvill Ishim': 'Highvill Ishim',
+};
+
 const I18N = {
   ru: {
     // Meta
@@ -156,14 +193,85 @@ const I18N = {
     // Timezone for time display
     timeTimezone: 'Asia/Almaty',
   },
+  kk: {
+    metaDescription: 'Астанадағы ғимарат қасбеттерінен шығатын қауіпті жарықтың интерактивті картасы',
+    subtitle: 'Жүргізушілерге арналған ғимарат қасбеттерінен түсетін қауіпті жарық аймақтарының картасы',
+    darkMode: 'Қараңғы режим',
+    loadingWeather: 'Ауа райы жүктелуде…',
+    weatherUnavailable: 'Ауа райы қолжетімсіз',
+    temp: 'Темп.',
+    cloudCover: 'Бұлттылық',
+    sun: 'Күн',
+    glareFactor: 'Жарық факторі',
+    belowHorizon: 'горизонттан төмен',
+    dangerLevel: 'Қауіп деңгейі',
+    dangerous: 'Қауіпті',
+    caution: 'Ескерту',
+    safe: 'Қауіпсіз',
+    levelDepends: 'Деңгей уақыт пен ауа райына байланысты',
+    legendUpdated: (time, condition, cloud, glare) =>
+      `${time} · ${condition}, бұлттылық ${cloud}% · жарық факторі ${glare}%`,
+    legendWeatherUnavailable: (time) =>
+      `${time} · Ауа райы қолжетімсіз — базалық деректер қолданылуда`,
+    legendLoading: 'Ауа райы деректері жүктелуде…',
+    maxIlluminance: 'Ең жоғары жарықтану',
+    currentWeatherAdjusted: 'Ағымдағы (ауа райын ескере отырып)',
+    dangerWindow: 'Қауіпті уақыт аралығы',
+    glassType: 'Әйнек түрі',
+    currentWeather: 'Қазіргі ауа райы',
+    weatherGlareFactor: 'Ауа райының жарық факторі',
+    luxUnit: 'лк',
+    wmo: {
+      0:  'Ашық',
+      1:  'Аздап бұлтты',
+      2:  'Айнымалы бұлттылық',
+      3:  'Бұлтты',
+      45: 'Туман',
+      48: 'Мұздық туман',
+      51: 'Жұқа тұман',
+      53: 'Тұман',
+      55: 'Қатты тұман',
+      56: 'Мұзды тұман',
+      57: 'Мұзды тұман',
+      61: 'Жұқа жаңбыр',
+      63: 'Жаңбыр',
+      65: 'Жаңбырлы жаңбыр',
+      66: 'Мұзды жаңбыр',
+      67: 'Қатты мұзды жаңбыр',
+      71: 'Жұқа қар',
+      73: 'Қар',
+      75: 'Қатты қар',
+      77: 'Қар тастары',
+      80: 'Жаңбырлы жаңбыр',
+      81: 'Жаңбырлы жаңбыр',
+      82: 'Қатты жаңбырлы жаңбыр',
+      85: 'Қатты қарлы жаңбыр',
+      86: 'Қатты қар',
+      95: 'Найзағай',
+      96: 'Найзағаймен бірге град',
+      99: 'Қатты градпен найзағай',
+    },
+    unknown: 'Белгісіз',
+    locale: 'kk-KZ',
+    timeTimezone: 'Asia/Almaty',
+  },
 };
 
 let currentLang = 'ru';
 try {
   const savedLang = localStorage.getItem('lang');
-  if (savedLang === 'ru' || savedLang === 'en') currentLang = savedLang;
+  if (savedLang === 'ru' || savedLang === 'en' || savedLang === 'kk') currentLang = savedLang;
 } catch (err) {
   console.warn('[Lang] Could not read localStorage:', err);
+}
+
+function getLocalizedBuildingLabel(building, fallback = '') {
+  if (!building) return fallback;
+  if (currentLang === 'en') return building.name_en || building.name || fallback;
+  if (currentLang === 'kk') {
+    return building.name_kk || BUILDING_LABELS_KK[building.name] || building.name_en || building.name || fallback;
+  }
+  return building.name || fallback;
 }
 
 function t(key) {
@@ -180,7 +288,7 @@ function writeStoredLang(lang) {
 }
 
 function setLang(lang) {
-  if (lang !== 'ru' && lang !== 'en') return;
+  if (lang !== 'ru' && lang !== 'en' && lang !== 'kk') return;
   currentLang = lang;
   writeStoredLang(lang);
   document.documentElement.lang = lang;
@@ -190,10 +298,11 @@ function setLang(lang) {
   recalcDanger();
   renderMarkers();
   refreshOpenPopup();
-  // Update active flag
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('lang-btn--active', btn.dataset.lang === lang);
-  });
+
+  const langSelect = document.getElementById('langSelect');
+  if (langSelect) {
+    langSelect.value = lang;
+  }
 }
 
 function applyLangToStaticText() {
@@ -647,10 +756,13 @@ function initUi() {
   applyLangToStaticText();
 
   // Language switcher
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('lang-btn--active', btn.dataset.lang === currentLang);
-    btn.addEventListener('click', () => setLang(btn.dataset.lang));
-  });
+  const langSelect = document.getElementById('langSelect');
+  if (langSelect) {
+    langSelect.value = currentLang;
+    langSelect.addEventListener('change', (event) => {
+      setLang(event.target.value);
+    });
+  }
 
   recalcDanger();
   renderWeatherStrip();
@@ -731,10 +843,9 @@ function popupHTML(b) {
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
 
-  // Localised building fields: fall back to Russian if English is missing
-  const bName    = (isEn && bData && bData.name_en)    ? bData.name_en    : b.name;
-  const bAddress = (isEn && bData && bData.address_en) ? bData.address_en : b.address;
-  const bGlass   = (isEn && bData && bData.glass_en)   ? bData.glass_en   : b.glass;
+  const bName    = getLocalizedBuildingLabel(bData || b, b.name);
+  const bAddress = (currentLang === 'en' && bData && bData.address_en) ? bData.address_en : b.address;
+  const bGlass   = (currentLang === 'en' && bData && bData.glass_en)   ? bData.glass_en   : b.glass;
 
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
