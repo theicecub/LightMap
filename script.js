@@ -1039,6 +1039,25 @@ async function bootstrap() {
     buildings = [];
   }
 
+  // Попытаться автоматически обнаружить дополнительные здания через OpenStreetMap
+  // (если функция autoDetectBuildings доступна и Overpass API работает)
+  if (typeof autoDetectBuildings === 'function') {
+    try {
+      console.log('[AutoDetect] Начинаем поиск дополнительных зданий через OpenStreetMap...');
+      const autoBuildingsRaw = await autoDetectBuildings(buildings);
+      const count = autoBuildingsRaw ? autoBuildingsRaw.length : 0;
+      if (count > 0) {
+        buildings = buildings.concat(autoBuildingsRaw);
+        console.log(`[AutoDetect] Добавлено ${count} автоматически обнаруженных зданий (всего: ${buildings.length})`);
+      } else {
+        console.log('[AutoDetect] Дополнительные здания не найдены или все отфильтрованы.');
+      }
+    } catch (err) {
+      console.warn('[AutoDetect] Ошибка при автоматическом обнаружении зданий (сайт будет работать со статическим списком):', err);
+      // Сайт продолжит работать со зданиями из buildings.json, если автообнаружение не удалось
+    }
+  }
+
   initUi();
   initMap();
 }
