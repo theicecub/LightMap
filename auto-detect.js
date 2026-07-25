@@ -32,23 +32,18 @@
 const AUTO_DETECT_CONFIG = {
   // Примерная застроенная территория Астаны (левый + правый берег)
   bbox: { south: 51.05, west: 71.28, north: 51.22, east: 71.58 },
-
   minHeightM: 20,          // ниже ~6-7 этажей блик редко достигает уровня глаз водителя
   maxRoadDistanceM: 150,   // дальше от дороги — водителю уже не мешает
   dedupeRadiusM: 80,       // не дублировать здания, уже выверенные вручную в buildings.json
   maxResults: 50,          // не перегружать карту и safe-route расчёт
-
   idStart: 100000,         // гарантированно не пересекается с ручными id из buildings.json
-
   overpassEndpoints: [
+    'https://overpass.kumi.systems/api/interpreter', // стабильнее — пробуем первым
     'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
   ],
-  overpassTimeoutMs: 20000,
-
-  cacheKey: 'lightmap_auto_buildings_v1',
-  cacheTtlMs: 24 * 60 * 60 * 1000, // 24 часа — геометрия зданий почти не меняется,
-                                    // и это бережно к бесплатному Overpass API
+  overpassTimeoutMs: 40000,                 // было 20000 — публичный Overpass медленный
+  cacheKey: 'lightmap_auto_buildings_v2',   // было v1 — сбрасываем старый битый кэш
+  cacheTtlMs: 24 * 60 * 60 * 1000,          // 24 часа — геометрия зданий почти не меняется
 };
 
 const ASTANA_UTC_OFFSET_MIN = 5 * 60; // Asia/Almaty — круглый год UTC+5, без перехода на летнее время
@@ -561,26 +556,67 @@ function overpassBboxString() {
 }
 
 async function queryOverpass(query) {
-  let lastErr = null;
-  for (const endpoint of AUTO_DETECT_CONFIG.overpassEndpoints) {
+  const cleanQuery = query
+    .replace(/^\uFEFF/, '')   // BOM
+    .replace(/\u00A0/g, ' ')  // неразрывные пробелы → обычные
+    .trim();
+
+  console.log('[Overpass] query >>>\n' + cleanQuery + '\n<<<');
+
+  // Защита: если в запрос попал undefined/пустой bbox — это гарантированный 406
+  if (/\(\s*\)/.test(cleanQuery) || cleanQuery.includes('undefined')) {
+    throw new Error('Overpass: битый запрос (пустой bbox или undefined). Проверь overpassBboxString().');
+  }
+
+  async function send(endpoint, mode) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), AUTO_DETECT_CONFIG.overpassTimeoutMs);
     try {
-      const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(query),
-        signal: controller.signal,
-      });
+      const opts = mode === 'form'
+        ? {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'data=' + encodeURIComponent(cleanQuery),
+            signal: controller.signal,
+          }
+        : {
+            method: 'POST',
+            body: cleanQuery,          // fallback: сырой QL
+            signal: controller.signal,
+          };
+      const resp = await fetch(endpoint, opts);
       clearTimeout(timeoutId);
+      if (resp.status === 406) {
+        const text = await resp.text().catch(() => '');
+        const e = new Error(`Overpass 406 (${mode}): ${text.slice(0, 200)}`);
+        e.is406 = true;
+        throw e;
+      }
       if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
       const json = await resp.json();
       if (!json || !Array.isArray(json.elements)) throw new Error('Overpass: неожиданный формат ответа');
       return json.elements;
-    } catch (err) {
+    } finally {
       clearTimeout(timeoutId);
-      console.warn(`[AutoDetect] Overpass endpoint недоступен (${endpoint}):`, err);
+    }
+  }
+
+  let lastErr = null;
+  for (const endpoint of AUTO_DETECT_CONFIG.overpassEndpoints) {
+    try {
+      return await send(endpoint, 'form');           // основной путь — form-urlencoded
+    } catch (err) {
+      console.error(`[AutoDetect] Overpass form fail (${endpoint}): ${err.name} — ${err.message}`);
       lastErr = err;
+      if (err.is406) {
+        // На 406 пробуем этот же эндпоинт сырым телом (некоторые инстансы так капризничают)
+        try {
+          return await send(endpoint, 'raw');
+        } catch (err2) {
+          console.error(`[AutoDetect] Overpass raw fail (${endpoint}): ${err2.name} — ${err2.message}`);
+          lastErr = err2;
+        }
+      }
     }
   }
   throw lastErr || new Error('Все Overpass-эндпоинты недоступны');
@@ -588,24 +624,21 @@ async function queryOverpass(query) {
 
 async function fetchBuildingWays() {
   const bbox = overpassBboxString();
-  const query = `
-    [out:json][timeout:25];
-    (
-      way["building"]["height"](${bbox});
-      way["building"]["building:levels"](${bbox});
-    );
-    out geom;
-  `;
+  // Однострочный QL без отступов — исключает невидимые символы, вызывающие 406
+  const query =
+    `[out:json][timeout:60];` +
+    `(way["building"]["height"](${bbox});` +
+    `way["building"]["building:levels"](${bbox}););` +
+    `out geom;`;
   return queryOverpass(query);
 }
 
 async function fetchRoadWays() {
   const bbox = overpassBboxString();
-  const query = `
-    [out:json][timeout:25];
-    way["highway"~"^(trunk|primary|secondary|tertiary|residential|living_street|unclassified|trunk_link|primary_link|secondary_link|tertiary_link)$"](${bbox});
-    out geom;
-  `;
+  const query =
+    `[out:json][timeout:60];` +
+    `way["highway"~"^(trunk|primary|secondary|tertiary|residential|living_street|unclassified|trunk_link|primary_link|secondary_link|tertiary_link)$"](${bbox});` +
+    `out geom;`;
   return queryOverpass(query);
 }
 
@@ -745,21 +778,23 @@ function dedupeAgainstManual(candidates, manualList) {
 // не требуется — все сетевые ошибки перехватываются внутри и приводят к [].
 async function autoDetectBuildings(existingBuildings) {
   let rawCandidates;
-
   const cached = readCache();
   if (cached) {
     rawCandidates = cached;
   } else {
     rawCandidates = await buildRawCandidates();
-    writeCache(rawCandidates);
+    // ВАЖНО: кэшируем только непустой результат, иначе один пустой/битый
+    // ответ Overpass заблокирует авто-детект на следующие 24 часа.
+    if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+      writeCache(rawCandidates);
+    }
   }
 
   const deduped = dedupeAgainstManual(rawCandidates, existingBuildings || []);
-
   const finalCandidates = deduped
     .map(c => {
       const forecast = estimateDangerWindows(c.orientation, c.baseLux, c.lat, c.lng);
-      if (forecast.windows.length === 0) return null; // за сутки нет ни одного опасного окна
+      if (forecast.windows.length === 0) return null; // за сутки нет опасного окна
       return { ...c, dangerTime: forecast.text, period: forecast.period };
     })
     .filter(Boolean)
