@@ -557,70 +557,43 @@ function overpassBboxString() {
 
 async function queryOverpass(query) {
   const cleanQuery = query
-    .replace(/^\uFEFF/, '')   // BOM
-    .replace(/\u00A0/g, ' ')  // неразрывные пробелы → обычные
+    .replace(/^\uFEFF/, '')
+    .replace(/\u00A0/g, ' ')
     .trim();
 
   console.log('[Overpass] query >>>\n' + cleanQuery + '\n<<<');
 
-  // Защита: если в запрос попал undefined/пустой bbox — это гарантированный 406
   if (/\(\s*\)/.test(cleanQuery) || cleanQuery.includes('undefined')) {
-    throw new Error('Overpass: битый запрос (пустой bbox или undefined). Проверь overpassBboxString().');
+    throw new Error('Overpass: битый запрос (пустой bbox или undefined).');
   }
 
-  async function send(endpoint, mode) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), AUTO_DETECT_CONFIG.overpassTimeoutMs);
-    try {
-      const opts = mode === 'form'
-        ? {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(cleanQuery),
-            signal: controller.signal,
-          }
-        : {
-            method: 'POST',
-            body: cleanQuery,          // fallback: сырой QL
-            signal: controller.signal,
-          };
-      const resp = await fetch(endpoint, opts);
-      clearTimeout(timeoutId);
-      if (resp.status === 406) {
-        const text = await resp.text().catch(() => '');
-        const e = new Error(`Overpass 406 (${mode}): ${text.slice(0, 200)}`);
-        e.is406 = true;
-        throw e;
-      }
-      if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
-      const json = await resp.json();
-      if (!json || !Array.isArray(json.elements)) throw new Error('Overpass: неожиданный формат ответа');
-      return json.elements;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AUTO_DETECT_CONFIG.overpassTimeoutMs);
+  try {
+    const resp = await fetch('/api/overpass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: cleanQuery }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-  let lastErr = null;
-  for (const endpoint of AUTO_DETECT_CONFIG.overpassEndpoints) {
-    try {
-      return await send(endpoint, 'form');           // основной путь — form-urlencoded
-    } catch (err) {
-      console.error(`[AutoDetect] Overpass form fail (${endpoint}): ${err.name} — ${err.message}`);
-      lastErr = err;
-      if (err.is406) {
-        // На 406 пробуем этот же эндпоинт сырым телом (некоторые инстансы так капризничают)
-        try {
-          return await send(endpoint, 'raw');
-        } catch (err2) {
-          console.error(`[AutoDetect] Overpass raw fail (${endpoint}): ${err2.name} — ${err2.message}`);
-          lastErr = err2;
-        }
-      }
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`Прокси /api/overpass -> HTTP ${resp.status}: ${text.slice(0, 200)}`);
     }
+    const json = await resp.json();
+    if (!json || !Array.isArray(json.elements)) {
+      throw new Error('Overpass: неожиданный формат ответа');
+    }
+    return json.elements;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error(`[AutoDetect] Overpass proxy fail: ${err.name} — ${err.message}`);
+    throw err;
   }
-  throw lastErr || new Error('Все Overpass-эндпоинты недоступны');
 }
+
 
 async function fetchBuildingWays() {
   const bbox = overpassBboxString();
