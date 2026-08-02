@@ -217,6 +217,47 @@ const geocodeCache = new Map();
 // Local places database
 let localPlaces = [];
 
+// MapTiler stores some streets under their full official name.  In everyday
+// input users often omit the first name, so keep known aliases in one form
+// before both local and remote search.
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/(?:шакарим[а]?\s+)?куда[йи]берд[иы]ул[ыы]|ш(?:а|ә)кәрім\s+құдайбердіұлы/giu, 'шакарим кудайбердыулы')
+    .replace(/[.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function expandGeocodeQueries(query) {
+  const normalized = normalizeSearchText(query);
+  const isKudaiberdyulyQuery = normalized.includes('шакарим кудайбердыулы');
+  return !isKudaiberdyulyQuery || normalized === query.toLowerCase().trim()
+    ? [query]
+    : [query, normalized];
+}
+
+function getRequestedHouseNumber(query) {
+  const match = normalizeSearchText(query).match(/(?:^|\s)(\d+(?:\s*\/\s*\d+)?[\p{L}]?)(?=$|\s)/u);
+  return match ? match[1].replace(/\s+/g, '') : null;
+}
+
+function isAddressQuery(query) {
+  // A POI such as "поликлиника 7" also has a number, but it must not be
+  // treated as a house number when querying the geocoder.
+  return Boolean(getRequestedHouseNumber(query)) &&
+    !/(?:^|[^\p{L}])(поликлиник|емхана|clinic|школ|school|больниц|hospital)/iu.test(query);
+}
+
+function hasRequestedHouseNumber(feature, houseNumber) {
+  if (!houseNumber) return true;
+
+  const escaped = houseNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const candidate = [feature.text, feature.address, feature.place_name].filter(Boolean).join(' ');
+  const exactHouseNumber = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}/])`, 'iu');
+  return exactHouseNumber.test(candidate);
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // LOAD LOCAL PLACES
 // ════════════════════════════════════════════════════════════════════════════
@@ -236,16 +277,19 @@ async function loadLocalPlaces() {
 
 // Search in local places with fuzzy matching
 function searchLocalPlaces(query) {
-  const q = query.toLowerCase().trim();
+  const q = normalizeSearchText(query);
   if (q.length < 2) return [];
 
   const results = [];
   for (const place of localPlaces) {
-    const name = (currentLang === 'en' ? place.name_en : currentLang === 'kk' ? place.name_kk : place.name_ru || '').toLowerCase();
-    const address = (currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru || '').toLowerCase();
+    const name = currentLang === 'en' ? place.name_en : currentLang === 'kk' ? place.name_kk : place.name_ru || '';
+    const address = currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru || '';
+    const searchTerms = [name, address, ...(place.search_terms || [])].map(normalizeSearchText);
+    const matchesAllQueryWords = q.split(' ').length > 1 &&
+      q.split(' ').every(word => searchTerms.some(term => term.includes(word)));
     
     // Match query against name and address
-    if (name.includes(q) || address.includes(q)) {
+    if (searchTerms.some(term => term.includes(q)) || matchesAllQueryWords) {
       results.push({
         lng: place.lng,
         lat: place.lat,
@@ -288,20 +332,24 @@ async function geocodeSearch(query) {
 
   // Then, search via MapTiler API
   const bbox = ROUTE_CONFIG.cityBbox.join(',');
-  const url = `${ROUTE_CONFIG.geocodeUrl}/${encodeURIComponent(trimmed)}.json?key=${ROUTE_CONFIG.apiKey}` +
-    `&autocomplete=true` +
-    `&limit=${ROUTE_CONFIG.maxSuggestions}` +
-    `&proximity=${ROUTE_CONFIG.proximity[0]},${ROUTE_CONFIG.proximity[1]}` +
-    `&country=${ROUTE_CONFIG.country}` +
-    `&bbox=${bbox}`;
+  const geocodeQueries = expandGeocodeQueries(trimmed);
+  const houseNumber = isAddressQuery(trimmed) ? getRequestedHouseNumber(trimmed) : null;
 
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
+    const responses = await Promise.all(geocodeQueries.map(async geocodeQuery => {
+      const url = `${ROUTE_CONFIG.geocodeUrl}/${encodeURIComponent(geocodeQuery)}.json?key=${ROUTE_CONFIG.apiKey}` +
+        `&autocomplete=true` +
+        `&limit=${ROUTE_CONFIG.maxSuggestions}` +
+        `&proximity=${ROUTE_CONFIG.proximity[0]},${ROUTE_CONFIG.proximity[1]}` +
+        `&country=${ROUTE_CONFIG.country}` +
+        `&bbox=${bbox}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.json();
+    }));
     const [west, south, east, north] = ROUTE_CONFIG.cityBbox;
     
-    const mapTilerResults = (data.features || [])
+    const mapTilerResults = responses.flatMap(data => data.features || [])
       .map(f => {
         const streetLabel = f.address ? `${f.text} ${f.address}` : (f.text || '');
         const fullName = f.place_name || streetLabel || '';
@@ -310,9 +358,12 @@ async function geocodeSearch(query) {
           lat: f.center[1],
           label: streetLabel || fullName,
           place: fullName,
+          feature: f,
         };
       })
-      .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north);
+      .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north)
+      .filter(r => !houseNumber || hasRequestedHouseNumber(r.feature, houseNumber))
+      .map(({ feature, ...result }) => result);
 
     // Combine local and MapTiler results, dedupe by proximity
     const combined = [...results];
@@ -1031,10 +1082,12 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
   if (!input || !suggBox) return;
 
   let debounceTimer = null;
+  let requestVersion = 0;
 
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     const query = input.value.trim();
+    const thisRequestVersion = ++requestVersion;
 
     if (query.length < 2) {
       suggBox.style.display = 'none';
@@ -1043,6 +1096,10 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
 
     debounceTimer = setTimeout(async () => {
       const results = await geocodeSearch(query);
+      // Do not replace suggestions for a newer input value with a slow,
+      // already obsolete geocoding response.
+      if (thisRequestVersion !== requestVersion || input.value.trim() !== query) return;
+
       if (results.length === 0) {
         suggBox.style.display = 'none';
         return;
