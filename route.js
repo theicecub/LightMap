@@ -168,43 +168,6 @@ const ROUTE_I18N = {
   },
 };
 
-const ROUTE_BUILDING_LABELS_KK = {
-  'Abu Dhabi Plaza': 'Abu Dhabi Plaza',
-  'Talan Towers': 'Talan Towers',
-  'Хан Шатыр': 'Хан Шатыр',
-  'Бизнес-центр «Москва»': 'Бизнес-орталық «Москва»',
-  'Северное Сияние': 'Северное Сияние',
-  'Бизнес-центр «Астаналык»': 'Бизнес-орталық «Астаналық»',
-  'Бизнес-центр «Алтын-Орда»': 'Бизнес-орталық «Алтын Орда»',
-  'Бизнес-центр «Алтын Орда»': 'Бизнес-орталық «Алтын Орда»',
-  'Изумрудный квартал (башни A/B)': '«Изумрудный квартал»',
-  'Изумрудный квартал': '«Изумрудный квартал»',
-  'ЖК «Триумф Астаны»': 'ТК «Триумф Астаны»',
-  'Байтерек': 'Бәйтерек',
-  'Нур Алем (сфера EXPO)': 'Нұр Әлем',
-  'Нур Алем': 'Нұр Әлем',
-  'Дворец Независимости': 'Тәуелсіздік сарайы',
-  'Дворец Мира и Согласия (Пирамида)': 'Бейбітшілік және келісім сарайы',
-  'Дворец Мира и Согласия': 'Бейбітшілік және келісім сарайы',
-  'Дворец творчества «Шабыт»': '«Шабыт» шығармашылық сарайы',
-  'Башня «Темір Жолы» (КТЖ)': '«Темір Жолы» мұнарасы',
-  'Башня «Темір Жолы»': '«Темір Жолы» мұнарасы',
-  'Astana Tower': 'Astana Tower',
-  'Зелёный квартал': '«Зелёный квартал»',
-  'Национальная библиотека': 'Ұлттық кітапхана',
-  'Ж/д вокзал «Нұрлы Жол»': '«Нұрлы Жол» теміржол вокзалы',
-  'Millennium Park': 'Millennium Park',
-  'Министерство финансов Республики Казахстан': 'Қазақстан Республикасы Қаржы министрлігі',
-  'Архив Президента Республики Казахстан': 'Қазақстан Республикасы Президентінің архиві',
-  'Казмедиа орталығы': '«Қазмедиа» орталығы',
-  'КазМунайГаз': 'ҚазМұнайГаз',
-  'Дом министерств': 'Министрліктер үйі',
-  'БЦ SAAD': 'SAAD бизнес-орталығы',
-  'Бизнес-центр «Санкт-Петербург»': 'Бизнес-орталық «Санкт-Петербург»',
-  'Beijing Palace Soluxe Hotel Astana': 'Beijing Palace Soluxe Hotel Astana',
-  'Highvill Ishim': 'Highvill Ishim',
-};
-
 function rt(key) {
   const val = ROUTE_I18N[currentLang]?.[key];
   return val !== undefined ? val : key;
@@ -231,6 +194,7 @@ const ROUTE_CONFIG = {
   cacheTTL: 5 * 60 * 1000,     // 5 min geocoding cache
   detourOffsets: [450, -450, 850, -850], // meters — perpendicular detours to synthesize alternatives
   maxAlternatives: 3,          // max routes to present (including the main one)
+  placesUrl: './places.json',  // local places database
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -250,8 +214,54 @@ const routeState = {
 // Geocoding cache: query → { results, timestamp }
 const geocodeCache = new Map();
 
+// Local places database
+let localPlaces = [];
+
 // ════════════════════════════════════════════════════════════════════════════
-// GEOCODING — MapTiler Geocoding API with debounce + cache
+// LOAD LOCAL PLACES
+// ════════════════════════════════════════════════════════════════════════════
+
+async function loadLocalPlaces() {
+  try {
+    const resp = await fetch(ROUTE_CONFIG.placesUrl);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    localPlaces = data.places || [];
+    console.log('[Places] Loaded', localPlaces.length, 'places');
+  } catch (err) {
+    console.warn('[Places] Could not load places.json:', err);
+    localPlaces = [];
+  }
+}
+
+// Search in local places with fuzzy matching
+function searchLocalPlaces(query) {
+  const q = query.toLowerCase().trim();
+  if (q.length < 2) return [];
+
+  const results = [];
+  for (const place of localPlaces) {
+    const name = (currentLang === 'en' ? place.name_en : currentLang === 'kk' ? place.name_kk : place.name_ru || '').toLowerCase();
+    const address = (currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru || '').toLowerCase();
+    
+    // Match query against name and address
+    if (name.includes(q) || address.includes(q)) {
+      results.push({
+        lng: place.lng,
+        lat: place.lat,
+        label: currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru,
+        place: currentLang === 'en' ? (place.name_en + ', ' + place.address_en) : 
+               currentLang === 'kk' ? (place.name_kk + ', ' + place.address_kk) :
+               (place.name_ru + ', ' + place.address_ru),
+      });
+    }
+  }
+
+  return results;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// GEOCODING — MapTiler Geocoding API with debounce + cache + local places
 // ════════════════════════════════════════════════════════════════════════════
 
 function getCachedGeocode(query) {
@@ -273,6 +283,10 @@ async function geocodeSearch(query) {
   const cached = getCachedGeocode(trimmed);
   if (cached) return cached;
 
+  // First, search in local places
+  let results = searchLocalPlaces(trimmed);
+
+  // Then, search via MapTiler API
   const bbox = ROUTE_CONFIG.cityBbox.join(',');
   const url = `${ROUTE_CONFIG.geocodeUrl}/${encodeURIComponent(trimmed)}.json?key=${ROUTE_CONFIG.apiKey}` +
     `&autocomplete=true` +
@@ -286,14 +300,9 @@ async function geocodeSearch(query) {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     const [west, south, east, north] = ROUTE_CONFIG.cityBbox;
-    // Defense-in-depth: even though we sent bbox to MapTiler, drop any result
-    // whose coordinates fall outside Astana's bounding box.
-    const results = (data.features || [])
+    
+    const mapTilerResults = (data.features || [])
       .map(f => {
-        // f.text is just the street/place name (e.g. "Достык"); the house
-        // number lives in a separate f.address field for address-type
-        // results. Combine them so exact addresses keep their number
-        // instead of collapsing to the bare street name after selection.
         const streetLabel = f.address ? `${f.text} ${f.address}` : (f.text || '');
         const fullName = f.place_name || streetLabel || '';
         return {
@@ -304,11 +313,24 @@ async function geocodeSearch(query) {
         };
       })
       .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north);
+
+    // Combine local and MapTiler results, dedupe by proximity
+    const combined = [...results];
+    for (const mt of mapTilerResults) {
+      const isDupe = combined.some(r => 
+        Math.abs(r.lng - mt.lng) < 0.001 && Math.abs(r.lat - mt.lat) < 0.001
+      );
+      if (!isDupe) combined.push(mt);
+    }
+
+    // Limit total results
+    results = combined.slice(0, ROUTE_CONFIG.maxSuggestions);
     setCachedGeocode(trimmed, results);
     return results;
   } catch (err) {
     console.warn('[Geocode] Search failed:', err);
-    return [];
+    setCachedGeocode(trimmed, results);
+    return results;
   }
 }
 
@@ -386,9 +408,7 @@ function haversine(lat1, lng1, lat2, lng2) {
 }
 
 // Distance from point to line segment (in meters)
-// p, a, b are {lat, lng}
 function pointToSegmentDist(p, a, b) {
-  // Convert to local meters
   const toMeters = (lat, lng) => {
     const x = lng * 111320 * Math.cos(a.lat * Math.PI / 180);
     const y = lat * 110540;
@@ -443,16 +463,15 @@ function fmtDur(s) {
   return `${h}ч ${m}${tr.minutes}`;
 }
 
-// Format distance strictly in kilometers (расстояние в километрах)
+// Format distance strictly in kilometers
 function fmtKm(m) {
   const tr = ROUTE_I18N[currentLang];
   const km = m / 1000;
-  // Show 2 decimals under 10 km for city-scale precision, else 1 decimal
   const val = km < 10 ? km.toFixed(2) : km.toFixed(1);
   return `${val} ${tr.km}`;
 }
 
-// Estimated time of arrival — current time + travel duration (примерное время прибытия)
+// Estimated time of arrival
 function fmtETA(durationS) {
   const tr = ROUTE_I18N[currentLang];
   const arrival = new Date(Date.now() + durationS * 1000);
@@ -465,17 +484,10 @@ function fmtETA(durationS) {
 // RISK SCORING
 // ════════════════════════════════════════════════════════════════════════════
 
-// Compute visibility coefficient for a segment near a building.
-// Considers: sun azimuth vs movement direction (±tolerance), building orientation,
-// distance falloff, and current effective lux.
 function computeVisibilityCoef(building, segStart, segEnd, sunAzimuth) {
-  // Movement direction
   const moveBearing = bearing(segStart.lat, segStart.lng, segEnd.lat, segEnd.lng);
-
-  // Sun vs movement direction: if driver is driving toward the sun, glare is worse
   const sunMoveDiff = angleDiff(moveBearing, sunAzimuth);
 
-  // Within ±tolerance → full exposure; falloff outside
   let dirCoef;
   if (sunMoveDiff <= ROUTE_CONFIG.sunAngleTolerance) {
     dirCoef = 1.0;
@@ -487,10 +499,8 @@ function computeVisibilityCoef(building, segStart, segEnd, sunAzimuth) {
     dirCoef = 0.05;
   }
 
-  // Building orientation factor: is the facade reflecting toward the road?
   let orientCoef = 1.0;
   if (building.orientation != null && building.orientation !== 0) {
-    // Reflected glare goes roughly opposite to sun azimuth
     const reflectAz = (sunAzimuth + 180) % 360;
     const orientDiff = angleDiff(reflectAz, building.orientation);
     if (orientDiff < 30) orientCoef = 1.0;
@@ -502,32 +512,26 @@ function computeVisibilityCoef(building, segStart, segEnd, sunAzimuth) {
   return dirCoef * orientCoef;
 }
 
-// Estimate exposure time (seconds) for a segment given its length and assumed speed
 function estimateExposureTime(segLengthM, routeDurationS, routeDistanceM) {
   if (routeDistanceM === 0) return 0;
-  const avgSpeed = routeDistanceM / routeDurationS; // m/s
+  const avgSpeed = routeDistanceM / routeDurationS;
   return segLengthM / avgSpeed;
 }
 
-// Distance falloff: closer buildings contribute more
 function distanceFalloff(distM, radius) {
   if (distM >= radius) return 0;
-  // Linear falloff with a minimum floor
   return Math.max(0.1, 1 - distM / radius);
 }
 
-// Evaluate a single route: chunk into segments, compute risk per segment
 function evaluateRoute(routeGeojson, durationS, distanceM) {
-  const coords = routeGeojson.coordinates; // [[lng, lat], ...]
+  const coords = routeGeojson.coordinates;
   const weatherMul = computeWeatherMultiplier();
   const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
   const sunAzimuth = sun.azimuth;
   const sunAltitude = sun.altitude;
 
-  // If sun is below horizon, no glare risk at all
   const sunActive = sunAltitude > 0;
 
-  // Chunk the route into segments of ~segmentChunkSize meters
   const segments = [];
   let currentSeg = { coords: [coords[0]], length: 0, riskScore: 0, nearbyBuildings: [] };
 
@@ -540,19 +544,13 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
     currentSeg.length += segLen;
 
     if (currentSeg.length >= ROUTE_CONFIG.segmentChunkSize || i === coords.length - 1) {
-      // Evaluate risk for this chunk
       if (sunActive) {
         const segStart = { lat: currentSeg.coords[0][1], lng: currentSeg.coords[0][0] };
         const segEnd = { lat: currentSeg.coords[currentSeg.coords.length - 1][1], lng: currentSeg.coords[currentSeg.coords.length - 1][0] };
-        const segMid = {
-          lat: (segStart.lat + segEnd.lat) / 2,
-          lng: (segStart.lng + segEnd.lng) / 2,
-        };
 
         let segRisk = 0;
 
         for (const b of buildings) {
-          // Find minimum distance from building to any sub-segment within this chunk
           let minDist = Infinity;
           for (let j = 1; j < currentSeg.coords.length; j++) {
             const a = { lat: currentSeg.coords[j - 1][1], lng: currentSeg.coords[j - 1][0] };
@@ -591,8 +589,6 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
         currentSeg.riskScore = 0;
       }
 
-      // Determine level
-      // Use a per-segment risk threshold relative to segment length
       const riskPerMeter = currentSeg.length > 0 ? currentSeg.riskScore / currentSeg.length : 0;
       if (riskPerMeter > 500) currentSeg.level = 'danger';
       else if (riskPerMeter > 100) currentSeg.level = 'warning';
@@ -603,7 +599,6 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
     }
   }
 
-  // Sort nearby buildings by contribution within each segment
   segments.forEach(s => {
     s.nearbyBuildings.sort((a, b) => b.contribution - a.contribution);
   });
@@ -643,12 +638,10 @@ async function buildSafeRoute() {
       return;
     }
 
-    // Evaluate each route
     const evaluated = rawRoutes.map(r =>
       evaluateRoute(r.geometry, r.duration, r.distance)
     );
 
-    // Sort by risk score (lowest = safest)
     evaluated.sort((a, b) => a.totalRiskScore - b.totalRiskScore);
 
     routeState.routes = evaluated;
@@ -675,20 +668,16 @@ function clearRoute() {
   routeState.loading = false;
   routeState.pickingFor = null;
 
-  // Clear inputs
   const inputA = document.getElementById('routeInputA');
   const inputB = document.getElementById('routeInputB');
   if (inputA) inputA.value = '';
   if (inputB) inputB.value = '';
 
-  // Remove map layers
   removeRouteLayers();
 
-  // Remove markers
   if (routeState.markerA) { routeState.markerA.remove(); routeState.markerA = null; }
   if (routeState.markerB) { routeState.markerB.remove(); routeState.markerB = null; }
 
-  // Reset map cursor
   if (map) map.getCanvas().style.cursor = '';
 
   updateRoutePanel();
@@ -722,7 +711,6 @@ function renderRouteOnMap() {
   const route = routeState.routes[routeState.selectedRouteIdx];
   const tr = ROUTE_I18N[currentLang];
 
-  // Build GeoJSON with per-segment features
   const segmentFeatures = route.segments.map(seg => ({
     type: 'Feature',
     geometry: {
@@ -748,7 +736,6 @@ function renderRouteOnMap() {
     data: { type: 'FeatureCollection', features: segmentFeatures },
   });
 
-  // Ghost lines for alternative (non-selected) routes — drawn UNDER the active route
   const altFeatures = routeState.routes
     .map((r, i) => ({ r, i }))
     .filter(({ i }) => i !== routeState.selectedRouteIdx)
@@ -776,7 +763,6 @@ function renderRouteOnMap() {
       },
     });
 
-    // Click a ghost alternative to select it
     map.on('click', 'route-alt', (e) => {
       const f = e.features && e.features[0];
       if (!f) return;
@@ -791,7 +777,6 @@ function renderRouteOnMap() {
     map.on('mouseleave', 'route-alt', () => { map.getCanvas().style.cursor = ''; });
   }
 
-  // Casing layer (dark outline under colored segments)
   map.addLayer({
     id: 'route-casing',
     type: 'line',
@@ -807,7 +792,6 @@ function renderRouteOnMap() {
     },
   });
 
-  // Three colored layers filtered by level
   Object.entries(ROUTE_COLORS).forEach(([level, color]) => {
     map.addLayer({
       id: `route-${level}`,
@@ -826,9 +810,6 @@ function renderRouteOnMap() {
     });
   });
 
-  // Invisible, much wider hit-area lines over the danger/warning segments.
-  // The visible line above is only 5px, which is hard to hit precisely with
-  // a finger — hover/tap for the explanatory tooltip binds to these instead.
   ['danger', 'warning'].forEach(level => {
     map.addLayer({
       id: `route-hitarea-${level}`,
@@ -844,7 +825,6 @@ function renderRouteOnMap() {
     });
   });
 
-  // Endpoint markers
   const endpointFeatures = [
     {
       type: 'Feature',
@@ -875,8 +855,6 @@ function renderRouteOnMap() {
     },
   });
 
-  // Tooltip for dangerous/warning segments — shown on hover (desktop) AND on
-  // tap (mobile/touch, which never fires mouseenter/mouseleave at all).
   const tooltipPopup = new maplibregl.Popup({
     offset: 16,
     closeButton: false,
@@ -920,7 +898,6 @@ function renderRouteOnMap() {
       tooltipPopup.remove();
     });
 
-    // Touch devices have no hover state, so bind the same tooltip to tap.
     map.on('click', layerId, (e) => {
       const f = e.features && e.features[0];
       if (!f) return;
@@ -929,13 +906,11 @@ function renderRouteOnMap() {
     });
   });
 
-  // Tapping anywhere else on the map dismisses the tap-opened tooltip.
   map.on('click', (e) => {
     const hits = map.queryRenderedFeatures(e.point, { layers: tooltipHitLayers });
     if (hits.length === 0) tooltipPopup.remove();
   });
 
-  // Fit bounds to include ALL routes (so alternatives are visible too)
   const bounds = new maplibregl.LngLatBounds(route.coordinates[0], route.coordinates[0]);
   routeState.routes.forEach(r => r.coordinates.forEach(c => bounds.extend(c)));
   map.fitBounds(bounds, { padding: 60 });
@@ -973,7 +948,6 @@ function updateRoutePanel() {
   const route = routeState.routes[routeState.selectedRouteIdx];
   const hasAlt = routeState.routes.length > 1;
 
-  // Build comparison if alternatives exist
   let comparisonHTML = '';
   if (hasAlt) {
     comparisonHTML = `<div class="route-comparison">
@@ -1002,7 +976,6 @@ function updateRoutePanel() {
     comparisonHTML += `</div></div>`;
   }
 
-  // Route summary
   const routeStatus = route.dangerZoneCount > 0 ? tr.routeHasRisks : (route.warningZoneCount > 0 ? tr.routeHasRisks : tr.routeSafe);
   const statusClass = route.dangerZoneCount > 0 ? 'danger' : (route.warningZoneCount > 0 ? 'warning' : 'safe');
 
@@ -1038,7 +1011,6 @@ function updateRoutePanel() {
     ${comparisonHTML}
   `;
 
-  // Bind comparison card clicks
   panel.querySelectorAll('.route-comparison-card').forEach(card => {
     card.addEventListener('click', () => {
       const idx = parseInt(card.dataset.routeIdx);
@@ -1082,7 +1054,6 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
 
       suggBox.style.display = 'block';
 
-      // Store results for this input
       input._results = results;
 
       suggBox.querySelectorAll('.route-suggestion').forEach(el => {
@@ -1106,7 +1077,6 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
   });
 
   input.addEventListener('blur', () => {
-    // Delay to allow click on suggestion
     setTimeout(() => { suggBox.style.display = 'none'; }, 200);
   });
 
@@ -1122,7 +1092,6 @@ function updateEndpointMarker(pointKey) {
   const markerKey = pointKey === 'pointA' ? 'markerA' : 'markerB';
   const color = pointKey === 'pointA' ? '#32D2AB' : '#FF5A3C';
 
-  // Remove old marker
   if (routeState[markerKey]) {
     routeState[markerKey].remove();
   }
@@ -1170,11 +1139,9 @@ function initMapClickPicker() {
 
     updateEndpointMarker(pointKey);
 
-    // Reset picking state
     routeState.pickingFor = null;
     map.getCanvas().style.cursor = '';
 
-    // Update pick buttons
     document.querySelectorAll('.route-pick-btn').forEach(btn => {
       btn.classList.remove('route-pick-btn--active');
     });
@@ -1188,11 +1155,9 @@ function initMapClickPicker() {
 // ════════════════════════════════════════════════════════════════════════════
 
 function initRouteModule() {
-  // Create autocomplete inputs
   createAutocomplete('routeInputA', 'routeSuggestionsA', 'pointA');
   createAutocomplete('routeInputB', 'routeSuggestionsB', 'pointB');
 
-  // Build button
   const buildBtn = document.getElementById('routeBuildBtn');
   if (buildBtn) {
     buildBtn.addEventListener('click', () => {
@@ -1202,24 +1167,20 @@ function initRouteModule() {
     });
   }
 
-  // Clear button
   const clearBtn = document.getElementById('routeClearBtn');
   if (clearBtn) {
     clearBtn.addEventListener('click', clearRoute);
   }
 
-  // Pick on map buttons
   document.querySelectorAll('.route-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.dataset.pick; // 'A' or 'B'
+      const target = btn.dataset.pick;
 
       if (routeState.pickingFor === target) {
-        // Toggle off
         routeState.pickingFor = null;
         btn.classList.remove('route-pick-btn--active');
         if (map) map.getCanvas().style.cursor = '';
       } else {
-        // Toggle on
         routeState.pickingFor = target;
         document.querySelectorAll('.route-pick-btn').forEach(b => {
           b.classList.toggle('route-pick-btn--active', b === btn);
@@ -1229,7 +1190,6 @@ function initRouteModule() {
     });
   });
 
-  // Panel collapse toggle
   const panelToggle = document.getElementById('routePanelToggle');
   const panelEl = document.getElementById('routePanel');
   const panelHeader = panelEl?.querySelector('.route-panel-header');
@@ -1240,28 +1200,19 @@ function initRouteModule() {
     panelToggle.addEventListener('click', (e) => { e.stopPropagation(); togglePanel(); });
     if (panelHeader) {
       panelHeader.addEventListener('click', (e) => {
-        // Only toggle when clicking the header area itself, not inputs
         if (e.target.closest('.route-panel-content')) return;
         togglePanel();
       });
     }
   }
 
-  // Init map click picker
   initMapClickPicker();
 
-  // Apply current language (handles a saved English preference on reload)
   applyRouteLangText();
 
-  // Initial panel state
   updateRoutePanel();
 }
 
-// Apply the current language to the route panel's static text (title,
-// placeholders, buttons). Called both on initial load — so a saved English
-// preference is respected immediately, since the page-load path applies
-// language via applyLangToStaticText() directly and never calls setLang() —
-// and again whenever the user switches language afterwards.
 function applyRouteLangText() {
   const tr = ROUTE_I18N[currentLang];
   if (!tr) return;
@@ -1285,28 +1236,26 @@ function applyRouteLangText() {
   });
 }
 
-// Initialize after map is loaded
-const _origOnLoad = map ? map._listeners?.load : null;
-
-// Hook into map load event
 function waitForMapAndInit() {
   if (map && map.loaded()) {
+    loadLocalPlaces();
     initRouteModule();
   } else if (map) {
-    map.on('load', initRouteModule);
+    map.on('load', () => {
+      loadLocalPlaces();
+      initRouteModule();
+    });
   } else {
     setTimeout(waitForMapAndInit, 100);
   }
 }
 
-// Start init when DOM is ready
 if (document.readyState === 'complete') {
   waitForMapAndInit();
 } else {
   window.addEventListener('load', waitForMapAndInit, { once: true });
 }
 
-// Re-render route on theme change
 const _origApplyTheme = typeof applyTheme === 'function' ? applyTheme : null;
 if (_origApplyTheme) {
   const _patchedApplyTheme = function(theme) {
@@ -1318,14 +1267,12 @@ if (_origApplyTheme) {
   applyTheme = _patchedApplyTheme;
 }
 
-// Update route panel on language change
 const _origSetLang = typeof setLang === 'function' ? setLang : null;
 if (_origSetLang) {
   const _patchedSetLang = function(lang) {
     _origSetLang(lang);
     updateRoutePanel();
     applyRouteLangText();
-    // Re-render route on map to update tooltips
     if (routeState.active) renderRouteOnMap();
   };
   setLang = _patchedSetLang;
