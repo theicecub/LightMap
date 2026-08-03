@@ -55,6 +55,13 @@ const ROUTE_I18N = {
     around: 'ок.',
     alternativesCount: 'Найдено маршрутов',
     selectRoute: 'Выбрать',
+    useCurrentLocation: 'Текущая геопозиция',
+    currentLocation: 'Текущая геопозиция',
+    locationUnavailable: 'Не удалось получить геопозицию. Проверьте разрешение браузера.',
+    locationDenied: 'Доступ к геопозиции запрещён.',
+    locationAccuracyPoor: 'Не удалось определить позицию с достаточной точностью. Включите GPS и попробуйте ещё раз.',
+    inDangerZone: 'Вы на опасном участке маршрута. Возможны ослепляющие блики.',
+    inWarningZone: 'Вы на участке маршрута с повышенным риском. Будьте внимательны.',
     luxUnit: 'лк',
     locale: 'ru-RU',
   },
@@ -109,6 +116,13 @@ const ROUTE_I18N = {
     around: '~',
     alternativesCount: 'Routes found',
     selectRoute: 'Select',
+    useCurrentLocation: 'Current location',
+    currentLocation: 'Current location',
+    locationUnavailable: 'Could not get your location. Check browser permissions.',
+    locationDenied: 'Location access was denied.',
+    locationAccuracyPoor: 'Your location is not accurate enough. Enable GPS and try again.',
+    inDangerZone: 'You are on a dangerous route segment. Glare may affect visibility.',
+    inWarningZone: 'You are on a higher-risk route segment. Please stay alert.',
     luxUnit: 'lx',
     locale: 'en-US',
   },
@@ -163,6 +177,13 @@ const ROUTE_I18N = {
     around: 'шамамен',
     alternativesCount: 'Табылған маршруттар',
     selectRoute: 'Таңдау',
+    useCurrentLocation: 'Ағымдағы геолокация',
+    currentLocation: 'Ағымдағы геолокация',
+    locationUnavailable: 'Геолокацияны алу мүмкін болмады. Браузер рұқсатын тексеріңіз.',
+    locationDenied: 'Геолокацияға рұқсат берілмеді.',
+    locationAccuracyPoor: 'Орналасу дәлдігі жеткіліксіз. GPS-ті қосып, қайталап көріңіз.',
+    inDangerZone: 'Сіз маршруттың қауіпті бөлігінде тұрсыз. Көз шағылыстыруы мүмкін.',
+    inWarningZone: 'Сіз маршруттың тәуекелі жоғары бөлігінде тұрсыз. Абай болыңыз.',
     luxUnit: 'лк',
     locale: 'kk-KZ',
   },
@@ -195,6 +216,11 @@ const ROUTE_CONFIG = {
   detourOffsets: [450, -450, 850, -850], // meters — perpendicular detours to synthesize alternatives
   maxAlternatives: 3,          // max routes to present (including the main one)
   placesUrl: './places.json',  // local places database
+  locationRouteUpdateDistance: 25, // meters before rebuilding from a new position
+  locationRouteUpdateInterval: 7000, // avoid excessive routing requests while moving
+  locationZoneRadius: 35, // meters around a colored route segment
+  locationMaxAccuracy: 200, // ignore coarse IP/Wi-Fi fixes that shift the route
+  locationMaxSpeed: 55, // m/s — rejects implausible GPS jumps between updates
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -209,6 +235,15 @@ const routeState = {
   selectedRouteIdx: 0,
   active: false,
   loading: false,
+  userPosition: null,
+  userMarker: null,
+  geoWatchId: null,
+  followsUserLocation: false,
+  lastRouteOrigin: null,
+  lastLocationRouteUpdateAt: 0,
+  currentZoneLevel: null,
+  buildRequestId: 0,
+  lastPositionTimestamp: 0,
 };
 
 // Geocoding cache: query → { results, timestamp }
@@ -676,11 +711,15 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
 async function buildSafeRoute() {
   if (!routeState.pointA || !routeState.pointB) return;
 
+  const requestId = ++routeState.buildRequestId;
   routeState.loading = true;
   updateRoutePanel();
 
   try {
     const rawRoutes = await fetchRoutes(routeState.pointA, routeState.pointB);
+
+    // A newer position may have already triggered a replacement route.
+    if (requestId !== routeState.buildRequestId) return;
 
     if (rawRoutes.length === 0) {
       showRouteError(rt('noRoute'));
@@ -693,6 +732,8 @@ async function buildSafeRoute() {
       evaluateRoute(r.geometry, r.duration, r.distance)
     );
 
+    if (requestId !== routeState.buildRequestId) return;
+
     evaluated.sort((a, b) => a.totalRiskScore - b.totalRiskScore);
 
     routeState.routes = evaluated;
@@ -701,8 +742,10 @@ async function buildSafeRoute() {
     routeState.loading = false;
 
     renderRouteOnMap();
+    refreshCurrentZoneLevel();
     updateRoutePanel();
   } catch (err) {
+    if (requestId !== routeState.buildRequestId) return;
     console.error('[Route] Build failed:', err);
     showRouteError(rt('routeError'));
     routeState.loading = false;
@@ -711,6 +754,7 @@ async function buildSafeRoute() {
 }
 
 function clearRoute() {
+  routeState.buildRequestId += 1;
   routeState.pointA = null;
   routeState.pointB = null;
   routeState.routes = [];
@@ -718,6 +762,9 @@ function clearRoute() {
   routeState.active = false;
   routeState.loading = false;
   routeState.pickingFor = null;
+  routeState.followsUserLocation = false;
+  routeState.lastRouteOrigin = null;
+  routeState.currentZoneLevel = null;
 
   const inputA = document.getElementById('routeInputA');
   const inputB = document.getElementById('routeInputB');
@@ -731,7 +778,203 @@ function clearRoute() {
 
   if (map) map.getCanvas().style.cursor = '';
 
+  updateLocationButton();
   updateRoutePanel();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// LIVE GEOLOCATION
+// ════════════════════════════════════════════════════════════════════════════
+
+function updateLocationButton() {
+  const button = document.getElementById('routeLocationBtn');
+  if (button) button.classList.toggle('route-location-btn--active', routeState.followsUserLocation);
+}
+
+function stopFollowingUserLocation() {
+  routeState.followsUserLocation = false;
+  routeState.lastRouteOrigin = null;
+  updateLocationButton();
+}
+
+function updateUserMarker() {
+  const position = routeState.userPosition;
+  if (!position || !map) return;
+
+  if (!routeState.userMarker) {
+    const el = document.createElement('div');
+    el.className = 'route-user-marker';
+    routeState.userMarker = new maplibregl.Marker({ element: el })
+      .setLngLat([position.lng, position.lat])
+      .addTo(map);
+  } else {
+    routeState.userMarker.setLngLat([position.lng, position.lat]);
+  }
+}
+
+function getCurrentZoneLevel() {
+  const position = routeState.userPosition;
+  if (!position) return null;
+
+  // Building zones are available even before a destination is selected.
+  // The same radius is used by the route risk calculation, so the map and
+  // live alert describe one consistent danger area.
+  let warningFound = false;
+  for (const building of buildings) {
+    if (building.level !== 'danger' && building.level !== 'warning') continue;
+    if (haversine(position.lat, position.lng, building.lat, building.lng) <= ROUTE_CONFIG.searchRadius) {
+      if (building.level === 'danger') return 'danger';
+      warningFound = true;
+    }
+  }
+
+  const route = routeState.routes[routeState.selectedRouteIdx];
+  if (!route) return warningFound ? 'warning' : null;
+
+  // GPS accuracy varies, but the alert should still represent the colored
+  // route segment the user is currently travelling on.
+  const radius = Math.max(
+    ROUTE_CONFIG.locationZoneRadius,
+    Math.min(position.accuracy || 0, 60)
+  );
+  for (const segment of route.segments) {
+    if (segment.level === 'safe') continue;
+    for (let i = 1; i < segment.coords.length; i++) {
+      const a = { lng: segment.coords[i - 1][0], lat: segment.coords[i - 1][1] };
+      const b = { lng: segment.coords[i][0], lat: segment.coords[i][1] };
+      if (pointToSegmentDist(position, a, b) <= radius) {
+        if (segment.level === 'danger') return 'danger';
+        warningFound = true;
+        break;
+      }
+    }
+  }
+
+  return warningFound ? 'warning' : null;
+}
+
+function refreshCurrentZoneLevel() {
+  routeState.currentZoneLevel = getCurrentZoneLevel();
+}
+
+function setPointAToUserLocation(forceRouteUpdate = false) {
+  const position = routeState.userPosition;
+  if (!position) return;
+
+  const hasMovedEnough = !routeState.lastRouteOrigin ||
+    haversine(
+      routeState.lastRouteOrigin.lat,
+      routeState.lastRouteOrigin.lng,
+      position.lat,
+      position.lng
+    ) >= ROUTE_CONFIG.locationRouteUpdateDistance;
+  const canUpdateNow = Date.now() - routeState.lastLocationRouteUpdateAt >=
+    ROUTE_CONFIG.locationRouteUpdateInterval;
+
+  if (!forceRouteUpdate && (!hasMovedEnough || !canUpdateNow)) return;
+
+  routeState.pointA = {
+    lng: position.lng,
+    lat: position.lat,
+    label: rt('currentLocation'),
+  };
+  routeState.lastRouteOrigin = { lng: position.lng, lat: position.lat };
+  routeState.lastLocationRouteUpdateAt = Date.now();
+
+  const inputA = document.getElementById('routeInputA');
+  if (inputA) inputA.value = rt('currentLocation');
+  updateEndpointMarker('pointA');
+
+  if (routeState.pointB) buildSafeRoute();
+}
+
+function handleUserPosition(geoPosition) {
+  const { latitude, longitude, accuracy } = geoPosition.coords;
+  const positionAccuracy = Number.isFinite(accuracy) ? accuracy : Infinity;
+  const timestamp = Number(geoPosition.timestamp) || Date.now();
+
+  if (positionAccuracy > ROUTE_CONFIG.locationMaxAccuracy) {
+    if (!routeState.userPosition) showRouteError(rt('locationAccuracyPoor'));
+    return false;
+  }
+
+  if (timestamp <= routeState.lastPositionTimestamp) return false;
+
+  if (routeState.userPosition) {
+    const elapsedSeconds = Math.max(1, (timestamp - routeState.lastPositionTimestamp) / 1000);
+    const travelled = haversine(
+      routeState.userPosition.lat,
+      routeState.userPosition.lng,
+      latitude,
+      longitude
+    );
+    const allowedDistance = Math.max(
+      150,
+      elapsedSeconds * ROUTE_CONFIG.locationMaxSpeed + positionAccuracy * 2
+    );
+    if (travelled > allowedDistance) return false;
+  }
+
+  routeState.userPosition = {
+    lat: latitude,
+    lng: longitude,
+    accuracy: positionAccuracy,
+  };
+  routeState.lastPositionTimestamp = timestamp;
+  updateUserMarker();
+
+  if (routeState.followsUserLocation) {
+    setPointAToUserLocation();
+  }
+
+  const previousLevel = routeState.currentZoneLevel;
+  refreshCurrentZoneLevel();
+  if (previousLevel !== routeState.currentZoneLevel) updateRoutePanel();
+  return true;
+}
+
+function handleLocationError(error) {
+  const message = error && error.code === error.PERMISSION_DENIED
+    ? rt('locationDenied')
+    : rt('locationUnavailable');
+  showRouteError(message);
+  const button = document.getElementById('routeLocationBtn');
+  if (button) button.classList.remove('route-location-btn--loading');
+}
+
+function ensureLocationWatch() {
+  if (routeState.geoWatchId != null || !navigator.geolocation) return;
+  routeState.geoWatchId = navigator.geolocation.watchPosition(
+    handleUserPosition,
+    handleLocationError,
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+  );
+}
+
+function useCurrentLocationForPointA() {
+  if (!navigator.geolocation) {
+    showRouteError(rt('locationUnavailable'));
+    return;
+  }
+
+  const button = document.getElementById('routeLocationBtn');
+  if (button) button.classList.add('route-location-btn--loading');
+
+  navigator.geolocation.getCurrentPosition((geoPosition) => {
+    if (button) button.classList.remove('route-location-btn--loading');
+    const accepted = handleUserPosition(geoPosition);
+    routeState.followsUserLocation = true;
+    updateLocationButton();
+    if (accepted) setPointAToUserLocation(true);
+    if (accepted && map && routeState.userPosition) {
+      map.flyTo({ center: [routeState.userPosition.lng, routeState.userPosition.lat], zoom: Math.max(map.getZoom(), 15) });
+    }
+    ensureLocationWatch();
+  }, handleLocationError, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 20000,
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -821,6 +1064,7 @@ function renderRouteOnMap() {
       if (typeof idx === 'number' && idx !== routeState.selectedRouteIdx) {
         routeState.selectedRouteIdx = idx;
         renderRouteOnMap();
+        refreshCurrentZoneLevel();
         updateRoutePanel();
       }
     });
@@ -992,12 +1236,21 @@ function updateRoutePanel() {
   }
 
   if (!routeState.active || routeState.routes.length === 0) {
-    panel.innerHTML = '';
+    panel.innerHTML = routeState.currentZoneLevel
+      ? `<div class="route-location-alert route-location-alert--${routeState.currentZoneLevel}">
+          ${routeState.currentZoneLevel === 'danger' ? rt('inDangerZone') : rt('inWarningZone')}
+        </div>`
+      : '';
     return;
   }
 
   const route = routeState.routes[routeState.selectedRouteIdx];
   const hasAlt = routeState.routes.length > 1;
+  const locationAlertHTML = routeState.currentZoneLevel
+    ? `<div class="route-location-alert route-location-alert--${routeState.currentZoneLevel}">
+        ${routeState.currentZoneLevel === 'danger' ? rt('inDangerZone') : rt('inWarningZone')}
+      </div>`
+    : '';
 
   let comparisonHTML = '';
   if (hasAlt) {
@@ -1032,6 +1285,7 @@ function updateRoutePanel() {
 
   panel.innerHTML = `
     <div class="route-summary">
+      ${locationAlertHTML}
       <div class="route-status route-status--${statusClass}">
         <span class="route-status-dot"></span>
         ${routeStatus}
@@ -1067,6 +1321,7 @@ function updateRoutePanel() {
       const idx = parseInt(card.dataset.routeIdx);
       routeState.selectedRouteIdx = idx;
       renderRouteOnMap();
+      refreshCurrentZoneLevel();
       updateRoutePanel();
     });
   });
@@ -1125,6 +1380,8 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
             lat: result.lat,
             label: result.label,
           };
+
+          if (pointKey === 'pointA') stopFollowingUserLocation();
 
           updateEndpointMarker(pointKey);
           tryBuildRoute();
@@ -1191,6 +1448,8 @@ function initMapClickPicker() {
       label: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
     };
 
+    if (pointKey === 'pointA') stopFollowingUserLocation();
+
     const input = document.getElementById(inputId);
     if (input) input.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
@@ -1229,6 +1488,9 @@ function initRouteModule() {
     clearBtn.addEventListener('click', clearRoute);
   }
 
+  const locationBtn = document.getElementById('routeLocationBtn');
+  if (locationBtn) locationBtn.addEventListener('click', useCurrentLocationForPointA);
+
   document.querySelectorAll('.route-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.pick;
@@ -1266,6 +1528,7 @@ function initRouteModule() {
   initMapClickPicker();
 
   applyRouteLangText();
+  updateLocationButton();
 
   updateRoutePanel();
 }
@@ -1287,6 +1550,18 @@ function applyRouteLangText() {
 
   const clearBtn = document.getElementById('routeClearBtn');
   if (clearBtn) clearBtn.textContent = tr.clearRoute;
+
+  const locationBtn = document.getElementById('routeLocationBtn');
+  if (locationBtn) {
+    locationBtn.title = tr.useCurrentLocation;
+    locationBtn.setAttribute('aria-label', tr.useCurrentLocation);
+  }
+
+  if (routeState.followsUserLocation) {
+    const inputA = document.getElementById('routeInputA');
+    if (inputA) inputA.value = tr.currentLocation;
+    if (routeState.pointA) routeState.pointA.label = tr.currentLocation;
+  }
 
   document.querySelectorAll('.route-pick-btn').forEach(btn => {
     btn.textContent = tr.pickOnMap;
