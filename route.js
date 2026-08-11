@@ -19,6 +19,13 @@ const ROUTE_I18N = {
     routeDuration: 'Время в пути',
     dangerZones: 'Опасных зон',
     riskScore: 'Риск-скор',
+    riskLevel: 'Уровень риска',
+    riskSafe: 'Безопасно',
+    riskMedium: 'Средне',
+    riskDanger: 'Опасно',
+    visibilityLow: 'Низкий',
+    visibilityMedium: 'Средний',
+    visibilityHigh: 'Высокий',
     normalRoute: 'Обычный маршрут',
     safeRouteLabel: 'Безопасный маршрут',
     comparison: 'Сравнение маршрутов',
@@ -80,6 +87,13 @@ const ROUTE_I18N = {
     routeDuration: 'Travel time',
     dangerZones: 'Danger zones',
     riskScore: 'Risk score',
+    riskLevel: 'Risk level',
+    riskSafe: 'Safe',
+    riskMedium: 'Moderate',
+    riskDanger: 'Danger',
+    visibilityLow: 'Low',
+    visibilityMedium: 'Moderate',
+    visibilityHigh: 'High',
     normalRoute: 'Normal route',
     safeRouteLabel: 'Safe route',
     comparison: 'Route comparison',
@@ -141,6 +155,13 @@ const ROUTE_I18N = {
     routeDuration: 'Жол жүру уақыты',
     dangerZones: 'Қауіпті аймақтар',
     riskScore: 'Қауіп-скоры',
+    riskLevel: 'Қауіп деңгейі',
+    riskSafe: 'Қауіпсіз',
+    riskMedium: 'Орташа',
+    riskDanger: 'Қауіпті',
+    visibilityLow: 'Төмен',
+    visibilityMedium: 'Орташа',
+    visibilityHigh: 'Жоғары',
     normalRoute: 'Қалыпты маршрут',
     safeRouteLabel: 'Қауіпсіз маршрут',
     comparison: 'Маршруттарды салыстыру',
@@ -192,6 +213,29 @@ const ROUTE_I18N = {
 function rt(key) {
   const val = ROUTE_I18N[currentLang]?.[key];
   return val !== undefined ? val : key;
+}
+
+function getRiskText(level) {
+  if (level === 'danger') return rt('riskDanger');
+  if (level === 'warning') return rt('riskMedium');
+  return rt('riskSafe');
+}
+
+function getVisibilityText(value) {
+  if (value >= 0.7) return { label: rt('visibilityHigh'), level: 'danger' };
+  if (value >= 0.3) return { label: rt('visibilityMedium'), level: 'warning' };
+  return { label: rt('visibilityLow'), level: 'safe' };
+}
+
+function getRouteRiskStatus(route) {
+  if (!route) return { label: rt('riskSafe'), level: 'safe' };
+  if (route.dangerZoneCount > 0 || route.totalRiskScore > 20000) {
+    return { label: rt('riskDanger'), level: 'danger' };
+  }
+  if (route.warningZoneCount > 0 || route.totalRiskScore > 5000) {
+    return { label: rt('riskMedium'), level: 'warning' };
+  }
+  return { label: rt('riskSafe'), level: 'safe' };
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1164,11 +1208,12 @@ function renderRouteOnMap() {
     let html = `<div class="route-tooltip">`;
     html += `<div class="route-tooltip-level route-tooltip-level--${level}">${levelLabel}</div>`;
     if (p.buildingName) {
+      const visStatus = getVisibilityText(Number(p.visCoef || 0));
       html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${p.buildingName}</strong></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('luxAtBuilding')}</span><span>${Number(p.buildingLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
-      html += `<div class="route-tooltip-row"><span>${rt('visibilityCoef')}</span><span>${(p.visCoef).toFixed(2)}</span></div>`;
+      html += `<div class="route-tooltip-row"><span>${rt('visibilityCoef')}</span><span>${visStatus.label}</span></div>`;
       html += `<div class="route-tooltip-reason">${rt('directionMatch')} (±${ROUTE_CONFIG.sunAngleTolerance}°)</div>`;
     } else {
       html += `<div class="route-tooltip-row">${rt('noRiskZones')}</div>`;
@@ -1261,6 +1306,8 @@ function updateRoutePanel() {
     routeState.routes.forEach((r, i) => {
       const isSel = i === routeState.selectedRouteIdx;
       const label = i === 0 ? tr.bestRoute : `${tr.routeAlt} ${i}`;
+      const routeStatus = getRouteRiskStatus(r);
+      const routeStatusClass = routeStatus.level === 'danger' ? 'danger' : (routeStatus.level === 'warning' ? 'warning' : 'safe');
       comparisonHTML += `
         <button class="route-comparison-card ${isSel ? 'route-comparison-card--active' : ''}" data-route-idx="${i}">
           <div class="route-comparison-label">${label}</div>
@@ -1270,8 +1317,8 @@ function updateRoutePanel() {
             <span title="${tr.eta}">🕒 ${fmtETA(r.duration)}</span>
           </div>
           <div class="route-comparison-risk">
-            <span class="route-risk-dot route-risk-dot--${r.dangerZoneCount > 0 ? 'danger' : r.warningZoneCount > 0 ? 'warning' : 'safe'}"></span>
-            ${tr.riskScore}: ${r.totalRiskScore.toLocaleString(tr.locale)}
+            <span class="route-risk-dot route-risk-dot--${routeStatusClass}"></span>
+            ${tr.riskLevel}: ${routeStatus.label}
           </div>
           <div class="route-comparison-zones">${tr.dangerZones}: ${r.dangerZoneCount}</div>
         </button>`;
@@ -1280,15 +1327,15 @@ function updateRoutePanel() {
     comparisonHTML += `</div></div>`;
   }
 
-  const routeStatus = route.dangerZoneCount > 0 ? tr.routeHasRisks : (route.warningZoneCount > 0 ? tr.routeHasRisks : tr.routeSafe);
-  const statusClass = route.dangerZoneCount > 0 ? 'danger' : (route.warningZoneCount > 0 ? 'warning' : 'safe');
+  const routeStatus = getRouteRiskStatus(route);
+  const statusClass = routeStatus.level;
 
   panel.innerHTML = `
     <div class="route-summary">
       ${locationAlertHTML}
       <div class="route-status route-status--${statusClass}">
         <span class="route-status-dot"></span>
-        ${routeStatus}
+        ${routeStatus.label}
       </div>
       <div class="route-stats">
         <div class="route-stat">
@@ -1308,8 +1355,8 @@ function updateRoutePanel() {
           <span class="route-stat-value route-stat-value--${route.dangerZoneCount > 0 ? 'danger' : 'safe'}">${route.dangerZoneCount}</span>
         </div>
         <div class="route-stat">
-          <span class="route-stat-label">${tr.riskScore}</span>
-          <span class="route-stat-value">${route.totalRiskScore.toLocaleString(tr.locale)}</span>
+          <span class="route-stat-label">${tr.riskLevel}</span>
+          <span class="route-stat-value route-stat-value--${statusClass}">${routeStatus.label}</span>
         </div>
       </div>
     </div>
