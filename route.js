@@ -243,14 +243,13 @@ function getRouteRiskStatus(route) {
 // ════════════════════════════════════════════════════════════════════════════
 
 const ROUTE_CONFIG = {
-  geocodeUrl: `https://api.maptiler.com/geocoding`,
+  suggestUrl: 'https://catalog.api.2gis.com/3.0/suggests',
+  suggestApiKey: TWO_GIS_API_KEY,
   directionsUrl: `https://router.project-osrm.org/route/v1/driving`,
-  apiKey: MAPTILER_KEY,
   debounceMs: 350,
   proximity: [71.430, 51.128], // Astana center — bias geocoding results
   // Astana bounding box [west, south, east, north] — hard-restrict geocoding to city only
   cityBbox: [71.10, 50.95, 71.80, 51.30],
-  country: 'kz',
   searchRadius: 300,           // meters — building proximity to route
   dangerLuxThreshold: 50000,   // lux — above this is considered dangerous
   sunAngleTolerance: 30,       // degrees — movement vs sun direction ±
@@ -259,7 +258,6 @@ const ROUTE_CONFIG = {
   cacheTTL: 5 * 60 * 1000,     // 5 min geocoding cache
   detourOffsets: [450, -450, 850, -850], // meters — perpendicular detours to synthesize alternatives
   maxAlternatives: 3,          // max routes to present (including the main one)
-  placesUrl: './places.json',  // local places database
   locationRouteUpdateDistance: 25, // meters before rebuilding from a new position
   locationRouteUpdateInterval: 7000, // avoid excessive routing requests while moving
   locationZoneRadius: 35, // meters around a colored route segment
@@ -384,11 +382,105 @@ function searchLocalPlaces(query) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// GEOCODING — MapTiler Geocoding API with debounce + cache + local places
+// GEOCODING — 2GIS Suggest API with debounce + cache
 // ════════════════════════════════════════════════════════════════════════════
 
+function expandGeocodeQueries(query) {
+  const normalized = normalizeSearchText(query);
+  const original = query.toLowerCase().trim();
+  return !normalized || normalized === original ? [query] : [query, normalized];
+}
+
+function getPlaceSearchFields(place) {
+  return [
+    place.name_ru,
+    place.name_en,
+    place.name_kk,
+    place.address_ru,
+    place.address_en,
+    place.address_kk,
+    ...(place.search_terms || []),
+  ].filter(Boolean);
+}
+
+function searchLocalPlaces(query) {
+  const q = normalizeSearchText(query);
+  if (q.length < 2) return [];
+
+  const qWords = q.split(' ').filter(Boolean);
+  const houseNumber = isAddressQuery(query) ? getRequestedHouseNumber(query) : null;
+
+  const scored = [];
+  for (const place of localPlaces) {
+    const nameFields = [place.name_ru, place.name_en, place.name_kk].filter(Boolean).map(normalizeSearchText);
+    const addressFields = [place.address_ru, place.address_en, place.address_kk].filter(Boolean).map(normalizeSearchText);
+    const allFields = getPlaceSearchFields(place).map(normalizeSearchText);
+
+    const nameBlob = nameFields.join(' ');
+    const addressBlob = addressFields.join(' ');
+    const allBlob = allFields.join(' ');
+
+    const exactAll = allBlob === q;
+    const exactAddress = addressBlob === q;
+    const containsAll = allBlob.includes(q);
+    const containsAddress = addressBlob.includes(q);
+    const containsName = nameBlob.includes(q);
+    const wordsAll = qWords.length > 1 && qWords.every(word => allBlob.includes(word));
+    const wordsAddress = qWords.length > 1 && qWords.every(word => addressBlob.includes(word));
+    const wordsName = qWords.length > 1 && qWords.every(word => nameBlob.includes(word));
+
+    if (!exactAll && !exactAddress && !containsAll && !containsAddress && !containsName && !wordsAll && !wordsAddress && !wordsName) {
+      continue;
+    }
+
+    let score = 0;
+    if (exactAll) score = 1000;
+    else if (exactAddress) score = 980;
+    else if (containsAddress) score = 900;
+    else if (containsAll) score = 800;
+    else if (wordsAddress) score = 700;
+    else if (wordsAll) score = 600;
+    else if (containsName) score = 500;
+    else if (wordsName) score = 400;
+
+    if (houseNumber) {
+      const addressHasNumber = addressFields.some(field =>
+        hasRequestedHouseNumber({ text: field, address: field, place_name: field }, houseNumber)
+      );
+      const nameHasNumber = nameFields.some(field =>
+        hasRequestedHouseNumber({ text: field, address: field, place_name: field }, houseNumber)
+      );
+
+      if (addressHasNumber) {
+        score += 250;
+      } else if (nameHasNumber) {
+        score += 100;
+      } else {
+        score -= 150;
+      }
+    }
+
+    scored.push({
+      score,
+      lng: place.lng,
+      lat: place.lat,
+      label: currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru,
+      place: currentLang === 'en' ? (place.name_en + ', ' + place.address_en) :
+             currentLang === 'kk' ? (place.name_kk + ', ' + place.address_kk) :
+             (place.name_ru + ', ' + place.address_ru),
+    });
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(({ score, ...result }) => result);
+}
+
+function getGeocodeCacheKey(query) {
+  return `${currentLang}:${query.toLowerCase()}`;
+}
+
 function getCachedGeocode(query) {
-  const cached = geocodeCache.get(query.toLowerCase());
+  const cached = geocodeCache.get(getGeocodeCacheKey(query));
   if (cached && Date.now() - cached.timestamp < ROUTE_CONFIG.cacheTTL) {
     return cached.results;
   }
@@ -396,7 +488,17 @@ function getCachedGeocode(query) {
 }
 
 function setCachedGeocode(query, results) {
-  geocodeCache.set(query.toLowerCase(), { results, timestamp: Date.now() });
+  geocodeCache.set(getGeocodeCacheKey(query), { results, timestamp: Date.now() });
+}
+
+function get2GisLocale() {
+  if (currentLang === 'kk') return 'kk_KZ';
+  return 'ru_KZ';
+}
+
+function getAstanaPolygon() {
+  const [west, south, east, north] = ROUTE_CONFIG.cityBbox;
+  return `POLYGON((${west} ${south},${east} ${south},${east} ${north},${west} ${north},${west} ${south}))`;
 }
 
 async function geocodeSearch(query) {
@@ -406,61 +508,63 @@ async function geocodeSearch(query) {
   const cached = getCachedGeocode(trimmed);
   if (cached) return cached;
 
-  // First, search in local places
-  let results = searchLocalPlaces(trimmed);
+  if (!ROUTE_CONFIG.suggestApiKey) {
+    console.warn('[2GIS Suggest] TWO_GIS_API_KEY is not configured');
+    return [];
+  }
 
-  // Then, search via MapTiler API
-  const bbox = ROUTE_CONFIG.cityBbox.join(',');
-  const geocodeQueries = expandGeocodeQueries(trimmed);
   const houseNumber = isAddressQuery(trimmed) ? getRequestedHouseNumber(trimmed) : null;
+  const addressSearch = Boolean(houseNumber);
 
   try {
-    const responses = await Promise.all(geocodeQueries.map(async geocodeQuery => {
-      const url = `${ROUTE_CONFIG.geocodeUrl}/${encodeURIComponent(geocodeQuery)}.json?key=${ROUTE_CONFIG.apiKey}` +
-        `&autocomplete=true` +
-        `&limit=${ROUTE_CONFIG.maxSuggestions}` +
-        `&proximity=${ROUTE_CONFIG.proximity[0]},${ROUTE_CONFIG.proximity[1]}` +
-        `&country=${ROUTE_CONFIG.country}` +
-        `&bbox=${bbox}`;
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      return resp.json();
-    }));
+    const url = new URL(ROUTE_CONFIG.suggestUrl);
+    url.searchParams.set('q', trimmed);
+    url.searchParams.set('key', ROUTE_CONFIG.suggestApiKey);
+    url.searchParams.set('locale', get2GisLocale());
+    // Address hints only contain a street and house number. For a name such as
+    // "Керуен", request route endpoints instead: 2GIS returns the actual
+    // building/organization name together with coordinates.
+    url.searchParams.set('suggest_type', addressSearch ? 'address' : 'route_endpoint');
+    if (addressSearch) url.searchParams.set('type', 'building');
+    url.searchParams.set('fields', 'items.point,items.address,items.full_address_name');
+    url.searchParams.set('location', ROUTE_CONFIG.proximity.join(','));
+    url.searchParams.set('sort_point', ROUTE_CONFIG.proximity.join(','));
+    url.searchParams.set('polygon', getAstanaPolygon());
+    url.searchParams.set('page_size', ROUTE_CONFIG.maxSuggestions);
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
     const [west, south, east, north] = ROUTE_CONFIG.cityBbox;
-    
-    const mapTilerResults = responses.flatMap(data => data.features || [])
-      .map(f => {
-        const streetLabel = f.address ? `${f.text} ${f.address}` : (f.text || '');
-        const fullName = f.place_name || streetLabel || '';
+
+    const results = (data.result?.items || [])
+      .map(item => {
+        const address = item.full_address_name || item.address_name || item.address?.name || '';
+        const name = item.name || item.full_name || '';
+        const label = addressSearch ? (address || name) : (name || address);
         return {
-          lng: f.center[0],
-          lat: f.center[1],
-          label: streetLabel || fullName,
-          place: fullName,
-          feature: f,
+          lng: item.point?.lon,
+          lat: item.point?.lat,
+          label,
+          place: label,
+          item,
         };
       })
+      .filter(r => Number.isFinite(r.lng) && Number.isFinite(r.lat))
       .filter(r => r.lng >= west && r.lng <= east && r.lat >= south && r.lat <= north)
-      .filter(r => !houseNumber || hasRequestedHouseNumber(r.feature, houseNumber))
-      .map(({ feature, ...result }) => result);
+      .filter(r => !houseNumber || hasRequestedHouseNumber({
+        text: r.item.name,
+        address: r.item.address_name || r.item.address?.name,
+        place_name: r.label,
+      }, houseNumber))
+      .map(({ item, ...result }) => result);
 
-    // Combine local and MapTiler results, dedupe by proximity
-    const combined = [...results];
-    for (const mt of mapTilerResults) {
-      const isDupe = combined.some(r => 
-        Math.abs(r.lng - mt.lng) < 0.001 && Math.abs(r.lat - mt.lat) < 0.001
-      );
-      if (!isDupe) combined.push(mt);
-    }
-
-    // Limit total results
-    results = combined.slice(0, ROUTE_CONFIG.maxSuggestions);
     setCachedGeocode(trimmed, results);
     return results;
   } catch (err) {
-    console.warn('[Geocode] Search failed:', err);
-    setCachedGeocode(trimmed, results);
-    return results;
+    console.warn('[2GIS Suggest] Search failed:', err);
+    setCachedGeocode(trimmed, []);
+    return [];
   }
 }
 
@@ -1617,11 +1721,9 @@ function applyRouteLangText() {
 
 function waitForMapAndInit() {
   if (map && map.loaded()) {
-    loadLocalPlaces();
     initRouteModule();
   } else if (map) {
     map.on('load', () => {
-      loadLocalPlaces();
       initRouteModule();
     });
   } else {

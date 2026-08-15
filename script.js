@@ -4,6 +4,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 const MAPTILER_KEY = 'JBWS7gL5h6Ob9ya2vfNO';
+// Create a browser key for Suggest API in the 2GIS Platform Manager.
+const TWO_GIS_API_KEY = 'f5c8ff47-1a40-42bc-b77d-2bdfea43a008';
 const MAP_STYLE = {
   dark:  `https://api.maptiler.com/maps/streets-v4-dark/style.json?key=${MAPTILER_KEY}`,
   light: `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
