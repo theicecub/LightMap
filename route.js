@@ -306,14 +306,6 @@ function normalizeSearchText(value) {
     .trim();
 }
 
-function expandGeocodeQueries(query) {
-  const normalized = normalizeSearchText(query);
-  const isKudaiberdyulyQuery = normalized.includes('шакарим кудайбердыулы');
-  return !isKudaiberdyulyQuery || normalized === query.toLowerCase().trim()
-    ? [query]
-    : [query, normalized];
-}
-
 function getRequestedHouseNumber(query) {
   const match = normalizeSearchText(query).match(/(?:^|\s)(\d+(?:\s*\/\s*\d+)?[\p{L}]?)(?=$|\s)/u);
   return match ? match[1].replace(/\s+/g, '') : null;
@@ -350,35 +342,6 @@ async function loadLocalPlaces() {
     console.warn('[Places] Could not load places.json:', err);
     localPlaces = [];
   }
-}
-
-// Search in local places with fuzzy matching
-function searchLocalPlaces(query) {
-  const q = normalizeSearchText(query);
-  if (q.length < 2) return [];
-
-  const results = [];
-  for (const place of localPlaces) {
-    const name = currentLang === 'en' ? place.name_en : currentLang === 'kk' ? place.name_kk : place.name_ru || '';
-    const address = currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru || '';
-    const searchTerms = [name, address, ...(place.search_terms || [])].map(normalizeSearchText);
-    const matchesAllQueryWords = q.split(' ').length > 1 &&
-      q.split(' ').every(word => searchTerms.some(term => term.includes(word)));
-    
-    // Match query against name and address
-    if (searchTerms.some(term => term.includes(q)) || matchesAllQueryWords) {
-      results.push({
-        lng: place.lng,
-        lat: place.lat,
-        label: currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru,
-        place: currentLang === 'en' ? (place.name_en + ', ' + place.address_en) : 
-               currentLang === 'kk' ? (place.name_kk + ', ' + place.address_kk) :
-               (place.name_ru + ', ' + place.address_ru),
-      });
-    }
-  }
-
-  return results;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -757,6 +720,77 @@ function distanceFalloff(distM, radius) {
   return Math.max(0.1, 1 - distM / radius);
 }
 
+// Buildings are static for the lifetime of a loaded dataset. Indexing them once
+// avoids checking every building against every route segment.
+const BUILDING_GRID_CELL_SIZE = 300;
+const BUILDING_GRID_LAT_METERS = 110574;
+const BUILDING_GRID_LNG_METERS = 111320 * Math.cos(ASTANA.lat * Math.PI / 180);
+let buildingSpatialIndex = { source: null, size: 0, cells: null };
+
+function buildingGridKey(x, y) {
+  return `${x}:${y}`;
+}
+
+function getBuildingSpatialIndex() {
+  // `loadBuildings` replaces the array, so a new dataset automatically gets a
+  // fresh index. The length check also covers appending candidates in place.
+  if (buildingSpatialIndex.source === buildings &&
+      buildingSpatialIndex.size === buildings.length) {
+    return buildingSpatialIndex;
+  }
+
+  const cells = new Map();
+  for (const building of buildings) {
+    if (!Number.isFinite(building.lat) || !Number.isFinite(building.lng)) continue;
+
+    const x = Math.floor(building.lng * BUILDING_GRID_LNG_METERS / BUILDING_GRID_CELL_SIZE);
+    const y = Math.floor(building.lat * BUILDING_GRID_LAT_METERS / BUILDING_GRID_CELL_SIZE);
+    const key = buildingGridKey(x, y);
+    const cell = cells.get(key);
+    if (cell) cell.push(building);
+    else cells.set(key, [building]);
+  }
+
+  buildingSpatialIndex = { source: buildings, size: buildings.length, cells };
+  return buildingSpatialIndex;
+}
+
+function getSegmentBuildingCandidates(segmentCoords, searchRadius) {
+  const index = getBuildingSpatialIndex();
+  if (index.cells.size === 0) return [];
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const [lng, lat] of segmentCoords) {
+    const x = lng * BUILDING_GRID_LNG_METERS;
+    const y = lat * BUILDING_GRID_LAT_METERS;
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+
+  // The small pad makes the equirectangular grid conservative; exact distance
+  // is still calculated below with pointToSegmentDist.
+  const bboxPadding = searchRadius + 10;
+  const fromCellX = Math.floor((minX - bboxPadding) / BUILDING_GRID_CELL_SIZE);
+  const toCellX = Math.floor((maxX + bboxPadding) / BUILDING_GRID_CELL_SIZE);
+  const fromCellY = Math.floor((minY - bboxPadding) / BUILDING_GRID_CELL_SIZE);
+  const toCellY = Math.floor((maxY + bboxPadding) / BUILDING_GRID_CELL_SIZE);
+  const candidates = [];
+
+  for (let x = fromCellX; x <= toCellX; x++) {
+    for (let y = fromCellY; y <= toCellY; y++) {
+      const cell = index.cells.get(buildingGridKey(x, y));
+      if (cell) candidates.push(...cell);
+    }
+  }
+
+  return candidates;
+}
+
 function evaluateRoute(routeGeojson, durationS, distanceM) {
   const coords = routeGeojson.coordinates;
   const weatherMul = computeWeatherMultiplier();
@@ -784,7 +818,13 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
 
         let segRisk = 0;
 
-        for (const b of buildings) {
+        // The grid/bbox query removes distant buildings before the expensive
+        // point-to-polyline distance calculation.
+        const nearbyCandidates = getSegmentBuildingCandidates(
+          currentSeg.coords,
+          ROUTE_CONFIG.searchRadius,
+        );
+        for (const b of nearbyCandidates) {
           let minDist = Infinity;
           for (let j = 1; j < currentSeg.coords.length; j++) {
             const a = { lat: currentSeg.coords[j - 1][1], lng: currentSeg.coords[j - 1][0] };
