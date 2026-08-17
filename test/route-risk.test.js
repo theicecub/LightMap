@@ -7,6 +7,9 @@ const vm = require('node:vm');
 const rootDir = path.resolve(__dirname, '..');
 const scriptSource = fs.readFileSync(path.join(rootDir, 'script.js'), 'utf8');
 const routeSource = fs.readFileSync(path.join(rootDir, 'route.js'), 'utf8');
+const aiDetectSource = fs.readFileSync(path.join(rootDir, 'ai-detect.js'), 'utf8');
+const classifyBuildings = require(path.join(rootDir, 'api', 'classify-buildings.js'));
+const { normalizeClassification } = classifyBuildings;
 
 function sourceBetween(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -154,4 +157,72 @@ test('evaluateRoute scores only nearby buildings and preserves contribution tota
   assert.equal(segment.nearbyBuildings[0].contribution, segment.riskScore);
   assert.ok(result.totalRiskScore > 0);
   assert.equal(result.dangerZoneCount, 1);
+});
+
+function loadAiDetectFunctions() {
+  const context = {
+    Math,
+    Number,
+    String,
+    Array,
+    Set,
+    escapeHtml: value => String(value ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+    haversine: (lat1, lng1, lat2, lng2) => {
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
+  };
+  vm.runInNewContext(`${aiDetectSource}\nglobalThis.aiTestApi = { normalizeAiCandidate, dedupeAiCandidates };`, context);
+  return context.aiTestApi;
+}
+
+test('AI candidates are deduplicated against manual buildings and each other', () => {
+  const { normalizeAiCandidate, dedupeAiCandidates } = loadAiDetectFunctions();
+  const candidates = [
+    normalizeAiCandidate({ name: 'Duplicate', lat: 51.128, lng: 71.430, baseLux: 40000, confidence: 'high' }, 0),
+    normalizeAiCandidate({ name: 'New', lat: 51.134, lng: 71.440, baseLux: 40000, confidence: 'medium' }, 1),
+    normalizeAiCandidate({ name: 'New nearby', lat: 51.1341, lng: 71.4401, baseLux: 40000, confidence: 'medium' }, 2),
+  ];
+  const result = dedupeAiCandidates(candidates, [{ lat: 51.1281, lng: 71.4301 }]);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].name, 'New');
+  assert.equal(result[0].id, 100001);
+});
+
+test('Gemini structured output validation rejects malformed values', () => {
+  const ids = new Set(['123']);
+  assert.equal(normalizeClassification({ osm_id: '123', material_guess: 'glass', reflectivity: 1.2, confidence: 'high', reasoning: 'x' }, ids), null);
+  assert.equal(normalizeClassification({ osm_id: '123', material_guess: 'unsupported', reflectivity: 0.6, confidence: 'high', reasoning: 'x' }, ids), null);
+  assert.equal(normalizeClassification({ osm_id: 'not-requested', material_guess: 'glass', reflectivity: 0.6, confidence: 'high', reasoning: 'x' }, ids), null);
+  const valid = normalizeClassification({ osm_id: '123', material_guess: 'glass', reflectivity: 0.6, confidence: 'low', reasoning: '<unsafe>' }, ids);
+  assert.equal(valid.reasoning, '&lt;unsafe&gt;');
+});
+
+test('classification endpoint degrades to an empty list when secrets are unavailable', async () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  const postgresUrl = process.env.POSTGRES_URL;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  delete process.env.DATABASE_URL;
+  delete process.env.POSTGRES_URL;
+  delete process.env.GEMINI_API_KEY;
+
+  let statusCode = null;
+  let payload = null;
+  const response = {
+    status(code) { statusCode = code; return this; },
+    json(value) { payload = value; return this; },
+  };
+  await classifyBuildings({ method: 'GET' }, response);
+
+  if (databaseUrl === undefined) delete process.env.DATABASE_URL;
+  else process.env.DATABASE_URL = databaseUrl;
+  if (postgresUrl === undefined) delete process.env.POSTGRES_URL;
+  else process.env.POSTGRES_URL = postgresUrl;
+  if (geminiKey === undefined) delete process.env.GEMINI_API_KEY;
+  else process.env.GEMINI_API_KEY = geminiKey;
+
+  assert.equal(statusCode, 200);
+  assert.deepEqual(payload, { buildings: [] });
 });
