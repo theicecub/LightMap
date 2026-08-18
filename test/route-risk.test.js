@@ -10,6 +10,7 @@ const routeSource = fs.readFileSync(path.join(rootDir, 'route.js'), 'utf8');
 const aiDetectSource = fs.readFileSync(path.join(rootDir, 'ai-detect.js'), 'utf8');
 const classifyBuildings = require(path.join(rootDir, 'api', 'classify-buildings.js'));
 const { normalizeClassification } = classifyBuildings;
+const { rewriteStyle } = require(path.join(rootDir, 'api', 'maptiler.js'));
 
 function sourceBetween(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -225,4 +226,13 @@ test('classification endpoint degrades to an empty list when secrets are unavail
 
   assert.equal(statusCode, 200);
   assert.deepEqual(payload, { buildings: [] });
+});
+
+test('MapTiler style proxy preserves MapLibre glyph placeholders and sprite paths', () => {
+  const style = rewriteStyle({
+    glyphs: 'https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=secret',
+    sprite: 'https://api.maptiler.com/sprites/general/sprite?key=secret',
+  });
+  assert.equal(style.glyphs, '/api/maptiler?path=%2Ffonts%2F{fontstack}%2F{range}.pbf');
+  assert.equal(style.sprite, '/api/maptiler?path=%2Fsprites%2Fgeneral%2Fsprite');
 });

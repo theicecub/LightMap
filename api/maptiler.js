@@ -1,8 +1,13 @@
 // MapTiler proxy keeps the provider key in Vercel environment variables.
-const ALLOWED_PATHS = ['/maps/', '/tiles/', '/fonts/'];
+const ALLOWED_PATHS = ['/maps/', '/tiles/', '/fonts/', '/sprites/'];
 
 function proxied(path) {
-  return `/api/maptiler?path=${encodeURIComponent(path)}`;
+  // MapLibre must see its glyph placeholders as literal braces so it can
+  // replace {fontstack} and {range} before making the request.
+  const encodedPath = encodeURIComponent(decodeURIComponent(path))
+    .replace(/%7B/gi, '{')
+    .replace(/%7D/gi, '}');
+  return `/api/maptiler?path=${encodedPath}`;
 }
 
 function rewriteStyle(value) {
@@ -30,3 +35,5 @@ module.exports = async (req, res) => {
     return res.status(502).end();
   }
 };
+
+module.exports.rewriteStyle = rewriteStyle;
