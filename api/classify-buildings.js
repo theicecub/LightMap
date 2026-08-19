@@ -8,10 +8,11 @@ const CLASSIFY_CONFIG = {
   bbox: { south: 51.05, west: 71.28, north: 51.22, east: 71.58 },
   minHeightM: 20,
   maxRoadDistanceM: 150,
-  maxCandidates: 250,
+  maxCandidates: 150,
   batchSize: 25,
-  overpassTimeoutMs: 45000,
+  overpassTimeoutMs: 12000,
   overpassEndpoints: [
+    'https://overpass.private.coffee/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
     'https://overpass-api.de/api/interpreter',
     'https://overpass.osm.ch/api/interpreter',
@@ -148,41 +149,71 @@ function getSunPosition(date, lat, lng) {
   return { altitude, azimuth };
 }
 
-function getOverpassQueries() {
+function getOverpassQuery() {
   const { south, west, north, east } = CLASSIFY_CONFIG.bbox;
   const bbox = `${south},${west},${north},${east}`;
-  return {
-    buildings: `[out:json][timeout:60];(way["building"]["height"](${bbox});way["building"]["building:levels"](${bbox}););out geom;`,
-    roads: `[out:json][timeout:60];way["highway"~"^(trunk|primary|secondary|tertiary|residential|living_street|unclassified|trunk_link|primary_link|secondary_link|tertiary_link)$"](${bbox});out geom;`,
-  };
+  // Full geometry for every tall building in Astana routinely exceeds public
+  // Overpass capacity. A center point and metadata are sufficient here: route
+  // scoring uses the point location, while orientation is conservatively 0.
+  return `[out:json][timeout:25];(` +
+    `way["building"]["building:levels"~"^([7-9]|[1-9][0-9]+)$"](${bbox});` +
+    `way["building"]["height"~"^([2-9][0-9]|[1-9][0-9][0-9]+)([.,][0-9]+)?( ?m)?$"](${bbox});` +
+    `);out center 150;`;
 }
 
 async function queryOverpass(query) {
-  for (const endpoint of CLASSIFY_CONFIG.overpassEndpoints) {
+  async function request(endpoint, mode) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), CLASSIFY_CONFIG.overpassTimeoutMs);
     try {
-      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(query)}`, signal: controller.signal });
+      let response;
+      if (mode === 'get') {
+        const url = new URL(endpoint);
+        url.searchParams.set('data', query);
+        response = await fetch(url, { signal: controller.signal });
+      } else {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          ...(mode === 'form'
+            ? { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(query)}` }
+            : { headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: query }),
+          signal: controller.signal,
+        });
+      }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const body = await response.json();
       if (!Array.isArray(body.elements)) throw new Error('Unexpected response');
       return body.elements;
-    } catch (error) {
-      console.warn(`[AutoDetect] Overpass unavailable (${endpoint}):`, error.message);
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  for (const endpoint of CLASSIFY_CONFIG.overpassEndpoints) {
+    for (const mode of ['form', 'raw', 'get']) {
+      try {
+        return await request(endpoint, mode);
+      } catch (error) {
+        console.warn(`[AutoDetect] Overpass unavailable (${endpoint}, ${mode}):`, error.message);
+      }
     }
   }
   return [];
 }
 
-function buildCandidates(buildings, roads) {
+function buildCandidates(buildings, roads = []) {
   return buildings.map((building) => {
     const tags = building.tags || {};
     const height = estimateHeightMeters(tags);
     const points = ringPoints(building.geometry);
-    const centroid = polygonCentroid(points);
-    if (!height || height < CLASSIFY_CONFIG.minHeightM || !centroid || minRoadDistance(centroid, roads) > CLASSIFY_CONFIG.maxRoadDistanceM) return null;
+    const centroid = polygonCentroid(points) || (Number.isFinite(building.center?.lat) && Number.isFinite(building.center?.lon)
+      ? { lat: building.center.lat, lon: building.center.lon }
+      : null);
+    if (!height || height < CLASSIFY_CONFIG.minHeightM || !centroid) return null;
+    // Road geometry is intentionally optional: a city-wide road query makes
+    // public Overpass instances unreliable, while route scoring already uses
+    // the precise distance-to-road calculation for every candidate.
+    if (roads.length > 0 && minRoadDistance(centroid, roads) > CLASSIFY_CONFIG.maxRoadDistanceM) return null;
     return {
       osm_id: String(building.id),
       name: tags.name || `Здание (${centroid.lat.toFixed(4)}, ${centroid.lon.toFixed(4)})`,
@@ -192,7 +223,7 @@ function buildCandidates(buildings, roads) {
       lat: centroid.lat,
       lng: centroid.lon,
       height,
-      orientation: estimateOrientation(points, centroid),
+      orientation: points.length >= 3 ? estimateOrientation(points, centroid) : 0,
       tags: { name: tags.name || '', building: tags.building || '', material: tags['building:material'] || '', levels: tags['building:levels'] || '', amenity: tags.amenity || '', shop: tags.shop || '' },
     };
   }).filter(Boolean).slice(0, CLASSIFY_CONFIG.maxCandidates);
@@ -258,8 +289,8 @@ module.exports = async (req, res) => {
     return res.status(200).json({ buildings: [] });
   }
   try {
-    const [buildingWays, roads] = await Promise.all(Object.values(getOverpassQueries()).map(queryOverpass));
-    const candidates = buildCandidates(buildingWays, roads);
+    const buildingWays = await queryOverpass(getOverpassQuery());
+    const candidates = buildCandidates(buildingWays);
     if (candidates.length === 0) return res.status(200).json({ buildings: [] });
     const sql = neon(databaseUrl);
     await sql.query('CREATE TABLE IF NOT EXISTS building_classifications (osm_id TEXT PRIMARY KEY, material_guess TEXT NOT NULL, reflectivity REAL NOT NULL, confidence TEXT NOT NULL, reasoning TEXT NOT NULL, classified_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
