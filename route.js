@@ -475,7 +475,10 @@ async function geocodeSearch(query) {
   const addressSearch = Boolean(houseNumber);
 
   try {
-    const url = new URL(ROUTE_CONFIG.suggestUrl);
+    // `suggestUrl` is a same-origin relative path. `new URL()` needs an
+    // explicit base for relative paths; without it the browser throws before
+    // `fetch` is reached and every search is treated as an empty result.
+    const url = new URL(ROUTE_CONFIG.suggestUrl, window.location.origin);
     url.searchParams.set('q', trimmed);
     url.searchParams.set('locale', get2GisLocale());
     // Address hints only contain a street and house number. For a name such as

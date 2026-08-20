@@ -21,6 +21,44 @@ function sourceBetween(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
+const geocodeSource = sourceBetween(
+  routeSource,
+  'function getGeocodeCacheKey',
+  '// ROUTING',
+);
+
+test('2GIS search sends requests through the same-origin proxy', async () => {
+  let requestedUrl;
+  const context = {
+    ROUTE_CONFIG: {
+      suggestUrl: '/api/suggest',
+      cacheTTL: 300000,
+      proximity: [71.43, 51.128],
+      cityBbox: [71.1, 50.95, 71.8, 51.3],
+      maxSuggestions: 6,
+    },
+    currentLang: 'ru',
+    geocodeCache: new Map(),
+    window: { location: { origin: 'https://lightmap.example' } },
+    URL,
+    Map,
+    Date,
+    Number,
+    console,
+    isAddressQuery: () => false,
+    fetch: async url => {
+      requestedUrl = String(url);
+      return { ok: true, json: async () => ({ result: { items: [] } }) };
+    },
+  };
+
+  vm.runInNewContext(`${geocodeSource}\nglobalThis.routeTestApi = { geocodeSearch };`, context);
+  await context.routeTestApi.geocodeSearch('Keruen');
+
+  assert.match(requestedUrl, /^https:\/\/lightmap\.example\/api\/suggest\?/);
+  assert.match(requestedUrl, /(?:\?|&)q=Keruen(?:&|$)/);
+});
+
 const sunAndLuxSource = sourceBetween(
   scriptSource,
   'function getSunPosition',
