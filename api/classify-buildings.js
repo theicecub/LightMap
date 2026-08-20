@@ -10,13 +10,24 @@ const CLASSIFY_CONFIG = {
   maxRoadDistanceM: 150,
   maxCandidates: 150,
   batchSize: 25,
-  overpassTimeoutMs: 12000,
+  // Per-attempt timeout is intentionally short: with 4 endpoints × 3 modes,
+  // the old 12s-per-attempt budget could take 2+ minutes worst case, which
+  // outlives a serverless function's execution limit long before it gets
+  // through the fallback list. overpassBudgetMs caps the *whole* fallback
+  // loop so it always gives up in time to still return a response.
+  overpassTimeoutMs: 6000,
+  overpassBudgetMs: 20000,
+  overpassUserAgent: 'LightMap/1.0 (+https://light-map.vercel.app; Astana glare-hazard map)',
   overpassEndpoints: [
     'https://overpass.private.coffee/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
     'https://overpass-api.de/api/interpreter',
     'https://overpass.osm.ch/api/interpreter',
   ],
+  // Building geometry/height barely changes; re-querying Overpass on every
+  // page load is what was exhausting the free mirrors. Candidates are cached
+  // in Neon and only refreshed once this TTL expires.
+  candidateCacheMs: 14 * 24 * 60 * 60 * 1000,
   geminiModel: 'gemini-2.0-flash-lite',
   materialGuesses: ['mirror', 'reflective', 'glass', 'tinted', 'low_e', 'metal', 'concrete', 'unknown'],
   confidenceLevels: ['low', 'medium', 'high'],
@@ -162,21 +173,23 @@ function getOverpassQuery() {
 }
 
 async function queryOverpass(query) {
-  async function request(endpoint, mode) {
+  const baseHeaders = { 'User-Agent': CLASSIFY_CONFIG.overpassUserAgent };
+
+  async function request(endpoint, mode, timeoutMs) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), CLASSIFY_CONFIG.overpassTimeoutMs);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
       let response;
       if (mode === 'get') {
         const url = new URL(endpoint);
         url.searchParams.set('data', query);
-        response = await fetch(url, { signal: controller.signal });
+        response = await fetch(url, { headers: baseHeaders, signal: controller.signal });
       } else {
         response = await fetch(endpoint, {
           method: 'POST',
           ...(mode === 'form'
-            ? { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(query)}` }
-            : { headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: query }),
+            ? { headers: { ...baseHeaders, 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encodeURIComponent(query)}` }
+            : { headers: { ...baseHeaders, 'Content-Type': 'text/plain;charset=UTF-8' }, body: query }),
           signal: controller.signal,
         });
       }
@@ -189,10 +202,21 @@ async function queryOverpass(query) {
     }
   }
 
+  // Bound the *entire* fallback loop by a shared deadline. Each of the up to
+  // 12 endpoint/mode combinations gets a timeout capped both by
+  // overpassTimeoutMs and by whatever's left of the overall budget, so a run
+  // of unresponsive mirrors can't add up to more than overpassBudgetMs — and
+  // can't silently eat the caller's serverless execution limit.
+  const deadline = Date.now() + CLASSIFY_CONFIG.overpassBudgetMs;
   for (const endpoint of CLASSIFY_CONFIG.overpassEndpoints) {
     for (const mode of ['form', 'raw', 'get']) {
+      const remaining = deadline - Date.now();
+      if (remaining < 1000) {
+        console.warn('[AutoDetect] Overpass time budget exhausted, giving up early');
+        return [];
+      }
       try {
-        return await request(endpoint, mode);
+        return await request(endpoint, mode, Math.min(CLASSIFY_CONFIG.overpassTimeoutMs, remaining));
       } catch (error) {
         console.warn(`[AutoDetect] Overpass unavailable (${endpoint}, ${mode}):`, error.message);
       }
@@ -255,6 +279,53 @@ async function classifyBatch(batch, apiKey) {
   return Array.isArray(parsed) ? parsed.map(item => normalizeClassification(item, ids)).filter(Boolean) : [];
 }
 
+async function ensureCandidateTable(sql) {
+  await sql.query(`CREATE TABLE IF NOT EXISTS building_candidates (
+    osm_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    name_en TEXT NOT NULL,
+    name_kk TEXT NOT NULL,
+    address TEXT NOT NULL,
+    lat DOUBLE PRECISION NOT NULL,
+    lng DOUBLE PRECISION NOT NULL,
+    height REAL NOT NULL,
+    orientation REAL NOT NULL,
+    tags JSONB NOT NULL,
+    fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+}
+
+// Loads whatever candidates are cached and reports how stale they are, in a
+// single round trip. Building geometry/height rarely changes, so this cache
+// is what lets normal page loads skip Overpass entirely.
+async function loadCandidateCache(sql) {
+  const rows = await sql.query('SELECT osm_id, name, name_en, name_kk, address, lat, lng, height, orientation, tags, fetched_at FROM building_candidates');
+  const candidates = rows.map(row => ({
+    osm_id: row.osm_id,
+    name: row.name,
+    name_en: row.name_en,
+    name_kk: row.name_kk,
+    address: row.address,
+    lat: Number(row.lat),
+    lng: Number(row.lng),
+    height: Number(row.height),
+    orientation: Number(row.orientation),
+    tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags,
+  }));
+  const freshAt = rows.reduce((latest, row) => Math.max(latest, new Date(row.fetched_at).getTime()), 0);
+  return { candidates, isFresh: freshAt > 0 && Date.now() - freshAt < CLASSIFY_CONFIG.candidateCacheMs };
+}
+
+async function storeCandidates(sql, candidates) {
+  if (candidates.length === 0) return;
+  await Promise.all(candidates.map(item => sql.query(
+    `INSERT INTO building_candidates (osm_id, name, name_en, name_kk, address, lat, lng, height, orientation, tags, fetched_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+     ON CONFLICT (osm_id) DO UPDATE SET name = $2, name_en = $3, name_kk = $4, address = $5, lat = $6, lng = $7, height = $8, orientation = $9, tags = $10, fetched_at = NOW()`,
+    [item.osm_id, item.name, item.name_en, item.name_kk, item.address, item.lat, item.lng, item.height, item.orientation, JSON.stringify(item.tags)],
+  )));
+}
+
 async function getClassifications(sql, ids) {
   if (ids.length === 0) return new Map();
   const rows = await sql.query('SELECT osm_id, material_guess, reflectivity, confidence, reasoning FROM building_classifications WHERE osm_id = ANY($1)', [ids]);
@@ -289,11 +360,34 @@ module.exports = async (req, res) => {
     return res.status(200).json({ buildings: [] });
   }
   try {
-    const buildingWays = await queryOverpass(getOverpassQuery());
-    const candidates = buildCandidates(buildingWays);
-    if (candidates.length === 0) return res.status(200).json({ buildings: [] });
     const sql = neon(databaseUrl);
+    await ensureCandidateTable(sql);
     await sql.query('CREATE TABLE IF NOT EXISTS building_classifications (osm_id TEXT PRIMARY KEY, material_guess TEXT NOT NULL, reflectivity REAL NOT NULL, confidence TEXT NOT NULL, reasoning TEXT NOT NULL, classified_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
+
+    // Overpass is expensive for the free mirrors and was previously queried
+    // on every single page load, which is what exhausted them. Now it's
+    // consulted only when the candidate cache is empty/stale, or when a
+    // refresh is explicitly requested with the right token.
+    const refreshToken = process.env.AUTODETECT_REFRESH_TOKEN;
+    const forceRefresh = req.query?.refresh === '1' && !!refreshToken && req.query?.token === refreshToken;
+    const cache = await loadCandidateCache(sql);
+    let candidates = cache.candidates;
+
+    if (forceRefresh || !cache.isFresh) {
+      const buildingWays = await queryOverpass(getOverpassQuery());
+      const fetched = buildCandidates(buildingWays);
+      if (fetched.length > 0) {
+        await storeCandidates(sql, fetched);
+        candidates = fetched;
+      } else if (cache.candidates.length > 0) {
+        // Overpass failed (or the budget ran out) but we still have a
+        // previous — even if stale — snapshot. Serve that instead of an
+        // empty map; it's still far more useful than nothing.
+        console.warn('[AutoDetect] Overpass refresh failed, serving stale candidate cache');
+      }
+    }
+
+    if (candidates.length === 0) return res.status(200).json({ buildings: [] });
     const cached = await getClassifications(sql, candidates.map(item => item.osm_id));
     const missing = candidates.filter(item => !cached.has(item.osm_id));
     const created = [];
