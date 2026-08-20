@@ -15,8 +15,8 @@ const CLASSIFY_CONFIG = {
   // outlives a serverless function's execution limit long before it gets
   // through the fallback list. overpassBudgetMs caps the *whole* fallback
   // loop so it always gives up in time to still return a response.
-  overpassTimeoutMs: 6000,
-  overpassBudgetMs: 20000,
+  overpassTimeoutMs: 9000,
+  overpassBudgetMs: 27000,
   overpassUserAgent: 'LightMap/1.0 (+https://light-map.vercel.app; Astana glare-hazard map)',
   overpassEndpoints: [
     'https://overpass.private.coffee/api/interpreter',
@@ -172,7 +172,9 @@ function getOverpassQuery() {
     `);out center 150;`;
 }
 
-async function queryOverpass(query) {
+async function queryOverpass(query, overrides = {}) {
+  const timeoutMs = overrides.timeoutMs ?? CLASSIFY_CONFIG.overpassTimeoutMs;
+  const budgetMs = overrides.budgetMs ?? CLASSIFY_CONFIG.overpassBudgetMs;
   const baseHeaders = { 'User-Agent': CLASSIFY_CONFIG.overpassUserAgent };
 
   async function request(endpoint, mode, timeoutMs) {
@@ -207,7 +209,7 @@ async function queryOverpass(query) {
   // overpassTimeoutMs and by whatever's left of the overall budget, so a run
   // of unresponsive mirrors can't add up to more than overpassBudgetMs — and
   // can't silently eat the caller's serverless execution limit.
-  const deadline = Date.now() + CLASSIFY_CONFIG.overpassBudgetMs;
+  const deadline = Date.now() + budgetMs;
   for (const endpoint of CLASSIFY_CONFIG.overpassEndpoints) {
     for (const mode of ['form', 'raw', 'get']) {
       const remaining = deadline - Date.now();
@@ -216,7 +218,7 @@ async function queryOverpass(query) {
         return [];
       }
       try {
-        return await request(endpoint, mode, Math.min(CLASSIFY_CONFIG.overpassTimeoutMs, remaining));
+        return await request(endpoint, mode, Math.min(timeoutMs, remaining));
       } catch (error) {
         console.warn(`[AutoDetect] Overpass unavailable (${endpoint}, ${mode}):`, error.message);
       }
@@ -404,3 +406,10 @@ module.exports = async (req, res) => {
 };
 
 module.exports.normalizeClassification = normalizeClassification;
+module.exports.CLASSIFY_CONFIG = CLASSIFY_CONFIG;
+module.exports.getOverpassQuery = getOverpassQuery;
+module.exports.queryOverpass = queryOverpass;
+module.exports.buildCandidates = buildCandidates;
+module.exports.ensureCandidateTable = ensureCandidateTable;
+module.exports.storeCandidates = storeCandidates;
+module.exports.loadCandidateCache = loadCandidateCache;
