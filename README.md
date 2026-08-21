@@ -4,11 +4,11 @@ LightMap shows potentially hazardous facade glare in Astana and scores route exp
 
 ## AI candidate detection
 
-After the initial map render, the browser requests `/api/classify-buildings`. The Vercel function obtains OSM candidates through Overpass, reuses cached facade classifications from Neon, and sends only unseen OSM ids to Gemini in batches. If any external service is unavailable, it returns an empty list and the map continues with `buildings.json`.
+After the initial map render, the browser requests `/api/classify-buildings`. The Vercel function obtains OSM candidates through Overpass, reuses cached facade classifications from Neon, and sends only unseen OSM ids to Groq in batches. If any external service is unavailable, it returns an empty list and the map continues with `buildings.json`.
 
 Set these Vercel environment variables:
 
-- `GEMINI_API_KEY`
+- `GROQ_API_KEY`
 - `DATABASE_URL` or `POSTGRES_URL` from Neon
 - `TWO_GIS_API_KEY`
 - `MAPTILER_KEY`

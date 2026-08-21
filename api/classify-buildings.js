@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════════
-// LightMap — серверная классификация фасадов (Overpass + Gemini + Neon)
+// LightMap — серверная классификация фасадов (Overpass + Groq + Neon)
 // ════════════════════════════════════════════════════════════════════════════
 
 const { neon } = require('@neondatabase/serverless');
@@ -28,7 +28,7 @@ const CLASSIFY_CONFIG = {
   // page load is what was exhausting the free mirrors. Candidates are cached
   // in Neon and only refreshed once this TTL expires.
   candidateCacheMs: 14 * 24 * 60 * 60 * 1000,
-  geminiModel: 'gemini-2.0-flash-lite',
+  groqModel: 'llama-3.1-8b-instant',
   materialGuesses: ['mirror', 'reflective', 'glass', 'tinted', 'low_e', 'metal', 'concrete', 'unknown'],
   confidenceLevels: ['low', 'medium', 'high'],
 };
@@ -267,18 +267,20 @@ function normalizeClassification(value, requestedIds) {
 }
 
 async function classifyBatch(batch, apiKey) {
-  const prompt = `Ты оцениваешь вероятный материал фасада зданий Астаны по OSM-тегам. Верни классификацию для каждого osm_id. reasoning: одно короткое предложение на русском.\nЗдания:\n${JSON.stringify(batch.map(({ osm_id, tags }) => ({ osm_id, ...tags })) )}`;
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CLASSIFY_CONFIG.geminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', responseSchema: responseSchema() } }),
+  const prompt = `Ты оцениваешь вероятный материал фасада зданий Астаны по OSM-тегам. Верни только JSON-объект вида {"classifications":[...]} без markdown. Для каждого osm_id создай объект с полями: osm_id (строка), material_guess (одно из: ${CLASSIFY_CONFIG.materialGuesses.join(', ')}), reflectivity (число от 0 до 1), confidence (одно из: ${CLASSIFY_CONFIG.confidenceLevels.join(', ')}), reasoning (одно короткое предложение на русском).\nЗдания:\n${JSON.stringify(batch.map(({ osm_id, tags }) => ({ osm_id, ...tags })) )}`;
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: CLASSIFY_CONFIG.groqModel, messages: [{ role: 'user', content: prompt }], temperature: 0, response_format: { type: 'json_object' } }),
   });
-  if (!response.ok) throw new Error(`Gemini HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`Groq HTTP ${response.status}`);
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = data.choices?.[0]?.message?.content;
   let parsed;
   try { parsed = JSON.parse(text); } catch { return []; }
   const ids = new Set(batch.map(item => item.osm_id));
-  return Array.isArray(parsed) ? parsed.map(item => normalizeClassification(item, ids)).filter(Boolean) : [];
+  const items = Array.isArray(parsed) ? parsed : parsed?.classifications;
+  return Array.isArray(items) ? items.map(item => normalizeClassification(item, ids)).filter(Boolean) : [];
 }
 
 async function ensureCandidateTable(sql) {
@@ -356,9 +358,9 @@ function toClientBuilding(candidate, classification) {
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ buildings: [] });
   const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!databaseUrl || !geminiKey) {
-    console.warn('[AutoDetect] GEMINI_API_KEY or DATABASE_URL is not configured');
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!databaseUrl || !groqKey) {
+    console.warn('[AutoDetect] GROQ_API_KEY or DATABASE_URL is not configured');
     return res.status(200).json({ buildings: [] });
   }
   try {
@@ -394,7 +396,7 @@ module.exports = async (req, res) => {
     const missing = candidates.filter(item => !cached.has(item.osm_id));
     const created = [];
     for (let index = 0; index < missing.length; index += CLASSIFY_CONFIG.batchSize) {
-      created.push(...await classifyBatch(missing.slice(index, index + CLASSIFY_CONFIG.batchSize), geminiKey));
+      created.push(...await classifyBatch(missing.slice(index, index + CLASSIFY_CONFIG.batchSize), groqKey));
     }
     await storeClassifications(sql, created);
     created.forEach(item => cached.set(item.osm_id, item));

@@ -230,7 +230,7 @@ test('AI candidates are deduplicated against manual buildings and each other', (
   assert.equal(result[0].id, 100001);
 });
 
-test('Gemini structured output validation rejects malformed values', () => {
+test('Groq structured output validation rejects malformed values', () => {
   const ids = new Set(['123']);
   assert.equal(normalizeClassification({ osm_id: '123', material_guess: 'glass', reflectivity: 1.2, confidence: 'high', reasoning: 'x' }, ids), null);
   assert.equal(normalizeClassification({ osm_id: '123', material_guess: 'unsupported', reflectivity: 0.6, confidence: 'high', reasoning: 'x' }, ids), null);
@@ -242,10 +242,10 @@ test('Gemini structured output validation rejects malformed values', () => {
 test('classification endpoint degrades to an empty list when secrets are unavailable', async () => {
   const databaseUrl = process.env.DATABASE_URL;
   const postgresUrl = process.env.POSTGRES_URL;
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
   delete process.env.DATABASE_URL;
   delete process.env.POSTGRES_URL;
-  delete process.env.GEMINI_API_KEY;
+  delete process.env.GROQ_API_KEY;
 
   let statusCode = null;
   let payload = null;
@@ -259,8 +259,8 @@ test('classification endpoint degrades to an empty list when secrets are unavail
   else process.env.DATABASE_URL = databaseUrl;
   if (postgresUrl === undefined) delete process.env.POSTGRES_URL;
   else process.env.POSTGRES_URL = postgresUrl;
-  if (geminiKey === undefined) delete process.env.GEMINI_API_KEY;
-  else process.env.GEMINI_API_KEY = geminiKey;
+  if (groqKey === undefined) delete process.env.GROQ_API_KEY;
+  else process.env.GROQ_API_KEY = groqKey;
 
   assert.equal(statusCode, 200);
   assert.deepEqual(payload, { buildings: [] });
