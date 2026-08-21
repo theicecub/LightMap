@@ -474,7 +474,7 @@ async function geocodeSearch(query) {
   const addressSearch = Boolean(houseNumber);
 
   try {
-    const url = new URL(ROUTE_CONFIG.suggestUrl);
+    const url = new URL(ROUTE_CONFIG.suggestUrl, window.location.origin);
     url.searchParams.set('q', trimmed);
     url.searchParams.set('locale', get2GisLocale());
     // Address hints only contain a street and house number. For a name such as
