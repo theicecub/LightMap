@@ -492,8 +492,7 @@
  }
  .popup-badge--danger { background: rgba(255,90,60,.16); color: var(--glare); }
  .popup-badge--warning { background: rgba(255,176,32,.16); color: var(--caution); }
-.popup-badge--safe { background: rgba(34,211,166,.16); color: var(--clear); }
-.popup-badge--ai { background: rgba(148,163,184,.16); color: #94A3B8; margin-left: 5px; }
+ .popup-badge--safe { background: rgba(34,211,166,.16); color: var(--clear); }
 
  .popup-title {
  font-family: 'Space Grotesk', sans-serif;

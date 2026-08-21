@@ -243,8 +243,8 @@ function getRouteRiskStatus(route) {
 // ════════════════════════════════════════════════════════════════════════════
 
 const ROUTE_CONFIG = {
-  suggestUrl: '/api/suggest',
-  placesUrl: './places.json',
+  suggestUrl: 'https://catalog.api.2gis.com/3.0/suggests',
+  suggestApiKey: TWO_GIS_API_KEY,
   directionsUrl: `https://router.project-osrm.org/route/v1/driving`,
   debounceMs: 350,
   proximity: [71.430, 51.128], // Astana center — bias geocoding results
@@ -471,15 +471,18 @@ async function geocodeSearch(query) {
   const cached = getCachedGeocode(trimmed);
   if (cached) return cached;
 
+  if (!ROUTE_CONFIG.suggestApiKey) {
+    console.warn('[2GIS Suggest] TWO_GIS_API_KEY is not configured');
+    return [];
+  }
+
   const houseNumber = isAddressQuery(trimmed) ? getRequestedHouseNumber(trimmed) : null;
   const addressSearch = Boolean(houseNumber);
 
   try {
-    // `suggestUrl` is a same-origin relative path. `new URL()` needs an
-    // explicit base for relative paths; without it the browser throws before
-    // `fetch` is reached and every search is treated as an empty result.
-    const url = new URL(ROUTE_CONFIG.suggestUrl, window.location.origin);
+    const url = new URL(ROUTE_CONFIG.suggestUrl);
     url.searchParams.set('q', trimmed);
+    url.searchParams.set('key', ROUTE_CONFIG.suggestApiKey);
     url.searchParams.set('locale', get2GisLocale());
     // Address hints only contain a street and house number. For a name such as
     // "Керуен", request route endpoints instead: 2GIS returns the actual
@@ -1350,7 +1353,7 @@ function renderRouteOnMap() {
     html += `<div class="route-tooltip-level route-tooltip-level--${level}">${levelLabel}</div>`;
     if (p.buildingName) {
       const visStatus = getVisibilityText(Number(p.visCoef || 0));
-      html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${escapeHtml(p.buildingName)}</strong></div>`;
+      html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${p.buildingName}</strong></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('luxAtBuilding')}</span><span>${Number(p.buildingLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
@@ -1549,7 +1552,7 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
       }
 
       suggBox.innerHTML = results.map((r, i) =>
-        `<div class="route-suggestion" data-idx="${i}">${escapeHtml(r.place)}</div>`
+        `<div class="route-suggestion" data-idx="${i}">${r.place}</div>`
       ).join('');
 
       suggBox.style.display = 'block';

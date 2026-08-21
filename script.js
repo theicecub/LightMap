@@ -3,19 +3,13 @@
 //  Опасность точек зависит от времени суток + погоды (Open-Meteo)
 // ════════════════════════════════════════════════════════════════════════════
 
+const MAPTILER_KEY = 'JBWS7gL5h6Ob9ya2vfNO';
+// Create a browser key for Suggest API in the 2GIS Platform Manager.
+const TWO_GIS_API_KEY = 'f5c8ff47-1a40-42bc-b77d-2bdfea43a008';
 const MAP_STYLE = {
-  dark: '/api/maptiler?path=%2Fmaps%2Fstreets-v4-dark%2Fstyle.json',
-  light: '/api/maptiler?path=%2Fmaps%2Fstreets-v4%2Fstyle.json',
+  dark:  `https://api.maptiler.com/maps/streets-v4-dark/style.json?key=${MAPTILER_KEY}`,
+  light: `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
 };
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&(?!(?:amp|lt|gt|quot|#39);)/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  i18n — ЛОКАЛИЗАЦИЯ
@@ -92,10 +86,6 @@ const I18N = {
     glassType: 'Тип стекла',
     currentWeather: 'Погода сейчас',
     weatherGlareFactor: 'Погодный фактор бликов',
-    aiEstimate: 'Оценка ИИ',
-    confidenceLow: 'низкая уверенность',
-    confidenceMedium: 'средняя уверенность',
-    confidenceHigh: 'высокая уверенность',
     luxUnit: 'лк',
     // WMO weather codes
     wmo: {
@@ -167,10 +157,6 @@ const I18N = {
     glassType: 'Glass type',
     currentWeather: 'Current weather',
     weatherGlareFactor: 'Weather glare factor',
-    aiEstimate: 'AI estimate',
-    confidenceLow: 'low confidence',
-    confidenceMedium: 'medium confidence',
-    confidenceHigh: 'high confidence',
     luxUnit: 'lx',
     // WMO weather codes
     wmo: {
@@ -236,10 +222,6 @@ const I18N = {
     glassType: 'Әйнек түрі',
     currentWeather: 'Қазіргі ауа райы',
     weatherGlareFactor: 'Ауа райының жарық факторі',
-    aiEstimate: 'ЖИ бағалауы',
-    confidenceLow: 'төмен сенімділік',
-    confidenceMedium: 'орташа сенімділік',
-    confidenceHigh: 'жоғары сенімділік',
     luxUnit: 'лк',
     wmo: {
       0:  'Ашық',
@@ -826,20 +808,6 @@ function initMap() {
     }
     renderMarkers();
     fetchWeather(); // загрузить погоду после инициализации карты
-    fetchAiDetectedBuildings(buildings).then((candidates) => {
-      if (candidates.length === 0) return;
-      buildings.push(...candidates);
-      recalcDanger();
-      renderMarkers();
-      if (typeof routeState !== 'undefined' && routeState.active) {
-        routeState.routes = routeState.routes.map(route =>
-          evaluateRoute({ coordinates: route.coordinates }, route.duration, route.distance)
-        );
-        renderRouteOnMap();
-        refreshCurrentZoneLevel();
-        updateRoutePanel();
-      }
-    });
   });
 }
 
@@ -877,13 +845,9 @@ function popupHTML(b) {
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
 
-  const bName    = escapeHtml(getLocalizedBuildingLabel(bData || b, b.name));
-  const bAddress = escapeHtml((currentLang === 'en' && bData && bData.address_en) ? bData.address_en : b.address);
-  const bGlass   = escapeHtml((currentLang === 'en' && bData && bData.glass_en)   ? bData.glass_en   : b.glass);
-  const confidenceKey = bData?.confidence ? `confidence${bData.confidence[0].toUpperCase()}${bData.confidence.slice(1)}` : null;
-  const aiBadge = bData?.source === 'ai'
-    ? `<div class="popup-badge popup-badge--ai">${tr.aiEstimate}: ${tr[confidenceKey] || bData.confidence}</div>`
-    : '';
+  const bName    = getLocalizedBuildingLabel(bData || b, b.name);
+  const bAddress = (currentLang === 'en' && bData && bData.address_en) ? bData.address_en : b.address;
+  const bGlass   = (currentLang === 'en' && bData && bData.glass_en)   ? bData.glass_en   : b.glass;
 
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
@@ -898,7 +862,6 @@ function popupHTML(b) {
 
   return `
     <div class="popup-badge popup-badge--${level}">${levelLabel(level)}</div>
-    ${aiBadge}
     <h3 class="popup-title">${bName}</h3>
     <p class="popup-address">${bAddress}</p>
     <div class="popup-field"><span class="popup-field-label">${tr.maxIlluminance}</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
@@ -923,8 +886,6 @@ function featureProperties(b) {
     period: b.period,
     dangerTime: b.dangerTime,
     level: b.level,
-    source: b.source || 'manual',
-    confidence: b.confidence || '',
   };
 }
 
@@ -963,7 +924,6 @@ function renderMarkers() {
       paint: {
         'circle-color': [
           'case',
-          ['==', ['get', 'source'], 'ai'],       '#94A3B8',
           ['==', ['get', 'level'], 'danger'],  '#FF5A3C',
           ['==', ['get', 'level'], 'warning'], '#FFB020',
           '#22D3A6',
