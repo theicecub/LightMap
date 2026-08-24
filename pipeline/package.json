@@ -1,0 +1,18 @@
+{
+  "name": "lightmap-pipeline",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0"
+  },
+  "scripts": {
+    "calibrate": "node calibrate.js --fetch",
+    "01": "node steps/01-candidates.js",
+    "02": "node steps/02-photos.js",
+    "03": "node steps/03-classify.js",
+    "04": "node steps/04-finalize.js",
+    "05-stats": "node steps/05-publish.js --stats",
+    "05-list": "node steps/05-publish.js --list",
+    "05-publish": "node steps/05-publish.js --publish"
+  }
+}
