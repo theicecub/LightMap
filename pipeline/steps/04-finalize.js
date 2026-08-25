@@ -34,7 +34,7 @@ async function main() {
   await ensureSchema(sql);
 
   await runStep(sql, '04-finalize', async (count) => {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT c.*, cl.is_reflective, cl.glass_category, cl.glazing_coverage, cl.confidence
       FROM candidates c JOIN classifications cl ON cl.candidate_id = c.id
       WHERE c.status = 'classified' ORDER BY c.id LIMIT ${LIMIT}`;

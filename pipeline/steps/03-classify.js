@@ -25,7 +25,7 @@ async function main() {
   await ensureSchema(sql);
 
   await runStep(sql, '03-classify', async (count) => {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT c.id AS candidate_id, c.name_ru, p.id AS photo_id, p.thumb_url, p.image_base64
       FROM candidates c
       JOIN photos p ON p.candidate_id = c.id AND p.selected = true

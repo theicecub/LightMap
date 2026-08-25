@@ -23,7 +23,7 @@ async function main() {
   await ensureSchema(sql);
 
   await runStep(sql, '02-photos', async (count) => {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT id, lat, lng, name_ru FROM candidates WHERE status = 'new' ORDER BY id LIMIT ${LIMIT}`;
     console.log(`кандидатов на обработку: ${rows.length}`);
 

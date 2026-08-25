@@ -13,7 +13,7 @@ export function loadBuildingsJson() {
 }
 
 export async function runStep(sql, step, fn) {
-  const { rows } = await sql`INSERT INTO runs (step) VALUES (${step}) RETURNING id`;
+  const rows = await sql`INSERT INTO runs (step) VALUES (${step}) RETURNING id`;
   const runId = rows[0].id;
   const stats = {};
   const count = (k, n = 1) => { stats[k] = (stats[k] || 0) + n; };
