@@ -24,6 +24,6 @@ export async function ensureSchema(sql) {
     .split(';')
     .map((s) => s.trim())
     .filter(Boolean);
-  for (const stmt of cleaned) await sql(stmt);
+  for (const stmt of cleaned) await sql.query(stmt);
   console.log(`[db] схема применена (${cleaned.length} стейтментов)`);
 }
