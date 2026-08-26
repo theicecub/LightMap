@@ -57,6 +57,7 @@ export async function fetchOverpass(query, { label = 'overpass' } = {}) {
       if (!json.elements) throw new Error('нет поля elements в ответе Overpass');
       // Вежливость к общественным инстансам: пауза между запросами.
       await sleep(OVERPASS_PAUSE_MS);
+      console.log(`[overpass] ${new URL(endpoint).host}: ${json.elements.length} элементов`);
       return json.elements;
     } catch (err) {
       lastErr = err;
