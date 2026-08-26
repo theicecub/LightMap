@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS candidates (
 CREATE INDEX IF NOT EXISTS candidates_status_idx ON candidates (status);
 CREATE INDEX IF NOT EXISTS candidates_district_idx ON candidates (district);
 
+-- Отметка «дороги для ориентации уже загружены» — чтобы повторный прогон 01-кандидатов
+-- добирал дороги только для тех, у кого их нет (bbox-кэш свежий, здания не перезапрашиваются).
+ALTER TABLE candidates ADD COLUMN IF NOT EXISTS roads_fetched BOOLEAN NOT NULL DEFAULT false;
+
 -- Кэш Overpass-запросов по bbox: один и тот же район не дёргаем повторно,
 -- пока кэш свежий (TTL задаётся в config.js, по умолчанию 7 дней).
 CREATE TABLE IF NOT EXISTS bbox_cache (

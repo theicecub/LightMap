@@ -1,7 +1,7 @@
 // Overpass API (бесплатный, без ключей). Один запрос на bbox — кэшируется в bbox_cache.
 // Числовой фильтр building:levels Overpass не умеет — фильтруем на клиенте.
 
-import { OVERPASS_ENDPOINTS, OVERPASS_TIMEOUT_S, ROAD_AROUND_M } from '../config.js';
+import { OVERPASS_ENDPOINTS, OVERPASS_TIMEOUT_S, OVERPASS_PAUSE_MS, ROAD_AROUND_M } from '../config.js';
 import { fetchWithRetry, sleep } from './http.js';
 
 const [S, W, N, E] = [0, 1, 2, 3];
@@ -56,7 +56,7 @@ export async function fetchOverpass(query, { label = 'overpass' } = {}) {
       const json = await resp.json();
       if (!json.elements) throw new Error('нет поля elements в ответе Overpass');
       // Вежливость к общественным инстансам: пауза между запросами.
-      await sleep(3000);
+      await sleep(OVERPASS_PAUSE_MS);
       return json.elements;
     } catch (err) {
       lastErr = err;

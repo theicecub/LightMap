@@ -36,6 +36,36 @@ function geometryToPolygon(el) {
   return poly;
 }
 
+// Добор дорог для кандидатов, у которых их ещё нет (roads_fetched = false).
+// Работает и сразу после вставки, и при повторном запуске: bbox-кэш не даёт
+// перезапрашивать здания, а этот этап добирает только недостающие дороги.
+async function backfillRoads(sql, count) {
+  const pending = await sql`SELECT id, lat, lng FROM candidates WHERE roads_fetched = false ORDER BY id`;
+  if (!pending.length) return;
+  const total = Math.ceil(pending.length / ROAD_FETCH_BATCH);
+  console.log(`\nдороги нужны для ${pending.length} кандидатов (${total} пачек)`);
+
+  for (let i = 0; i < pending.length; i += ROAD_FETCH_BATCH) {
+    const batch = pending.slice(i, i + ROAD_FETCH_BATCH);
+    const roads = await fetchOverpass(buildRoadsAroundQuery(batch), { label: 'roads' });
+    for (const r of roads) {
+      if (r.type !== 'way' || !ROAD_CLASSES.has(r.tags?.highway)) continue;
+      const line = (r.geometry || []).map((g) => [g.lat, g.lng]);
+      if (line.length < 2) continue;
+      await sql`
+        INSERT INTO roads_cache (osm_id, highway, name_ru, geometry)
+        VALUES (${r.id}, ${r.tags.highway}, ${r.tags?.['name:ru'] || r.tags?.name || null},
+                ${JSON.stringify(line)}::jsonb)
+        ON CONFLICT (osm_id) DO NOTHING`;
+      count('roads_cached');
+    }
+    const ids = batch.map((c) => c.id);
+    await sql`UPDATE candidates SET roads_fetched = true WHERE id = ANY(${ids})`;
+    count('roads_batches');
+    console.log(`  пачка ${Math.floor(i / ROAD_FETCH_BATCH) + 1}/${total}: ${roads.length} дорог`);
+  }
+}
+
 async function main() {
   requireEnv();
   const sql = db();
@@ -62,7 +92,6 @@ async function main() {
       count(`overpass_elements:${d.label}`, elements.length);
 
       let inserted = 0;
-      const newPoints = [];
       for (const el of elements) {
         if (el.type !== 'way') continue;
         const levels = parseLevels(el);
@@ -87,7 +116,6 @@ async function main() {
                   ${JSON.stringify(polygon)}::jsonb, ${JSON.stringify(el.tags || {})}::jsonb)
           ON CONFLICT (osm_type, osm_id) DO NOTHING`;
         inserted++;
-        newPoints.push({ id: el.id, lat: c.lat, lng: c.lng });
         count('inserted');
       }
 
@@ -97,25 +125,11 @@ async function main() {
                 ${crypto.createHash('md5').update(query).digest('hex')}, now())
         ON CONFLICT (label) DO UPDATE SET element_count = EXCLUDED.element_count,
           query_md5 = EXCLUDED.query_md5, fetched_at = now()`;
-
-      // Дороги вокруг новых кандидатов — пачками по ROAD_FETCH_BATCH за один запрос.
-      for (let i = 0; i < newPoints.length; i += ROAD_FETCH_BATCH) {
-        const batch = newPoints.slice(i, i + ROAD_FETCH_BATCH);
-        const roads = await fetchOverpass(buildRoadsAroundQuery(batch), { label: `roads:${d.label}` });
-        for (const r of roads) {
-          if (r.type !== 'way' || !ROAD_CLASSES.has(r.tags?.highway)) continue;
-          const line = (r.geometry || []).map((g) => [g.lat, g.lng]);
-          if (line.length < 2) continue;
-          await sql`
-            INSERT INTO roads_cache (osm_id, highway, name_ru, geometry)
-            VALUES (${r.id}, ${r.tags.highway}, ${r.tags?.['name:ru'] || r.tags?.name || null},
-                    ${JSON.stringify(line)}::jsonb)
-            ON CONFLICT (osm_id) DO NOTHING`;
-          count('roads_cached');
-        }
-      }
       console.log(`[${d.label}] вставлено кандидатов: ${inserted}`);
     }
+
+    // Дороги — один общий этап после всех районов (лёгкие пачки, добор при повторах).
+    await backfillRoads(sql, count);
   });
 }
 

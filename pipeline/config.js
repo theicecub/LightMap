@@ -9,6 +9,7 @@ export const OVERPASS_ENDPOINTS = [
 
 export const OVERPASS_TIMEOUT_S = 180;
 export const OVERPASS_BBOX_TTL_DAYS = 7;      // не дёргать один bbox чаще раза в неделю
+export const OVERPASS_PAUSE_MS = 8000;        // пауза между запросами к общественным зеркалам
 
 // Bounding box'ы районов (S, W, N, E). Приблизительные — уточнить на bboxfinder.com.
 // 'esil' выключен: текущие 29 зданий уже покрывают его вручную; bbox нужен только
@@ -50,7 +51,8 @@ export const CONFIDENCE_THRESHOLD = 0.65;      // ниже — в review_queue, 
 export const MAX_CANDIDATES_PER_RUN = 200;     // Overpass (один запрос на bbox, не на здание)
 export const MAX_PHOTOS_PER_RUN = 40;          // Mapillary (по одному маленькому bbox на здание)
 export const MAPILLARY_MIN_INTERVAL_MS = 250;
-export const ROAD_FETCH_BATCH = 40;            // кандидатов на один Overpass-запрос дорог
+export const ROAD_FETCH_BATCH = 12;            // кандидатов на один Overpass-запрос дорог
+                                              // (лёгкие пачки реже ловят 504 на зеркалах)
 export const ROAD_AROUND_M = 100;              // дороги в радиусе N м от центроида
 
 export const NEON_DATABASE_URL = process.env.DATABASE_URL;
