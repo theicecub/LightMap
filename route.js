@@ -290,9 +290,6 @@ const routeState = {
 // Geocoding cache: query → { results, timestamp }
 const geocodeCache = new Map();
 
-// Local places database
-let localPlaces = [];
-
 // MapTiler stores some streets under their full official name.  In everyday
 // input users often omit the first name, so keep known aliases in one form
 // before both local and remote search.
@@ -327,23 +324,6 @@ function hasRequestedHouseNumber(feature, houseNumber) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// LOAD LOCAL PLACES
-// ════════════════════════════════════════════════════════════════════════════
-
-async function loadLocalPlaces() {
-  try {
-    const resp = await fetch(ROUTE_CONFIG.placesUrl);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    localPlaces = data.places || [];
-    console.log('[Places] Loaded', localPlaces.length, 'places');
-  } catch (err) {
-    console.warn('[Places] Could not load places.json:', err);
-    localPlaces = [];
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 // GEOCODING — 2GIS Suggest API with debounce + cache
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -351,90 +331,6 @@ function expandGeocodeQueries(query) {
   const normalized = normalizeSearchText(query);
   const original = query.toLowerCase().trim();
   return !normalized || normalized === original ? [query] : [query, normalized];
-}
-
-function getPlaceSearchFields(place) {
-  return [
-    place.name_ru,
-    place.name_en,
-    place.name_kk,
-    place.address_ru,
-    place.address_en,
-    place.address_kk,
-    ...(place.search_terms || []),
-  ].filter(Boolean);
-}
-
-function searchLocalPlaces(query) {
-  const q = normalizeSearchText(query);
-  if (q.length < 2) return [];
-
-  const qWords = q.split(' ').filter(Boolean);
-  const houseNumber = isAddressQuery(query) ? getRequestedHouseNumber(query) : null;
-
-  const scored = [];
-  for (const place of localPlaces) {
-    const nameFields = [place.name_ru, place.name_en, place.name_kk].filter(Boolean).map(normalizeSearchText);
-    const addressFields = [place.address_ru, place.address_en, place.address_kk].filter(Boolean).map(normalizeSearchText);
-    const allFields = getPlaceSearchFields(place).map(normalizeSearchText);
-
-    const nameBlob = nameFields.join(' ');
-    const addressBlob = addressFields.join(' ');
-    const allBlob = allFields.join(' ');
-
-    const exactAll = allBlob === q;
-    const exactAddress = addressBlob === q;
-    const containsAll = allBlob.includes(q);
-    const containsAddress = addressBlob.includes(q);
-    const containsName = nameBlob.includes(q);
-    const wordsAll = qWords.length > 1 && qWords.every(word => allBlob.includes(word));
-    const wordsAddress = qWords.length > 1 && qWords.every(word => addressBlob.includes(word));
-    const wordsName = qWords.length > 1 && qWords.every(word => nameBlob.includes(word));
-
-    if (!exactAll && !exactAddress && !containsAll && !containsAddress && !containsName && !wordsAll && !wordsAddress && !wordsName) {
-      continue;
-    }
-
-    let score = 0;
-    if (exactAll) score = 1000;
-    else if (exactAddress) score = 980;
-    else if (containsAddress) score = 900;
-    else if (containsAll) score = 800;
-    else if (wordsAddress) score = 700;
-    else if (wordsAll) score = 600;
-    else if (containsName) score = 500;
-    else if (wordsName) score = 400;
-
-    if (houseNumber) {
-      const addressHasNumber = addressFields.some(field =>
-        hasRequestedHouseNumber({ text: field, address: field, place_name: field }, houseNumber)
-      );
-      const nameHasNumber = nameFields.some(field =>
-        hasRequestedHouseNumber({ text: field, address: field, place_name: field }, houseNumber)
-      );
-
-      if (addressHasNumber) {
-        score += 250;
-      } else if (nameHasNumber) {
-        score += 100;
-      } else {
-        score -= 150;
-      }
-    }
-
-    scored.push({
-      score,
-      lng: place.lng,
-      lat: place.lat,
-      label: currentLang === 'en' ? place.address_en : currentLang === 'kk' ? place.address_kk : place.address_ru,
-      place: currentLang === 'en' ? (place.name_en + ', ' + place.address_en) :
-             currentLang === 'kk' ? (place.name_kk + ', ' + place.address_kk) :
-             (place.name_ru + ', ' + place.address_ru),
-    });
-  }
-
-  scored.sort((a, b) => b.score - a.score);
-  return scored.map(({ score, ...result }) => result);
 }
 
 function getGeocodeCacheKey(query) {
