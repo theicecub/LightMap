@@ -1,9 +1,0 @@
-# Секреты
-.env
-pipeline/.env
-
-# Зависимости
-node_modules/
-
-# Бэкапы buildings.json от шага публикации
-buildings.json.bak-*

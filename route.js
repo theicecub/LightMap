@@ -243,7 +243,8 @@ function getRouteRiskStatus(route) {
 // ════════════════════════════════════════════════════════════════════════════
 
 const ROUTE_CONFIG = {
-  suggestUrl: '/api/geocode',
+  suggestUrl: 'https://catalog.api.2gis.com/3.0/suggests',
+  suggestApiKey: TWO_GIS_API_KEY,
   directionsUrl: `https://router.project-osrm.org/route/v1/driving`,
   debounceMs: 350,
   proximity: [71.430, 51.128], // Astana center — bias geocoding results
@@ -470,12 +471,18 @@ async function geocodeSearch(query) {
   const cached = getCachedGeocode(trimmed);
   if (cached) return cached;
 
+  if (!ROUTE_CONFIG.suggestApiKey) {
+    console.warn('[2GIS Suggest] TWO_GIS_API_KEY is not configured');
+    return [];
+  }
+
   const houseNumber = isAddressQuery(trimmed) ? getRequestedHouseNumber(trimmed) : null;
   const addressSearch = Boolean(houseNumber);
 
   try {
-    const url = new URL(ROUTE_CONFIG.suggestUrl, window.location.origin);
+    const url = new URL(ROUTE_CONFIG.suggestUrl);
     url.searchParams.set('q', trimmed);
+    url.searchParams.set('key', ROUTE_CONFIG.suggestApiKey);
     url.searchParams.set('locale', get2GisLocale());
     // Address hints only contain a street and house number. For a name such as
     // "Керуен", request route endpoints instead: 2GIS returns the actual
