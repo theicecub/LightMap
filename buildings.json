@@ -5,14 +5,21 @@
     "address": "ул. Сыганак 60/5",
     "lat": 51.12257682152757,
     "lng": 71.42800365052331,
-    "baseLux": 62000,
+    "baseLux": 8261,
     "period": "both",
-    "dangerTime": "07:30–09:30 17:30-20:00",
     "glass": "Ламинированное стекло",
     "orientation": 180,
     "name_en": "Abu Dhabi Plaza",
     "address_en": "Syganak St. 60/5",
-    "glass_en": "Laminated glass"
+    "glass_en": "Laminated glass",
+    "dangerTime_by_season": {
+      "winter": "10:04-14:22",
+      "spring": "no glare",
+      "summer": "no glare",
+      "autumn": "no glare"
+    },
+    "reflectance_used": 0.15,
+    "reflectance_basis": "laminated"
   },
   {
     "id": 2,
@@ -20,14 +27,21 @@
     "address": "ул. Достык 16",
     "lat": 51.125043753584954,
     "lng": 71.43291321421682,
-    "baseLux": 71500,
+    "baseLux": 28280,
     "period": "evening",
-    "dangerTime": "17:30–19:00",
     "glass": "Высокоселективное стекло",
     "orientation": 250,
     "name_en": "Talan Towers",
     "address_en": "Dostyk St. 16",
-    "glass_en": "High-selective glass"
+    "glass_en": "High-selective glass",
+    "dangerTime_by_season": {
+      "winter": "11:38-15:18",
+      "spring": "16:08-17:50",
+      "summer": "04:52-05:00 18:04-19:40",
+      "autumn": "16:00-17:40"
+    },
+    "reflectance_used": 0.45,
+    "reflectance_basis": "high-selective"
   },
   {
     "id": 3,
@@ -35,14 +49,21 @@
     "address": "просп. Туран, 37",
     "lat": 51.13246944940683,
     "lng": 71.40367673211153,
-    "baseLux": 34000,
+    "baseLux": 5060,
     "period": "morning",
-    "dangerTime": "07:00–08:00",
     "glass": "Трехслойная мембрана",
     "orientation": 120,
     "name_en": "Khan Shatyr",
     "address_en": "Turan Ave. 37",
-    "glass_en": "Three-layer membrane"
+    "glass_en": "Three-layer membrane",
+    "dangerTime_by_season": {
+      "winter": "no glare",
+      "spring": "08:36-08:40",
+      "summer": "no glare",
+      "autumn": "08:12-08:16"
+    },
+    "reflectance_used": 0.08,
+    "reflectance_basis": "membrane (non-glass)"
   },
   {
     "id": 4,
@@ -50,14 +71,21 @@
     "address": "ул. Достык, 18",
     "lat": 51.12460897442751,
     "lng": 71.43427958423301,
-    "baseLux": 50500,
+    "baseLux": 15363,
     "period": "evening",
-    "dangerTime": "17:00–18:15",
     "glass": "Панорамное фасадное стекло",
     "orientation": 270,
     "name_en": "\"Moscow\" Business Center",
     "address_en": "Dostyk St. 18",
-    "glass_en": "Panoramic facade glass"
+    "glass_en": "Panoramic facade glass",
+    "dangerTime_by_season": {
+      "winter": "no glare",
+      "spring": "16:08-17:40",
+      "summer": "18:04-19:34",
+      "autumn": "16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 5,
@@ -65,14 +93,21 @@
     "address": "ул. Достык, 5",
     "lat": 51.12780175944153,
     "lng": 71.42213831345616,
-    "baseLux": 62200,
+    "baseLux": 40084,
     "period": "morning",
-    "dangerTime": "08:00-10:00",
     "glass": "Зеркальное архитектурное стекло",
     "orientation": 90,
     "name_en": "Severnoye Siyaniye (Northern Lights)",
     "address_en": "Dostyk St. 5",
-    "glass_en": "Mirrored architectural glass"
+    "glass_en": "Mirrored architectural glass",
+    "dangerTime_by_season": {
+      "winter": "09:06-11:30",
+      "spring": "06:54-08:40",
+      "summer": "05:00-06:30",
+      "autumn": "06:30-08:16"
+    },
+    "reflectance_used": 0.65,
+    "reflectance_basis": "mirrored"
   },
   {
     "id": 6,
@@ -80,14 +115,21 @@
     "address": "ул. Динмухамеда Конаева, 33",
     "lat": 51.130678053681216,
     "lng": 71.43431213679109,
-    "baseLux": 32200,
+    "baseLux": 15742,
     "period": "morning",
-    "dangerTime": "08:00-09:30",
     "glass": "Стеклянный навесной фасад",
     "orientation": 110,
     "name_en": "\"Astanalyk\" Business Center",
     "address_en": "Dinmukhamed Konayev St. 33",
-    "glass_en": "Curtain-wall glass facade"
+    "glass_en": "Curtain-wall glass facade",
+    "dangerTime_by_season": {
+      "winter": "09:28-12:08",
+      "spring": "07:08-08:40",
+      "summer": "05:10-06:30",
+      "autumn": "06:46-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 7,
@@ -95,14 +137,21 @@
     "address": "пр. Мангилик Ел, 8/2",
     "lat": 51.12753530636626,
     "lng": 71.43936010333385,
-    "baseLux": 57400,
+    "baseLux": 15254,
     "period": "morning",
-    "dangerTime": "08:00-10:00",
-    "glass": "Панорамное архитетктурное стекло",
+    "glass": "Панорамное архитектурное стекло",
     "orientation": 100,
     "name_en": "\"Altyn-Orda\" Business Center",
     "address_en": "Mangilik El Ave. 8/2",
-    "glass_en": "Panoramic architectural glass"
+    "glass_en": "Panoramic architectural glass",
+    "dangerTime_by_season": {
+      "winter": "09:36-11:22",
+      "spring": "07:08-08:40",
+      "summer": "05:04-06:30",
+      "autumn": "06:46-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 8,
@@ -110,14 +159,21 @@
     "address": "ул. Динмухамеда Конаева, 8",
     "lat": 51.13035215997953,
     "lng": 71.42245808089339,
-    "baseLux": 67900,
-    "period": "both",
-    "dangerTime": "08:00-09:30 17:30–19:00",
+    "baseLux": 34446,
+    "period": "morning",
     "glass": "Зеркальное стекло",
     "orientation": 160,
     "name_en": "Emerald Quarter (Towers A/B)",
     "address_en": "Dinmukhamed Konayev St. 8",
-    "glass_en": "Mirrored glass"
+    "glass_en": "Mirrored glass",
+    "dangerTime_by_season": {
+      "winter": "09:00-15:12",
+      "spring": "07:04-08:40",
+      "summer": "no glare",
+      "autumn": "06:42-08:16"
+    },
+    "reflectance_used": 0.65,
+    "reflectance_basis": "mirrored"
   },
   {
     "id": 9,
@@ -125,14 +181,21 @@
     "address": "пр. Кабанбай батыра, 11",
     "lat": 51.14015931767077,
     "lng": 71.41507162203148,
-    "baseLux": 85500,
-    "period": "both",
-    "dangerTime": "08:00-10:00 17:00–19:30",
+    "baseLux": 36637,
+    "period": "morning",
     "glass": "Зеркальные стеклопакеты",
     "orientation": 145,
     "name_en": "\"Triumph of Astana\" Residential Complex",
     "address_en": "Kabanbay Batyr Ave. 11",
-    "glass_en": "Mirrored double-glazed units"
+    "glass_en": "Mirrored double-glazed units",
+    "dangerTime_by_season": {
+      "winter": "09:00-14:56",
+      "spring": "06:58-08:40",
+      "summer": "05:28-06:30",
+      "autumn": "06:36-08:16"
+    },
+    "reflectance_used": 0.65,
+    "reflectance_basis": "mirrored"
   },
   {
     "id": 10,
@@ -140,14 +203,22 @@
     "address": "Бульвар Нуржол, 14",
     "lat": 51.128310151593574,
     "lng": 71.43029781319242,
-    "baseLux": 25700,
+    "baseLux": 10105,
     "period": "both",
-    "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Тонированное стекло",
-    "orientation": 0,
+    "orientation": null,
+    "omnidirectional": true,
     "name_en": "Baiterek",
     "address_en": "Nurzhol Boulevard 14",
-    "glass_en": "Tinted glass"
+    "glass_en": "Tinted glass",
+    "dangerTime_by_season": {
+      "winter": "09:48-14:38",
+      "spring": "07:24-08:40 16:08-17:24",
+      "summer": "05:14-06:30 18:04-19:18",
+      "autumn": "07:02-08:16 16:00-17:14"
+    },
+    "reflectance_used": 0.15,
+    "reflectance_basis": "tinted"
   },
   {
     "id": 11,
@@ -155,14 +226,22 @@
     "address": "территория ЭКСПО, пр. Мәңгілік Ел",
     "lat": 51.0891927108529,
     "lng": 71.41589448841293,
-    "baseLux": 50000,
+    "baseLux": 16847,
     "period": "both",
-    "dangerTime": "08:30–10:30 17:00–19:00",
     "glass": "Стеклянная сферическая оболочка",
-    "orientation": 0,
+    "orientation": null,
+    "omnidirectional": true,
     "name_en": "Nur Alem (EXPO sphere)",
     "address_en": "EXPO grounds, Mangilik El Ave.",
-    "glass_en": "Spherical glass shell"
+    "glass_en": "Spherical glass shell",
+    "dangerTime_by_season": {
+      "winter": "09:20-15:06",
+      "spring": "07:08-08:40 16:08-17:40",
+      "summer": "04:56-06:30 18:04-19:38",
+      "autumn": "06:44-08:16 16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 12,
@@ -170,14 +249,21 @@
     "address": "пр. Тәуелсіздік",
     "lat": 51.120563632635736,
     "lng": 71.47266671067665,
-    "baseLux": 30000,
-    "period": "both",
-    "dangerTime": "09:00–11:00 16:30–18:00",
+    "baseLux": 13254,
+    "period": "evening",
     "glass": "Стеклянная трапеция с металлической решёткой",
     "orientation": 200,
     "name_en": "Palace of Independence",
     "address_en": "Tauelsizdik Ave.",
-    "glass_en": "Glass trapezoid with metal grid"
+    "glass_en": "Glass trapezoid with metal grid",
+    "dangerTime_by_season": {
+      "winter": "09:48-15:04",
+      "spring": "16:08-17:18",
+      "summer": "no glare",
+      "autumn": "16:00-17:06"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 13,
@@ -185,14 +271,22 @@
     "address": "пр. Тәуелсіздік",
     "lat": 51.12298260469731,
     "lng": 71.46370318362385,
-    "baseLux": 28000,
+    "baseLux": 16852,
     "period": "both",
-    "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Стеклянные грани пирамиды",
-    "orientation": 0,
+    "orientation": null,
+    "omnidirectional": true,
     "name_en": "Palace of Peace and Reconciliation (Pyramid)",
     "address_en": "Tauelsizdik Ave.",
-    "glass_en": "Glass faces of the pyramid"
+    "glass_en": "Glass faces of the pyramid",
+    "dangerTime_by_season": {
+      "winter": "09:20-15:06",
+      "spring": "07:08-08:40 16:08-17:40",
+      "summer": "04:56-06:30 18:04-19:38",
+      "autumn": "06:44-08:16 16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 14,
@@ -200,14 +294,22 @@
     "address": "пр. Кабанбай батыра",
     "lat": 51.12290729938051,
     "lng": 71.47287192439045,
-    "baseLux": 48000,
+    "baseLux": 16855,
     "period": "both",
-    "dangerTime": "08:30–10:00 17:00–18:30",
     "glass": "Стеклянный конусообразный фасад",
-    "orientation": 0,
+    "orientation": null,
+    "omnidirectional": true,
     "name_en": "\"Shabyt\" Palace of Creativity",
     "address_en": "Kabanbay Batyr Ave.",
-    "glass_en": "Cone-shaped glass facade"
+    "glass_en": "Cone-shaped glass facade",
+    "dangerTime_by_season": {
+      "winter": "09:20-15:06",
+      "spring": "07:08-08:40 16:08-17:40",
+      "summer": "04:56-06:30 18:04-19:38",
+      "autumn": "06:44-08:16 16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 15,
@@ -215,14 +317,21 @@
     "address": "пр. Мәңгілік Ел",
     "lat": 51.13084195522708,
     "lng": 71.42109841891599,
-    "baseLux": 52000,
+    "baseLux": 11705,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Витражное остекление офисного фасада",
     "orientation": 220,
     "name_en": "\"Temir Zholy\" Tower (KTZ / Kazakhstan Railways)",
     "address_en": "Mangilik El Ave.",
-    "glass_en": "Stained-glass office facade"
+    "glass_en": "Stained-glass office facade",
+    "dangerTime_by_season": {
+      "winter": "10:50-14:56",
+      "spring": "16:08-17:26",
+      "summer": "18:04-18:18",
+      "autumn": "16:00-17:14"
+    },
+    "reflectance_used": 0.2,
+    "reflectance_basis": "stained-glass (generic)"
   },
   {
     "id": 16,
@@ -230,14 +339,21 @@
     "address": "Есильский р-н",
     "lat": 51.15326993834346,
     "lng": 71.42918477879022,
-    "baseLux": 32000,
+    "baseLux": 13750,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:30–19:00",
     "glass": "Панорамное стекло, структурный фасад",
     "orientation": 180,
     "name_en": "Astana Tower",
     "address_en": "Yesil District",
-    "glass_en": "Panoramic glass, structural facade"
+    "glass_en": "Panoramic glass, structural facade",
+    "dangerTime_by_season": {
+      "winter": "09:30-14:56",
+      "spring": "08:08-08:40 16:08-16:40",
+      "summer": "no glare",
+      "autumn": "07:52-08:16 16:00-16:24"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "structural glazing (generic)"
   },
   {
     "id": 17,
@@ -245,14 +361,21 @@
     "address": "Есильский р-н",
     "lat": 51.13021814420195,
     "lng": 71.39058525359164,
-    "baseLux": 26000,
-    "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
+    "baseLux": 15123,
+    "period": "evening",
     "glass": "Стеклянный навесной фасад",
     "orientation": 135,
     "name_en": "Green Quarter",
     "address_en": "Yesil District",
-    "glass_en": "Curtain-wall glass facade"
+    "glass_en": "Curtain-wall glass facade",
+    "dangerTime_by_season": {
+      "winter": "09:22-13:40",
+      "spring": "07:14-08:40",
+      "summer": "05:44-06:30",
+      "autumn": "06:52-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 18,
@@ -260,14 +383,22 @@
     "address": "пр. Тәуелсіздік",
     "lat": 51.127228110226795,
     "lng": 71.42738260411048,
-    "baseLux": 47000,
+    "baseLux": 15132,
     "period": "both",
-    "dangerTime": "09:00–11:00 16:00–18:00",
     "glass": "Сферический стеклянный купол",
-    "orientation": 0,
+    "orientation": 135,
+    "omnidirectional": false,
     "name_en": "National Library (Elbasy Library)",
     "address_en": "Tauelsizdik Ave.",
-    "glass_en": "Spherical glass dome"
+    "glass_en": "Spherical glass dome",
+    "dangerTime_by_season": {
+      "winter": "09:20-13:40",
+      "spring": "07:12-08:40",
+      "summer": "05:44-06:30",
+      "autumn": "06:52-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 19,
@@ -275,14 +406,21 @@
     "address": "Есильский р-н",
     "lat": 51.11160220466827,
     "lng": 71.53105585708367,
-    "baseLux": 30000,
+    "baseLux": 10916,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Стекло и металл, витражный фасад",
     "orientation": 170,
     "name_en": "\"Nurly Zhol\" Railway Station",
     "address_en": "Yesil District",
-    "glass_en": "Glass and metal stained facade"
+    "glass_en": "Glass and metal stained facade",
+    "dangerTime_by_season": {
+      "winter": "09:36-14:34",
+      "spring": "07:58-08:38",
+      "summer": "no glare",
+      "autumn": "07:40-08:16"
+    },
+    "reflectance_used": 0.2,
+    "reflectance_basis": "stained-glass (generic)"
   },
   {
     "id": 20,
@@ -290,14 +428,21 @@
     "address": "ул. Касыма Аманжолова (жилой комплекс)",
     "lat": 51.12272659540985,
     "lng": 71.47610002949703,
-    "baseLux": 42000,
-    "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
+    "baseLux": 15704,
+    "period": "evening",
     "glass": "Панорамные стеклопакеты, алюминиевые фасадные системы",
-    "orientation": 0,
+    "orientation": 250,
     "name_en": "Millennium Park",
     "address_en": "Kasym Amanzholov St. (residential complex)",
-    "glass_en": "Panoramic double-glazed units, aluminum facade systems"
+    "glass_en": "Panoramic double-glazed units, aluminum facade systems",
+    "dangerTime_by_season": {
+      "winter": "12:18-14:58",
+      "spring": "16:08-17:40",
+      "summer": "18:04-19:24",
+      "autumn": "16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 21,
@@ -305,14 +450,21 @@
     "address": "пр. Мәңгілік Ел, 8",
     "lat": 51.128226547862056,
     "lng": 71.43995731995513,
-    "baseLux": 52000,
+    "baseLux": 13359,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Структурное остекление, Low-E стекло",
-    "orientation": 0,
+    "orientation": 210,
     "name_en": "Ministry of Finance of the Republic of Kazakhstan",
     "address_en": "Mangilik El Ave. 8",
-    "glass_en": "Structural glazing, Low-E glass"
+    "glass_en": "Structural glazing, Low-E glass",
+    "dangerTime_by_season": {
+      "winter": "10:06-15:04",
+      "spring": "16:08-17:28",
+      "summer": "no glare",
+      "autumn": "16:00-17:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "Low-E"
   },
   {
     "id": 22,
@@ -320,14 +472,21 @@
     "address": "пр. Мәңгілік Ел, 15",
     "lat": 51.11823643312307,
     "lng": 71.4336439869567,
-    "baseLux": 38000,
-    "period": "both",
-    "dangerTime": "08:30–10:00 17:00–18:30",
+    "baseLux": 15255,
+    "period": "morning",
     "glass": "Панорамное архитектурное стекло",
-    "orientation": 0,
+    "orientation": 100,
     "name_en": "Presidential Archive of the Republic of Kazakhstan",
     "address_en": "Mangilik El Ave. 15",
-    "glass_en": "Panoramic architectural glass"
+    "glass_en": "Panoramic architectural glass",
+    "dangerTime_by_season": {
+      "winter": "09:36-11:22",
+      "spring": "07:08-08:40",
+      "summer": "05:04-06:30",
+      "autumn": "06:46-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 23,
@@ -335,14 +494,21 @@
     "address": "ул. Д. Кунаева, 4",
     "lat": 51.131731694374906,
     "lng": 71.42046953541535,
-    "baseLux": 68000,
+    "baseLux": 18546,
     "period": "both",
-    "dangerTime": "08:00–10:00 17:00–18:30",
     "glass": "Панорамное селективное Low-E стекло",
-    "orientation": 0,
+    "orientation": 200,
     "name_en": "Kazmedia Center",
     "address_en": "D. Kunayev St. 4",
-    "glass_en": "Panoramic selective Low-E glass"
+    "glass_en": "Panoramic selective Low-E glass",
+    "dangerTime_by_season": {
+      "winter": "09:32-15:14",
+      "spring": "16:08-17:30",
+      "summer": "no glare",
+      "autumn": "16:00-17:18"
+    },
+    "reflectance_used": 0.35,
+    "reflectance_basis": "selective Low-E"
   },
   {
     "id": 24,
@@ -350,29 +516,43 @@
     "address": "пр. Кабанбай батыра, 19",
     "lat": 51.13215109245026,
     "lng": 71.41315271579835,
-    "baseLux": 72000,
+    "baseLux": 27818,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–19:00",
     "glass": "Высокоселективное стекло, навесной фасад",
-    "orientation": 0,
+    "orientation": 230,
     "name_en": "KazMunayGas",
     "address_en": "Kabanbay Batyr Ave. 19",
-    "glass_en": "High-selective glass, curtain-wall facade"
+    "glass_en": "High-selective glass, curtain-wall facade",
+    "dangerTime_by_season": {
+      "winter": "10:24-15:20",
+      "spring": "16:08-17:48",
+      "summer": "18:04-19:24",
+      "autumn": "16:00-17:38"
+    },
+    "reflectance_used": 0.45,
+    "reflectance_basis": "high-selective"
   },
   {
     "id": 25,
     "name": "Дом министерств",
-    "address": "пр. Мәңгілік Ел, 8",
+    "address": "пр. Мәңгілік Ел, 8, блок 4",
     "lat": 51.128103084024126,
     "lng": 71.43932538408556,
-    "baseLux": 56000,
+    "baseLux": 36293,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
-    "glass": "Стеклянный навесной фасад, Low-E стеклопакеты",
-    "orientation": 0,
+    "glass": "Золотое зеркальное остекление, парные конусовидные высотки",
+    "orientation": 205,
     "name_en": "House of Ministries",
-    "address_en": "Mangilik El Ave. 8",
-    "glass_en": "Glass curtain-wall facade, Low-E double-glazed units"
+    "address_en": "Mangilik El Ave. 8, block 4",
+    "glass_en": "Golden mirrored glazing, twin cone-shaped towers",
+    "dangerTime_by_season": {
+      "winter": "09:16-15:28",
+      "spring": "16:08-17:48",
+      "summer": "18:04-18:16",
+      "autumn": "16:00-17:38"
+    },
+    "reflectance_used": 0.7,
+    "reflectance_basis": "gold mirrored"
   },
   {
     "id": 26,
@@ -380,14 +560,21 @@
     "address": "ул. Достык, 2",
     "lat": 51.128797015082874,
     "lng": 71.40743293222327,
-    "baseLux": 65000,
+    "baseLux": 15220,
     "period": "both",
-    "dangerTime": "08:00–10:00 17:00–19:00",
     "glass": "Панорамное селективное стекло",
-    "orientation": 0,
+    "orientation": 260,
     "name_en": "SAAD Business Center",
     "address_en": "Dostyk St. 2",
-    "glass_en": "Panoramic selective glass"
+    "glass_en": "Panoramic selective glass",
+    "dangerTime_by_season": {
+      "winter": "13:04-14:50",
+      "spring": "16:08-17:40",
+      "summer": "18:04-19:30",
+      "autumn": "16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 27,
@@ -395,14 +582,21 @@
     "address": "ул. Достык, 20",
     "lat": 51.124492690997485,
     "lng": 71.43609212621853,
-    "baseLux": 70000,
-    "period": "both",
-    "dangerTime": "08:00–10:00 17:00–19:00",
+    "baseLux": 38979,
+    "period": "evening",
     "glass": "Зеркальное фасадное стекло",
-    "orientation": 0,
+    "orientation": 265,
     "name_en": "\"Saint Petersburg\" Business Center",
     "address_en": "Dostyk St. 20",
-    "glass_en": "Mirrored facade glass"
+    "glass_en": "Mirrored facade glass",
+    "dangerTime_by_season": {
+      "winter": "12:34-15:22",
+      "spring": "16:08-17:54",
+      "summer": "04:42-05:00 18:04-19:52",
+      "autumn": "16:00-17:44"
+    },
+    "reflectance_used": 0.65,
+    "reflectance_basis": "mirrored"
   },
   {
     "id": 28,
@@ -410,14 +604,21 @@
     "address": "ул. Сыганак, 45",
     "lat": 51.12341980479718,
     "lng": 71.43294683605592,
-    "baseLux": 52000,
+    "baseLux": 13638,
     "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
     "glass": "Панорамное архитектурное стекло",
-    "orientation": 0,
+    "orientation": 190,
     "name_en": "Beijing Palace Soluxe Hotel Astana",
     "address_en": "Syganak St. 45",
-    "glass_en": "Panoramic architectural glass"
+    "glass_en": "Panoramic architectural glass",
+    "dangerTime_by_season": {
+      "winter": "09:38-15:00",
+      "spring": "16:08-17:04",
+      "summer": "no glare",
+      "autumn": "16:00-16:50"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   },
   {
     "id": 29,
@@ -425,13 +626,112 @@
     "address": "ул. Жумекена Нажимеденова, 4",
     "lat": 51.12029787114182,
     "lng": 71.45899528461447,
-    "baseLux": 50000,
-    "period": "both",
-    "dangerTime": "08:00–09:30 17:00–18:30",
+    "baseLux": 15799,
+    "period": "evening",
     "glass": "Панорамное остекление, Low-E стеклопакеты",
-    "orientation": 0,
+    "orientation": 240,
     "name_en": "Highvill Ishim",
     "address_en": "Zhumeken Nazhimedenov St. 4",
-    "glass_en": "Panoramic glazing, Low-E double-glazed units"
+    "glass_en": "Panoramic glazing, Low-E double-glazed units",
+    "dangerTime_by_season": {
+      "winter": "11:38-15:02",
+      "spring": "16:08-17:38",
+      "summer": "18:04-19:14",
+      "autumn": "16:00-17:28"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "Low-E"
+  },
+  {
+    "id": 30,
+    "name": "ЖК «Гранд Алатау»",
+    "address": "ул. Желтоксан, 2/3 (правый берег)",
+    "lat": 51.16203946335745,
+    "lng": 71.41956948293551,
+    "baseLux": 15707,
+    "period": "evening",
+    "glass": "Полностью остеклённый фасад (подтверждено: набережная правого берега Ишима)",
+    "orientation": 250,
+    "name_en": "\"Grand Alatau\" Residential Complex",
+    "address_en": "Zheltoksan St. 2/3 (right bank)",
+    "glass_en": "Fully glazed facade (confirmed: right-bank embankment)",
+    "dangerTime_by_season": {
+      "winter": "12:18-14:58",
+      "spring": "16:08-17:40",
+      "summer": "18:04-19:24",
+      "autumn": "16:00-17:30"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
+  },
+  {
+    "id": 31,
+    "name": "Ледовый дворец «Барыс Арена»",
+    "address": "пр. Туран, 57",
+    "lat": 51.1092151336879,
+    "lng": 71.39557803306054,
+    "baseLux": 25372,
+    "period": "both",
+    "glass": "Зеркальное стекло фасада (подтверждено источниками)",
+    "orientation": 335,
+    "omnidirectional": false,
+    "name_en": "\"Barys Arena\" Ice Palace",
+    "address_en": "Turan Ave. 57",
+    "glass_en": "Mirrored facade glass (source-confirmed)",
+    "dangerTime_by_season": {
+      "winter": "no glare",
+      "spring": "no glare",
+      "summer": "04:42-05:00 18:04-19:52",
+      "autumn": "16:50-17:22"
+    },
+    "reflectance_used": 0.65,
+    "reflectance_basis": "mirrored"
+  },
+  {
+    "id": 32,
+    "name": "Transport Tower («Зажигалка»)",
+    "address": "пр. Кабанбай батыра, 32/1",
+    "lat": 51.131384,
+    "lng": 71.416594,
+    "baseLux": 15100,
+    "period": "both",
+    "glass": "Остекление башни (адрес и высота 155м подтверждены; точный тип стекла источниками не описан)",
+    "orientation": [
+      45,
+      225
+    ],
+    "name_en": "Transport Tower (\"The Lighter\")",
+    "address_en": "Kabanbay Batyr Ave. 32/1",
+    "glass_en": "Tower glazing (address and 155m height confirmed; exact glass type not documented in sources)",
+    "dangerTime_by_season": {
+      "winter": "10:46-15:06",
+      "spring": "07:34-08:30 16:08-17:34",
+      "summer": "05:00-06:30 18:04-18:48",
+      "autumn": "07:04-08:16 16:00-17:24"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
+  },
+  {
+    "id": 33,
+    "name": "Отель St. Regis Astana",
+    "address": "пр. Кабанбай батыра",
+    "lat": 51.129,
+    "lng": 71.416,
+    "baseLux": 15817,
+    "period": "morning",
+    "glass": "Панорамное фасадное остекление (адрес и статус здания подтверждены; точный тип стекла источниками не описан)",
+    "orientation": 120,
+    "name_en": "St. Regis Astana Hotel",
+    "address_en": "Kabanbay Batyr Ave.",
+    "glass_en": "Panoramic facade glazing (address and building status confirmed; exact glass type not documented in sources)",
+    "dangerTime_by_season": {
+      "winter": "09:24-12:48",
+      "spring": "07:10-08:40",
+      "summer": "05:18-06:30",
+      "autumn": "06:48-08:16"
+    },
+    "reflectance_used": 0.25,
+    "reflectance_basis": "panoramic (generic, unconfirmed)"
   }
 ]
