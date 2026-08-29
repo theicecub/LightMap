@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const rootDir = path.resolve(__dirname, '..');
 const scriptSource = fs.readFileSync(path.join(rootDir, 'script.js'), 'utf8');
+const glareWindowSource = fs.readFileSync(path.join(rootDir, 'glare-window.js'), 'utf8');
 const routeSource = fs.readFileSync(path.join(rootDir, 'route.js'), 'utf8');
 
 function sourceBetween(source, startMarker, endMarker) {
@@ -17,7 +18,8 @@ function sourceBetween(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-const sunAndLuxSource = sourceBetween(
+const seasonalGlareSource = glareWindowSource;
+const sunAndLuxSource = seasonalGlareSource + sourceBetween(
   scriptSource,
   'function getSunPosition',
   '\nfunction levelOf',
@@ -124,14 +126,16 @@ test('risk helpers apply distance falloff, exposure time, and directional visibi
 });
 
 test('danger window is derived from season data instead of returning undefined', () => {
-  const startMarker = 'function getSeasonKey';
-  const endMarker = 'function popupHTML';
-  const section = sourceBetween(scriptSource, startMarker, endMarker);
+  const section = seasonalGlareSource + sourceBetween(
+    scriptSource,
+    'function getDangerTimeForBuilding',
+    'function popupHTML',
+  );
 
-  const context = { Date, Math };
+  const context = { Date, Math, Intl, Object, Number, RegExp };
   vm.runInNewContext(`
     ${section}
-    globalThis.popupTestApi = { getSeasonKey, getDangerTimeForBuilding };
+    globalThis.popupTestApi = { getSeasonKey, getDangerTimeForBuilding, isBuildingGlareActive };
   `, context);
 
   const building = {
@@ -146,6 +150,9 @@ test('danger window is derived from season data instead of returning undefined',
   assert.equal(context.popupTestApi.getSeasonKey(new Date('2025-01-15T12:00:00Z')), 'winter');
   assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-01-15T12:00:00Z')), '10:04-14:22');
   assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-06-01T12:00:00Z')), 'no glare');
+  assert.equal(context.popupTestApi.isBuildingGlareActive(building, new Date('2025-01-15T06:00:00Z')), true);
+  assert.equal(context.popupTestApi.isBuildingGlareActive(building, new Date('2025-01-15T05:00:00Z')), false);
+  assert.equal(context.popupTestApi.isBuildingGlareActive(building, new Date('2025-06-01T06:00:00Z')), false);
 });
 
 test('evaluateRoute scores only nearby buildings and preserves contribution totals', () => {
@@ -161,6 +168,12 @@ test('evaluateRoute scores only nearby buildings and preserves contribution tota
     lng: 71.4305,
     baseLux: 1000000,
     orientation: (sun.azimuth + 180) % 360,
+    dangerTime_by_season: {
+      winter: '00:00-23:59',
+      spring: '00:00-23:59',
+      summer: '00:00-23:59',
+      autumn: '00:00-23:59',
+    },
   };
   context.buildings = [
     nearbyBuilding,

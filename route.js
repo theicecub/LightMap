@@ -250,7 +250,6 @@ const ROUTE_CONFIG = {
   // Astana bounding box [west, south, east, north] — hard-restrict geocoding to city only
   cityBbox: [71.10, 50.95, 71.80, 51.30],
   searchRadius: 300,           // meters — building proximity to route
-  dangerLuxThreshold: 50000,   // lux — above this is considered dangerous
   sunAngleTolerance: 30,       // degrees — movement vs sun direction ±
   segmentChunkSize: 100,       // meters — chunk route into segments for coloring
   maxSuggestions: 6,
@@ -1092,7 +1091,7 @@ function renderRouteOnMap() {
       level: seg.level,
       riskScore: seg.riskScore,
       buildingName: seg.nearbyBuildings.length > 0
-        ? (currentLang === 'en' ? (seg.nearbyBuildings[0].building.name_en || seg.nearbyBuildings[0].building.name) : seg.nearbyBuildings[0].building.name)
+        ? getLocalizedBuildingLabel(seg.nearbyBuildings[0].building, seg.nearbyBuildings[0].building.name)
         : '',
       buildingLux: seg.nearbyBuildings.length > 0 ? seg.nearbyBuildings[0].lux : 0,
       buildingDist: seg.nearbyBuildings.length > 0 ? seg.nearbyBuildings[0].distance : 0,
@@ -1242,7 +1241,7 @@ function renderRouteOnMap() {
     html += `<div class="route-tooltip-level route-tooltip-level--${level}">${levelLabel}</div>`;
     if (p.buildingName) {
       const visStatus = getVisibilityText(Number(p.visCoef || 0));
-      html += `<div class="route-tooltip-building">${rt('blindingBuilding')}: <strong>${p.buildingName}</strong></div>`;
+      html += `<div class="route-tooltip-building">${escapeHtml(rt('blindingBuilding'))}: <strong>${escapeHtml(p.buildingName)}</strong></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('luxAtBuilding')}</span><span>${Number(p.buildingLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
@@ -1418,66 +1417,98 @@ function createAutocomplete(inputId, suggestionsId, pointKey) {
 
   let debounceTimer = null;
   let requestVersion = 0;
+  let results = [];
+  let activeIndex = -1;
+
+  const hideSuggestions = () => {
+    suggBox.replaceChildren();
+    suggBox.style.display = 'none';
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
+    activeIndex = -1;
+  };
+
+  const selectResult = index => {
+    const result = results[index];
+    if (!result) return;
+    input.value = result.label;
+    hideSuggestions();
+    routeState[pointKey] = { lng: result.lng, lat: result.lat, label: result.label };
+    if (pointKey === 'pointA') stopFollowingUserLocation();
+    updateEndpointMarker(pointKey);
+    tryBuildRoute();
+  };
+
+  const setActiveResult = index => {
+    if (!results.length) return;
+    activeIndex = (index + results.length) % results.length;
+    const optionId = `${suggestionsId}-option-${activeIndex}`;
+    input.setAttribute('aria-activedescendant', optionId);
+    suggBox.querySelectorAll('.route-suggestion').forEach((button, buttonIndex) => {
+      const isActive = buttonIndex === activeIndex;
+      button.classList.toggle('route-suggestion--active', isActive);
+      button.setAttribute('aria-selected', String(isActive));
+    });
+  };
+
+  const showSuggestions = nextResults => {
+    results = nextResults;
+    activeIndex = -1;
+    suggBox.replaceChildren();
+    results.forEach((result, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = `${suggestionsId}-option-${index}`;
+      button.className = 'route-suggestion';
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', 'false');
+      button.textContent = result.place;
+      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('click', () => selectResult(index));
+      suggBox.append(button);
+    });
+    suggBox.style.display = 'block';
+    input.setAttribute('aria-expanded', 'true');
+  };
 
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     const query = input.value.trim();
     const thisRequestVersion = ++requestVersion;
-
     if (query.length < 2) {
-      suggBox.style.display = 'none';
+      hideSuggestions();
       return;
     }
 
     debounceTimer = setTimeout(async () => {
-      const results = await geocodeSearch(query);
-      // Do not replace suggestions for a newer input value with a slow,
-      // already obsolete geocoding response.
+      const nextResults = await geocodeSearch(query);
       if (thisRequestVersion !== requestVersion || input.value.trim() !== query) return;
-
-      if (results.length === 0) {
-        suggBox.style.display = 'none';
+      if (nextResults.length === 0) {
+        hideSuggestions();
         return;
       }
-
-      suggBox.innerHTML = results.map((r, i) =>
-        `<div class="route-suggestion" data-idx="${i}">${r.place}</div>`
-      ).join('');
-
-      suggBox.style.display = 'block';
-
-      input._results = results;
-
-      suggBox.querySelectorAll('.route-suggestion').forEach(el => {
-        el.addEventListener('click', () => {
-          const idx = parseInt(el.dataset.idx);
-          const result = results[idx];
-          input.value = result.label;
-          suggBox.style.display = 'none';
-
-          routeState[pointKey] = {
-            lng: result.lng,
-            lat: result.lat,
-            label: result.label,
-          };
-
-          if (pointKey === 'pointA') stopFollowingUserLocation();
-
-          updateEndpointMarker(pointKey);
-          tryBuildRoute();
-        });
-      });
+      showSuggestions(nextResults);
     }, ROUTE_CONFIG.debounceMs);
   });
 
-  input.addEventListener('blur', () => {
-    setTimeout(() => { suggBox.style.display = 'none'; }, 200);
+  input.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown' && results.length) {
+      event.preventDefault();
+      setActiveResult(activeIndex + 1);
+    } else if (event.key === 'ArrowUp' && results.length) {
+      event.preventDefault();
+      setActiveResult(activeIndex - 1);
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      selectResult(activeIndex);
+    } else if (event.key === 'Escape') {
+      hideSuggestions();
+    }
   });
 
+  input.addEventListener('blur', () => setTimeout(hideSuggestions, 200));
   input.addEventListener('focus', () => {
-    if (input._results && input._results.length > 0 && input.value.trim().length >= 2) {
-      suggBox.style.display = 'block';
-    }
+    if (results.length && input.value.trim().length >= 2) showSuggestions(results);
   });
 }
 

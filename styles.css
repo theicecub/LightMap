@@ -986,18 +986,26 @@
 }
 
 .route-suggestion {
+  width: 100%;
   padding: 7px 10px;
+  font: inherit;
   font-size: 11.5px;
   color: var(--text);
+  text-align: left;
   cursor: pointer;
+  background: transparent;
+  border: 0;
   transition: background 150ms ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.route-suggestion:hover {
-  background: var(--surface);
+.route-suggestion:hover,
+.route-suggestion:focus-visible,
+.route-suggestion--active {
+  background: var(--surface-strong);
+  outline: none;
 }
 
 .route-suggestion:not(:last-child) {

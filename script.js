@@ -423,11 +423,8 @@ async function loadBuildings() {
 
 const weatherState = {
   cloudCover:   0,    // 0-100 %
-  isDay:        1,    // 1 = день, 0 = ночь
   weatherCode:  0,    // WMO weather code
   temperature:  null, // °C
-  visibility:   null, // метры
-  humidity:     null, // %
   loaded:       false,
   error:        false,
   lastUpdate:   null,
@@ -475,8 +472,7 @@ async function fetchWeather() {
   const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
     latitude:  ASTANA.lat,
     longitude: ASTANA.lng,
-    current:   'temperature_2m,relative_humidity_2m,weather_code,cloud_cover,is_day',
-    hourly:    'cloud_cover,weather_code,visibility,is_day',
+    current:   'temperature_2m,weather_code,cloud_cover',
     timezone:  'Asia/Almaty',
     forecast_days: 1,
   });
@@ -489,29 +485,12 @@ async function fetchWeather() {
 
     const c = data.current;
     weatherState.cloudCover   = c.cloud_cover ?? 0;
-    weatherState.isDay        = c.is_day ?? 1;
     weatherState.weatherCode  = c.weather_code ?? 0;
     weatherState.temperature  = c.temperature_2m;
-    weatherState.humidity     = c.relative_humidity_2m;
     weatherState.loaded       = true;
     weatherState.error        = false;
     weatherState.lastUpdate   = new Date();
 
-    // Получим видимость из ближайшего часа
-    if (data.hourly && data.hourly.visibility) {
-      // API timestamps are expressed in the requested timezone. Compare them
-      // with the timestamp returned by that same response so a visitor in a
-      // different timezone still gets the correct hourly visibility value.
-      const now = c.time ? new Date(c.time) : new Date();
-      const times = data.hourly.time.map(t => new Date(t));
-      let closest = 0;
-      let minDiff = Infinity;
-      times.forEach((t, i) => {
-        const diff = Math.abs(t - now);
-        if (diff < minDiff) { minDiff = diff; closest = i; }
-      });
-      weatherState.visibility = data.hourly.visibility[closest];
-    }
 
     console.log('[Weather] Loaded:', weatherState);
   } catch (err) {
@@ -583,8 +562,9 @@ function computeTimeSunMultiplier(building) {
   const now = new Date();
   const sun = getSunPosition(now, ASTANA.lat, ASTANA.lng);
 
-  // Ночью — нет бликов
-  if (sun.altitude <= 0) return 0;
+  // Seasonal windows are the calibrated building data. The physical model
+  // refines intensity only while that building can produce glare.
+  if (!isBuildingGlareActive(building, now) || sun.altitude <= 0) return 0;
 
   // Наиболее опасны низкие углы солнца (< 30°) — слепят водителей на уровне глаз
   let altMul;
@@ -814,7 +794,6 @@ function initMap() {
 //  МАРКЕРЫ
 // ════════════════════════════════════════════════════════════════════════════
 
-let activeMarkers = [];
 let currentPopup = null;
 let currentPopupBuildingId = null;
 
@@ -824,14 +803,6 @@ function closePopup() {
     currentPopup = null;
   }
   currentPopupBuildingId = null;
-}
-
-function getSeasonKey(date = new Date()) {
-  const month = date.getMonth() + 1;
-  if (month === 12 || month === 1 || month === 2) return 'winter';
-  if (month >= 3 && month <= 5) return 'spring';
-  if (month >= 6 && month <= 8) return 'summer';
-  return 'autumn';
 }
 
 function getDangerTimeForBuilding(building, date = new Date()) {
@@ -866,36 +837,31 @@ function refreshOpenPopup() {
 
 function popupHTML(b) {
   const tr = I18N[currentLang];
-  const isEn = currentLang === 'en';
-  const bData = buildings.find(x => x.id === (typeof b.id === 'string' ? parseInt(b.id) : b.id));
+  const bData = buildings.find(x => x.id === (typeof b.id === 'string' ? parseInt(b.id, 10) : b.id));
   const baseLux = bData ? bData.baseLux : b.lux;
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
   const dangerTime = getDangerTimeForBuilding(bData || b, new Date());
 
-  const bName    = getLocalizedBuildingLabel(bData || b, b.name);
-  const bAddress = (currentLang === 'en' && bData && bData.address_en) ? bData.address_en : b.address;
-  const bGlass   = (currentLang === 'en' && bData && bData.glass_en)   ? bData.glass_en   : b.glass;
+  const bName = getLocalizedBuildingLabel(bData || b, b.name);
+  const bAddress = getLocalizedBuildingField(bData || b, 'address', currentLang, b.address);
+  const bGlass = getLocalizedBuildingField(bData || b, 'glass', currentLang, b.glass);
 
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
-    const weatherMul = (bData && typeof bData.weatherMul === 'number')
-      ? bData.weatherMul
-      : computeWeatherMultiplier();
-    const weatherMulPct = Math.round(weatherMul * 100);
     weatherLine = `
       <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.icon} ${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
   }
 
   return `
-    <div class="popup-badge popup-badge--${level}">${levelLabel(level)}</div>
-    <h3 class="popup-title">${bName}</h3>
-    <p class="popup-address">${bAddress}</p>
-    <div class="popup-field"><span class="popup-field-label">${tr.maxIlluminance}</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
-    <div class="popup-field"><span class="popup-field-label">${tr.currentWeatherAdjusted}</span><span class="popup-field-value lux">${Number(effLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
-    <div class="popup-field"><span class="popup-field-label">${tr.dangerWindow}</span><span class="popup-field-value">${dangerTime}</span></div>
-    <div class="popup-field"><span class="popup-field-label">${tr.glassType}</span><span class="popup-field-value">${bGlass}</span></div>
+    <div class="popup-badge popup-badge--${level}">${escapeHtml(levelLabel(level))}</div>
+    <h3 class="popup-title">${escapeHtml(bName)}</h3>
+    <p class="popup-address">${escapeHtml(bAddress)}</p>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.maxIlluminance)}</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString(tr.locale)} ${escapeHtml(tr.luxUnit)}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.currentWeatherAdjusted)}</span><span class="popup-field-value lux">${Number(effLux).toLocaleString(tr.locale)} ${escapeHtml(tr.luxUnit)}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.dangerWindow)}</span><span class="popup-field-value">${escapeHtml(dangerTime)}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.glassType)}</span><span class="popup-field-value">${escapeHtml(bGlass)}</span></div>
     ${weatherLine}
   `;
 }
@@ -907,8 +873,10 @@ function featureProperties(b) {
     name_en: b.name_en || b.name,
     address: b.address,
     address_en: b.address_en || b.address,
+    address_kk: b.address_kk || b.address,
     glass: b.glass,
     glass_en: b.glass_en || b.glass,
+    glass_kk: b.glass_kk || b.glass,
     lux: b.lux,
     baseLux: b.baseLux,
     period: b.period,
@@ -934,8 +902,6 @@ function buildGeoJson() {
 }
 
 function renderMarkers() {
-  activeMarkers.forEach(m => m.remove());
-  activeMarkers = [];
   const paint = mapPaint();
 
   if (!map.getSource('points')) {

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LightMap</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><polygon points='12,2 14.8,9.2 22,12 14.8,14.8 12,22 9.2,14.8 2,12 9.2,9.2' fill='%231D9E75'/></svg>">
 <meta name="description" content="Интерактивная карта опасных световых бликов от фасадов зданий Астаны для водителей">
@@ -102,19 +102,19 @@
         <div class="route-input-group">
           <div class="route-input-row">
             <span class="route-input-pin route-input-pin--a">A</span>
-            <input type="text" id="routeInputA" class="route-input" placeholder="Откуда" autocomplete="off" />
+            <input type="text" id="routeInputA" class="route-input" placeholder="Откуда" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="routeSuggestionsA" aria-expanded="false" />
             <button class="route-location-btn" id="routeLocationBtn" type="button" title="Текущая геопозиция" aria-label="Текущая геопозиция">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
             </button>
             <button class="route-pick-btn" data-pick="A" title="Выбрать на карте">📍</button>
-            <div class="route-suggestions" id="routeSuggestionsA"></div>
+            <div class="route-suggestions" id="routeSuggestionsA" role="listbox" aria-label="Варианты точки отправления"></div>
           </div>
 
           <div class="route-input-row">
             <span class="route-input-pin route-input-pin--b">B</span>
-            <input type="text" id="routeInputB" class="route-input" placeholder="Куда" autocomplete="off" />
+            <input type="text" id="routeInputB" class="route-input" placeholder="Куда" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="routeSuggestionsB" aria-expanded="false" />
             <button class="route-pick-btn" data-pick="B" title="Выбрать на карте">📍</button>
-            <div class="route-suggestions" id="routeSuggestionsB"></div>
+            <div class="route-suggestions" id="routeSuggestionsB" role="listbox" aria-label="Варианты точки назначения"></div>
           </div>
         </div>
 
@@ -135,6 +135,8 @@
 </div>
 
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="ui-utils.js"></script>
+<script src="glare-window.js"></script>
 <script src="script.js"></script>
 <script src="route.js"></script>
 </body>
