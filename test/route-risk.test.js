@@ -123,6 +123,31 @@ test('risk helpers apply distance falloff, exposure time, and directional visibi
   assert.equal(api.computeVisibilityCoef({ orientation: 90 }, segmentStart, segmentEnd, 90), 0.1);
 });
 
+test('danger window is derived from season data instead of returning undefined', () => {
+  const startMarker = 'function getSeasonKey';
+  const endMarker = 'function popupHTML';
+  const section = sourceBetween(scriptSource, startMarker, endMarker);
+
+  const context = { Date, Math };
+  vm.runInNewContext(`
+    ${section}
+    globalThis.popupTestApi = { getSeasonKey, getDangerTimeForBuilding };
+  `, context);
+
+  const building = {
+    dangerTime_by_season: {
+      winter: '10:04-14:22',
+      spring: 'no glare',
+      summer: 'no glare',
+      autumn: 'no glare',
+    },
+  };
+
+  assert.equal(context.popupTestApi.getSeasonKey(new Date('2025-01-15T12:00:00Z')), 'winter');
+  assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-01-15T12:00:00Z')), '10:04-14:22');
+  assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-06-01T12:00:00Z')), 'no glare');
+});
+
 test('evaluateRoute scores only nearby buildings and preserves contribution totals', () => {
   const { api, context } = loadRiskFunctions();
   const coordinates = [

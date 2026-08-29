@@ -634,6 +634,7 @@ function recalcDanger() {
   buildings.forEach(b => {
     b.lux        = computeEffectiveLux(b, weatherMul);
     b.level      = levelOf(b.lux);
+    b.dangerTime = getDangerTimeForBuilding(b, new Date());
     b.weatherMul = weatherMul; // сохраняем, чтобы показать в попапе без повторного пересчёта
   });
   updateStats();
@@ -825,6 +826,34 @@ function closePopup() {
   currentPopupBuildingId = null;
 }
 
+function getSeasonKey(date = new Date()) {
+  const month = date.getMonth() + 1;
+  if (month === 12 || month === 1 || month === 2) return 'winter';
+  if (month >= 3 && month <= 5) return 'spring';
+  if (month >= 6 && month <= 8) return 'summer';
+  return 'autumn';
+}
+
+function getDangerTimeForBuilding(building, date = new Date()) {
+  if (!building) return '—';
+
+  const seasonKey = getSeasonKey(date);
+  const seasonMap = building.dangerTime_by_season || {};
+  const currentSeasonValue = seasonMap[seasonKey];
+  if (typeof currentSeasonValue === 'string' && currentSeasonValue.trim()) {
+    return currentSeasonValue.trim();
+  }
+
+  for (const key of ['winter', 'spring', 'summer', 'autumn']) {
+    const value = seasonMap[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return building.dangerTime || 'no glare';
+}
+
 // Перегенерирует HTML уже открытого попапа (вызывается при смене языка,
 // пересчёте опасности и обновлении погоды), иначе попап "застывает" на
 // тех данных/языке, что были на момент клика по маркеру.
@@ -842,6 +871,7 @@ function popupHTML(b) {
   const baseLux = bData ? bData.baseLux : b.lux;
   const effLux  = bData ? bData.lux : b.lux;
   const level   = bData ? bData.level : (b.level || levelOf(b.lux));
+  const dangerTime = getDangerTimeForBuilding(bData || b, new Date());
 
   const bName    = getLocalizedBuildingLabel(bData || b, b.name);
   const bAddress = (currentLang === 'en' && bData && bData.address_en) ? bData.address_en : b.address;
@@ -864,7 +894,7 @@ function popupHTML(b) {
     <p class="popup-address">${bAddress}</p>
     <div class="popup-field"><span class="popup-field-label">${tr.maxIlluminance}</span><span class="popup-field-value lux">${Number(baseLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
     <div class="popup-field"><span class="popup-field-label">${tr.currentWeatherAdjusted}</span><span class="popup-field-value lux">${Number(effLux).toLocaleString(tr.locale)} ${tr.luxUnit}</span></div>
-    <div class="popup-field"><span class="popup-field-label">${tr.dangerWindow}</span><span class="popup-field-value">${b.dangerTime}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${tr.dangerWindow}</span><span class="popup-field-value">${dangerTime}</span></div>
     <div class="popup-field"><span class="popup-field-label">${tr.glassType}</span><span class="popup-field-value">${bGlass}</span></div>
     ${weatherLine}
   `;
@@ -882,7 +912,7 @@ function featureProperties(b) {
     lux: b.lux,
     baseLux: b.baseLux,
     period: b.period,
-    dangerTime: b.dangerTime,
+    dangerTime: getDangerTimeForBuilding(b, new Date()),
     level: b.level,
   };
 }
