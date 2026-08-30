@@ -92,8 +92,8 @@
       <div class="route-panel-header">
         <h3 class="route-panel-title">Безопасный маршрут</h3>
         <button class="route-panel-toggle" id="routePanelToggle" aria-label="Toggle route panel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
         </button>
       </div>
@@ -106,14 +106,14 @@
             <button class="route-location-btn" id="routeLocationBtn" type="button" title="Текущая геопозиция" aria-label="Текущая геопозиция">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
             </button>
-            <button class="route-pick-btn" data-pick="A" title="Выбрать на карте">📍</button>
+            <button class="route-pick-btn" data-pick="A" title="Выбрать на карте" aria-label="Выбрать на карте"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 10.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg></button>
             <div class="route-suggestions" id="routeSuggestionsA" role="listbox" aria-label="Варианты точки отправления"></div>
           </div>
 
           <div class="route-input-row">
             <span class="route-input-pin route-input-pin--b">B</span>
             <input type="text" id="routeInputB" class="route-input" placeholder="Куда" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="routeSuggestionsB" aria-expanded="false" />
-            <button class="route-pick-btn" data-pick="B" title="Выбрать на карте">📍</button>
+            <button class="route-pick-btn" data-pick="B" title="Выбрать на карте" aria-label="Выбрать на карте"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 10.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg></button>
             <div class="route-suggestions" id="routeSuggestionsB" role="listbox" aria-label="Варианты точки назначения"></div>
           </div>
         </div>

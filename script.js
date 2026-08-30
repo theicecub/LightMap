@@ -434,40 +434,26 @@ const weatherState = {
   lastUpdate:   null,
 };
 
-// WMO weather codes → иконка (text comes from i18n)
+// Heroicons outline weather glyphs (text comes from i18n).
+const WEATHER_ICONS = {
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364 6.364-1.06-1.06M6.697 6.697l-1.06-1.06m12.728 0-1.06 1.06M6.697 17.303l-1.06 1.06M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg>',
+  cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5h10.5a4.5 4.5 0 0 0 1.95-8.555 6.002 6.002 0 0 0-11.7 1.555A3.75 3.75 0 0 0 2.25 15Z" /></svg>',
+  rain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5h10.5a4.5 4.5 0 0 0 1.95-8.555 6.002 6.002 0 0 0-11.7 1.555A3.75 3.75 0 0 0 2.25 15Zm7.5 3.75-1.5 3m6-3-1.5 3" /></svg>',
+  snow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5h10.5a4.5 4.5 0 0 0 1.95-8.555 6.002 6.002 0 0 0-11.7 1.555A3.75 3.75 0 0 0 2.25 15Zm6.75 3.75v3m-1.5-1.5h3m3-1.5v3m-1.5-1.5h3" /></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 15a4.5 4.5 0 0 0-.3-8.99 6.002 6.002 0 0 0-11.7 1.555A3.75 3.75 0 0 0 6.75 15h3l-1.5 6 6-8.25h-3.75l1.5-4.5" /></svg>',
+};
+
 const WMO_CODES = {
-  0:  { icon:'☀️' },
-  1:  { icon:'🌤️' },
-  2:  { icon:'⛅' },
-  3:  { icon:'☁️' },
-  45: { icon:'🌫️' },
-  48: { icon:'🌫️' },
-  51: { icon:'🌦️' },
-  53: { icon:'🌦️' },
-  55: { icon:'🌧️' },
-  56: { icon:'🌧️' },
-  57: { icon:'🌧️' },
-  61: { icon:'🌧️' },
-  63: { icon:'🌧️' },
-  65: { icon:'🌧️' },
-  66: { icon:'🌧️' },
-  67: { icon:'🌧️' },
-  71: { icon:'🌨️' },
-  73: { icon:'🌨️' },
-  75: { icon:'🌨️' },
-  77: { icon:'🌨️' },
-  80: { icon:'🌦️' },
-  81: { icon:'🌧️' },
-  82: { icon:'🌧️' },
-  85: { icon:'🌨️' },
-  86: { icon:'🌨️' },
-  95: { icon:'⛈️' },
-  96: { icon:'⛈️' },
-  99: { icon:'⛈️' },
+  0: { icon: WEATHER_ICONS.sun }, 1: { icon: WEATHER_ICONS.sun }, 2: { icon: WEATHER_ICONS.cloud }, 3: { icon: WEATHER_ICONS.cloud },
+  45: { icon: WEATHER_ICONS.cloud }, 48: { icon: WEATHER_ICONS.cloud },
+  51: { icon: WEATHER_ICONS.rain }, 53: { icon: WEATHER_ICONS.rain }, 55: { icon: WEATHER_ICONS.rain }, 56: { icon: WEATHER_ICONS.rain }, 57: { icon: WEATHER_ICONS.rain },
+  61: { icon: WEATHER_ICONS.rain }, 63: { icon: WEATHER_ICONS.rain }, 65: { icon: WEATHER_ICONS.rain }, 66: { icon: WEATHER_ICONS.rain }, 67: { icon: WEATHER_ICONS.rain },
+  71: { icon: WEATHER_ICONS.snow }, 73: { icon: WEATHER_ICONS.snow }, 75: { icon: WEATHER_ICONS.snow }, 77: { icon: WEATHER_ICONS.snow }, 80: { icon: WEATHER_ICONS.rain }, 81: { icon: WEATHER_ICONS.rain }, 82: { icon: WEATHER_ICONS.rain }, 85: { icon: WEATHER_ICONS.snow }, 86: { icon: WEATHER_ICONS.snow },
+  95: { icon: WEATHER_ICONS.bolt }, 96: { icon: WEATHER_ICONS.bolt }, 99: { icon: WEATHER_ICONS.bolt },
 };
 
 function getWMO(code) {
-  const entry = WMO_CODES[code] || { icon: '❓' };
+  const entry = WMO_CODES[code] || { icon: WEATHER_ICONS.cloud };
   const text = I18N[currentLang].wmo[code] || I18N[currentLang].unknown;
   return { text, icon: entry.icon };
 }

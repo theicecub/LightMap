@@ -210,6 +210,12 @@ const ROUTE_I18N = {
   },
 };
 
+const ROUTE_ICONS = {
+  mapPin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 10.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg>',
+  distance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m7.5 21-4.5-4.5m0 0L7.5 12M3 16.5h18m0-9L16.5 3m4.5 4.5L16.5 12M21 7.5H3" /></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m6.75 0a9.75 9.75 0 1 1-19.5 0 9.75 9.75 0 0 1 19.5 0Z" /></svg>',
+};
+
 function rt(key) {
   const val = ROUTE_I18N[currentLang]?.[key];
   return val !== undefined ? val : key;
@@ -1344,9 +1350,9 @@ function updateRoutePanel() {
         <button class="route-comparison-card ${isSel ? 'route-comparison-card--active' : ''}" data-route-idx="${i}">
           <div class="route-comparison-label">${label}</div>
           <div class="route-comparison-stats">
-            <span title="${tr.routeDistance}">📏 ${fmtKm(r.distance)}</span>
-            <span title="${tr.routeDuration}">⏱ ${fmtDur(r.duration)}</span>
-            <span title="${tr.eta}">🕒 ${fmtETA(r.duration)}</span>
+            <span title="${tr.routeDistance}"><i class="route-comparison-stat-icon">${ROUTE_ICONS.distance}</i>${fmtKm(r.distance)}</span>
+            <span title="${tr.routeDuration}"><i class="route-comparison-stat-icon">${ROUTE_ICONS.clock}</i>${fmtDur(r.duration)}</span>
+            <span title="${tr.eta}"><i class="route-comparison-stat-icon">${ROUTE_ICONS.clock}</i>${fmtETA(r.duration)}</span>
           </div>
           <div class="route-comparison-risk">
             <span class="route-risk-dot route-risk-dot--${routeStatusClass}"></span>
@@ -1675,7 +1681,10 @@ function applyRouteLangText() {
   }
 
   document.querySelectorAll('.route-pick-btn').forEach(btn => {
-    btn.textContent = tr.pickOnMap;
+    const label = btn.dataset.pick === 'A' ? tr.clickMapA : tr.clickMapB;
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-label', label);
+    btn.innerHTML = ROUTE_ICONS.mapPin;
   });
 }
 

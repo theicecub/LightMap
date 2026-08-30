@@ -667,8 +667,17 @@
 }
 
 .ws-icon {
- font-size: 14px;
- line-height: 1;
+ display: inline-flex;
+ width: 16px;
+ height: 16px;
+ color: var(--caution);
+}
+
+.ws-icon svg {
+ width: 100%;
+ height: 100%;
+ stroke-linecap: round;
+ stroke-linejoin: round;
 }
 
 .ws-label {
@@ -911,12 +920,39 @@
   border: 1px solid var(--border);
   border-radius: 7px;
   cursor: pointer;
-  font-size: 13px;
+  color: var(--text-dim);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 200ms ease, border-color 200ms ease;
   padding: 0;
+}
+
+.route-pick-btn svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.route-comparison-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.route-comparison-stat-icon {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+}
+
+.route-comparison-stat-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .route-location-btn {
@@ -960,10 +996,12 @@
 }
 
 .route-pick-btn:hover {
+  color: var(--clear);
   background: var(--surface-strong);
 }
 
 .route-pick-btn--active {
+  color: var(--ink);
   background: var(--clear);
   border-color: var(--clear);
 }
