@@ -382,6 +382,10 @@ syncThemeState(initialTheme);
 const CENTER = [71.43029781319242, 51.128310151593574];
 const ZOOM   = 13;
 const ASTANA = { lat: 51.128, lng: 71.430 };
+const ASTANA_BOUNDS = [
+  [71.10, 50.95],
+  [71.80, 51.30],
+];
 
 const MAP_PAINT = {
   dark:  { stroke: 'rgba(12, 16, 24, 0.95)' },
@@ -765,6 +769,14 @@ function initMap() {
     style: MAP_STYLE[activeTheme()] || MAP_STYLE.dark,
     center: CENTER,
     zoom: ZOOM,
+    maxBounds: ASTANA_BOUNDS,
+    minZoom: 10,
+    maxZoom: 17,
+  });
+
+  map.fitBounds(ASTANA_BOUNDS, {
+    padding: 20,
+    maxZoom: ZOOM,
   });
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
