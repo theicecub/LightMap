@@ -1440,6 +1440,12 @@ function initRouteModule() {
 
   const panelToggle = document.getElementById('routePanelToggle');
   if (panelToggle) {
+    // Set initial arrow state: down when open
+    const toggleIcon = panelToggle.querySelector('svg');
+    if (toggleIcon) {
+      toggleIcon.style.transform = 'rotate(180deg)';
+    }
+
     panelToggle.addEventListener('click', () => {
       const panel = document.getElementById('routePanel');
       if (!panel) return;

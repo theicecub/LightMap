@@ -561,13 +561,18 @@
  overflow: hidden;
  }
  .topbar-row {
- display: flex;
- grid-template-columns: minmax(0, 1fr) auto;
+ display: grid;
+ grid-template-columns: 1fr auto;
  gap: 8px;
  align-items: center;
+ width: 100%;
  }
  .brand {
- grid-column: 1 / -1;
+ grid-column: 1;
+ grid-row: 1;
+ display: flex;
+ align-items: center;
+ gap: 10px;
  min-width: 0;
  }
  .brand > div:last-child { min-width: 0; }
@@ -575,6 +580,24 @@
  .brand h1 { font-size: 14px; }
  .brand-icon { width: 30px; height: 30px; border-radius: 8px; }
  .brand-icon svg { width: 17px; height: 17px; }
+ .topbar-controls {
+ grid-column: 2;
+ grid-row: 1;
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ flex-shrink: 0;
+ }
+ .weather-strip {
+ grid-column: 1 / -1;
+ grid-row: 2;
+ flex: 1 1 auto;
+ min-width: 0;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ overflow: hidden;
+ }
  .stats {
  width: auto;
  min-width: 0;
@@ -590,7 +613,7 @@
  .legend h4 { font-size: 9.5px; }
  .legend-item { font-size: 11px; }
  .dot { width: 8px; height: 8px; }
- }
+}
 
 
 
