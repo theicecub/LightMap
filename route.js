@@ -629,7 +629,7 @@ function getBuildingSpatialIndex() {
   // `loadBuildings` replaces the array, so a new dataset automatically gets a
   // fresh index. The length check also covers appending candidates in place.
   if (buildingSpatialIndex.source === buildings &&
-      buildingSpatialIndex.size === buildings.length) {
+    buildingSpatialIndex.size === buildings.length) {
     return buildingSpatialIndex;
   }
 
@@ -1408,7 +1408,7 @@ function initMapClickPicker() {
 
     const { lng, lat } = e.lngLat;
     const field = routeState.pickingFor;
-    
+
     setPoint(field, {
       lng,
       lat,
@@ -1427,7 +1427,7 @@ function initMapClickPicker() {
 function initRouteModule() {
   // Initialize field buttons and menus
   initFieldMenus();
-  
+
   // Build button
   const buildBtn = document.getElementById('routeBuildBtn');
   if (buildBtn) {
@@ -1479,7 +1479,7 @@ function initFieldMenus() {
   ['A', 'B'].forEach(field => {
     const inputBtn = document.getElementById(field === 'A' ? 'routeInputABtn' : 'routeInputBBtn');
     const menu = document.getElementById(`routeFieldMenu${field}`);
-    
+
     if (!inputBtn || !menu) return;
 
     // Toggle menu on button click
@@ -1498,7 +1498,7 @@ function initFieldMenus() {
         e.stopPropagation();
         const action = item.dataset.action;
         const itemField = item.dataset.field;
-        
+
         if (action === 'address') {
           openAddressInput(itemField);
         } else if (action === 'geolocation') {
@@ -1506,7 +1506,7 @@ function initFieldMenus() {
         } else if (action === 'map') {
           startMapPicker(itemField);
         }
-        
+
         menu.classList.remove('active');
       });
     });
@@ -1523,9 +1523,9 @@ function initFieldMenus() {
 }
 
 function openAddressInput(field) {
-  const addressInput = prompt(field === 'A' ? 'Введите адрес (откуда):' : 'Введите адрес (куда):', 
-                               routeState[field === 'A' ? 'pointA' : 'pointB']?.label || '');
-  
+  const addressInput = prompt(field === 'A' ? 'Введите адрес (откуда):' : 'Введите адрес (куда):',
+    routeState[field === 'A' ? 'pointA' : 'pointB']?.label || '');
+
   if (addressInput && addressInput.trim()) {
     const query = addressInput.trim();
     geocodeSearch(query).then(results => {
@@ -1576,14 +1576,14 @@ function selectPointFromGeocoding(field, result) {
 function setPoint(field, point) {
   const pointKey = field === 'A' ? 'pointA' : 'pointB';
   const fieldValueId = field === 'A' ? 'routeFieldValueA' : 'routeFieldValueB';
-  
+
   routeState[pointKey] = point;
-  
+
   const fieldValue = document.getElementById(fieldValueId);
   if (fieldValue) {
     fieldValue.textContent = point.label;
   }
-  
+
   updateEndpointMarker(pointKey);
   tryBuildRoute();
 }
@@ -1625,12 +1625,12 @@ function applyRouteLangText() {
   const inputABtn = document.getElementById('routeInputABtn');
   const inputBBtn = document.getElementById('routeInputBBtn');
   const buildBtn = document.getElementById('routeBuildBtn');
-  
+
   if (inputABtn) {
     const label = inputABtn.querySelector('.route-field-label');
     if (label) label.textContent = tr.placeholderA || 'Откуда';
   }
-  
+
   if (inputBBtn) {
     const label = inputBBtn.querySelector('.route-field-label');
     if (label) label.textContent = tr.placeholderB || 'Куда';
@@ -1640,7 +1640,7 @@ function applyRouteLangText() {
   ['A', 'B'].forEach(field => {
     const menu = document.getElementById(`routeFieldMenu${field}`);
     if (!menu) return;
-    
+
     const items = menu.querySelectorAll('.route-menu-item');
     if (items[0]) items[0].querySelector('span').textContent = 'Ввести адрес';
     if (items[1]) items[1].querySelector('span').textContent = 'Мое местоположение';
@@ -1671,7 +1671,7 @@ if (document.readyState === 'complete') {
 
 const _origApplyTheme = typeof applyTheme === 'function' ? applyTheme : null;
 if (_origApplyTheme) {
-  const _patchedApplyTheme = function(theme) {
+  const _patchedApplyTheme = function (theme) {
     _origApplyTheme(theme);
     if (routeState.active) {
       setTimeout(() => renderRouteOnMap(), 300);
@@ -1682,7 +1682,7 @@ if (_origApplyTheme) {
 
 const _origSetLang = typeof setLang === 'function' ? setLang : null;
 if (_origSetLang) {
-  const _patchedSetLang = function(lang) {
+  const _patchedSetLang = function (lang) {
     _origSetLang(lang);
     updateRoutePanel();
     applyRouteLangText();
