@@ -40,7 +40,13 @@
         </div>
         <div>
           <h1>LightMap</h1>
-          <p class="subtitle">Карта опасных световых зон от фасадов зданий для водителей</p>
+        </div>
+      </div>
+
+      <div class="weather-strip" id="weatherStrip">
+        <div class="weather-strip-loading">
+          <span class="weather-spinner"></span>
+          <span>Загрузка погоды…</span>
         </div>
       </div>
 
@@ -73,59 +79,81 @@
         </label>
       </div>
     </div>
-
-    <div class="topbar-secondary">
-      <div class="weather-strip" id="weatherStrip">
-        <div class="weather-strip-loading">
-          <span class="weather-spinner"></span>
-          <span>Загрузка погоды…</span>
-        </div>
-      </div>
-    </div>
   </header>
 
   <main class="map-wrap">
     <div id="map"></div>
 
-    <!-- Safe Route Panel -->
+    <!-- Safe Route Panel — Redesigned Compact Version -->
     <div class="route-panel" id="routePanel">
-      <div class="route-panel-header">
-        <h3 class="route-panel-title">Безопасный маршрут</h3>
-        <button class="route-panel-toggle" id="routePanelToggle" aria-label="Toggle route panel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-          </svg>
+      <div class="route-panel-inner">
+        <button class="route-panel-toggle" id="routePanelToggle" type="button" aria-label="Свернуть панель маршрута" title="Свернуть панель маршрута">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"></path></svg>
         </button>
-      </div>
-
-      <div class="route-panel-content" id="routePanelContent">
-        <div class="route-input-group">
-          <div class="route-input-row">
-            <span class="route-input-pin route-input-pin--a">A</span>
-            <input type="text" id="routeInputA" class="route-input" placeholder="Откуда" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="routeSuggestionsA" aria-expanded="false" />
-            <button class="route-location-btn" id="routeLocationBtn" type="button" title="Текущая геопозиция" aria-label="Текущая геопозиция">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        <div class="route-panel-content">
+          <!-- Input Group -->
+          <div class="route-input-group">
+          <!-- From Field -->
+          <div class="route-input-field">
+            <button class="route-input-button" id="routeInputABtn" data-field="A" aria-label="Откуда">
+              <span class="route-field-label">Откуда</span>
+              <span class="route-field-value" id="routeFieldValueA"></span>
             </button>
-            <button class="route-pick-btn" data-pick="A" title="Выбрать на карте" aria-label="Выбрать на карте"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 10.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg></button>
-            <div class="route-suggestions" id="routeSuggestionsA" role="listbox" aria-label="Варианты точки отправления"></div>
+            <div class="route-field-menu" id="routeFieldMenuA" role="listbox" aria-label="Способ ввода: откуда">
+              <button class="route-menu-item" data-action="address" data-field="A" title="Ввести адрес">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <span>Ввести адрес</span>
+              </button>
+              <button class="route-menu-item" data-action="geolocation" data-field="A" title="Использовать геолокацию">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M12 1C6.48 1 2 5.48 2 11c0 8 10 13 10 13s10-5 10-13c0-5.52-4.48-10-10-10zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"></path></svg>
+                <span>Мое местоположение</span>
+              </button>
+              <button class="route-menu-item" data-action="map" data-field="A" title="Выбрать на карте">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z"></path><circle cx="12" cy="10.5" r="2.25"></circle></svg>
+                <span>Выбрать на карте</span>
+              </button>
+            </div>
+            <button class="route-clear-btn" id="routeClearA" title="Очистить поле" aria-label="Очистить откуда">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>
+            </button>
           </div>
 
-          <div class="route-input-row">
-            <span class="route-input-pin route-input-pin--b">B</span>
-            <input type="text" id="routeInputB" class="route-input" placeholder="Куда" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="routeSuggestionsB" aria-expanded="false" />
-            <button class="route-pick-btn" data-pick="B" title="Выбрать на карте" aria-label="Выбрать на карте"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 10.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg></button>
-            <div class="route-suggestions" id="routeSuggestionsB" role="listbox" aria-label="Варианты точки назначения"></div>
+          <!-- To Field -->
+          <div class="route-input-field">
+            <button class="route-input-button" id="routeInputBBtn" data-field="B" aria-label="Куда">
+              <span class="route-field-label">Куда</span>
+              <span class="route-field-value" id="routeFieldValueB"></span>
+            </button>
+            <div class="route-field-menu" id="routeFieldMenuB" role="listbox" aria-label="Способ ввода: куда">
+              <button class="route-menu-item" data-action="address" data-field="B" title="Ввести адрес">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <span>Ввести адрес</span>
+              </button>
+              <button class="route-menu-item" data-action="geolocation" data-field="B" title="Использовать геолокацию">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M12 1C6.48 1 2 5.48 2 11c0 8 10 13 10 13s10-5 10-13c0-5.52-4.48-10-10-10zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"></path></svg>
+                <span>Мое местоположение</span>
+              </button>
+              <button class="route-menu-item" data-action="map" data-field="B" title="Выбрать на карте">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z"></path><circle cx="12" cy="10.5" r="2.25"></circle></svg>
+                <span>Выбрать на карте</span>
+              </button>
+            </div>
+            <button class="route-clear-btn" id="routeClearB" title="Очистить поле" aria-label="Очистить куда">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>
+            </button>
           </div>
         </div>
 
-        <div class="route-actions">
-          <button class="route-btn route-btn--primary" id="routeBuildBtn">Построить маршрут</button>
-          <button class="route-btn route-btn--secondary" id="routeClearBtn">Очистить</button>
-        </div>
+          <!-- Action Button -->
+          <button class="route-action-btn" id="routeBuildBtn" title="Построить маршрут" aria-label="Построить маршрут">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 5l-7 7h4v5h6v-5h4l-7-7z"></path></svg>
+          </button>
 
-        <div class="route-results" id="routeResults">
-          <div class="route-error" id="routeError" style="display:none;"></div>
-          <div class="route-panel-body" id="routePanelBody"></div>
+          <!-- Results Area (Hidden by default) -->
+          <div class="route-results" id="routeResults" style="display:none;">
+            <div class="route-error" id="routeError" style="display:none;"></div>
+            <div class="route-panel-body" id="routePanelBody"></div>
+          </div>
         </div>
       </div>
     </div>

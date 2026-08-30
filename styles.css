@@ -113,9 +113,8 @@
  .topbar-row {
  display: flex;
  align-items: center;
- justify-content: space-between;
- gap: 14px;
- flex: 1 1 auto;
+ gap: 12px;
+ width: 100%;
  min-width: 0;
  }
  .topbar-controls {
@@ -123,6 +122,7 @@
  align-items: center;
  gap: 12px;
  flex-shrink: 0;
+ margin-left: auto;
  }
  .lang-switcher {
  display: flex;
@@ -599,11 +599,7 @@
 }
 
 .topbar-secondary {
- display: flex;
- align-items: center;
- gap: 10px;
- width: 100%;
- min-width: 0;
+ display: none;
 }
 
 .weather-strip {
@@ -611,12 +607,15 @@
  min-width: 0;
  display: flex;
  align-items: center;
+ justify-content: center;
+ overflow: hidden;
 }
 
 .weather-strip-loading,
 .weather-strip-error {
  display: flex;
  align-items: center;
+ justify-content: center;
  gap: 6px;
  font-size: 12px;
  color: var(--text-dim);
@@ -624,6 +623,7 @@
  border-radius: 8px;
  background: var(--surface);
  white-space: nowrap;
+ min-width: 0;
 }
 
 .weather-strip-error {
@@ -643,16 +643,19 @@
 .weather-strip-content {
  display: flex;
  align-items: center;
+ justify-content: center;
  gap: 4px;
- flex-wrap: wrap;
- width: 100%;
+ flex-wrap: nowrap;
+ width: auto;
+ max-width: 100%;
+ overflow: hidden;
 }
 
 .ws-item {
  display: flex;
  align-items: center;
  gap: 4px;
- padding: 4px 8px;
+ padding: 4px 7px;
  border-radius: 6px;
  background: var(--surface);
  font-size: 11.5px;
@@ -668,9 +671,14 @@
 
 .ws-icon {
  display: inline-flex;
- width: 16px;
- height: 16px;
+ align-items: center;
+ justify-content: center;
+ width: 12px;
+ height: 12px;
+ font-size: 12px;
+ line-height: 1;
  color: var(--caution);
+ flex-shrink: 0;
 }
 
 .ws-icon svg {
@@ -734,91 +742,302 @@
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SAFE ROUTE PANEL — positioned in bottom-left corner
+   SAFE ROUTE PANEL — Compact Bottom Navigation (Redesigned)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .route-panel {
   position: absolute;
   bottom: 12px;
   left: 12px;
-  width: 320px;
+  right: auto;
+  width: min(320px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
-  background: var(--panel);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-top: 1px solid var(--border-top);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  background: rgba(80, 100, 120, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(223, 232, 246, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 10;
   overflow: visible;
-  transition: max-height 320ms var(--theme-ease), opacity 320ms var(--theme-ease);
-  max-height: 560px;
+  transition: all 200ms ease;
+}
+
+.route-panel-inner {
   display: flex;
   flex-direction: column;
-}
-
-.route-panel--collapsed {
-  max-height: 44px;
-}
-
-.route-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  cursor: pointer;
-  flex-shrink: 0;
-  touch-action: manipulation;
-}
-
-.route-panel-title {
-  margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.route-panel-toggle {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: transform 200ms ease, color 200ms ease, background 200ms ease;
-  display: flex;
-  align-items: center;
-}
-
-.route-panel-toggle:hover {
-  color: var(--text);
-  background: var(--surface);
-}
-
-.route-panel--collapsed .route-panel-toggle {
-  transform: rotate(-90deg);
+  gap: 8px;
+  padding: 10px 12px;
+  position: relative;
 }
 
 .route-panel-content {
-  padding: 0 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow: visible;
-  min-height: 0;
+  gap: 8px;
+  transition: opacity 150ms ease;
+}
+
+/* Input Group */
+.route-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.route-input-field {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.route-input-button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  background: rgba(223, 232, 246, 0.08);
+  border: 1px solid rgba(223, 232, 246, 0.15);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 150ms ease;
+  touch-action: manipulation;
+  outline: none;
+}
+
+.route-input-button:hover {
+  background: rgba(223, 232, 246, 0.12);
+  border-color: rgba(223, 232, 246, 0.2);
+}
+
+.route-input-button:focus {
+  border-color: var(--clear);
+  background: rgba(50, 210, 171, 0.08);
+  box-shadow: 0 0 0 2px rgba(50, 210, 171, 0.15);
+}
+
+.route-field-label {
+  display: inline;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.route-field-value {
+  display: inline;
+  color: var(--text);
+  font-weight: 500;
+  max-width: calc(100% - 40px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Clear Button */
+.route-clear-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(223, 232, 246, 0.08);
+  border: 1px solid rgba(223, 232, 246, 0.15);
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  touch-action: manipulation;
+  outline: none;
+}
+
+.route-clear-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.route-clear-btn:hover {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: rgba(255, 80, 80, 0.3);
+  color: #ff5050;
+}
+
+.route-clear-btn:active {
+  transform: scale(0.95);
+}
+
+/* Action Button */
+.route-action-btn {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0;
+  background: var(--clear);
+  border: none;
+  border-radius: 8px;
+  color: #0C1018;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  touch-action: manipulation;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: 0 2px 8px rgba(50, 210, 171, 0.25);
+}
+
+.route-action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.route-panel-toggle {
+  width: 100%;
+  height: 30px;
+  border: 1px solid rgba(223, 232, 246, 0.18);
+  border-radius: 8px;
+  background: rgba(16, 22, 30, 0.24);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  touch-action: manipulation;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+  flex-shrink: 0;
+}
+
+.route-panel-toggle:hover {
+  background: rgba(223, 232, 246, 0.1);
+  border-color: rgba(223, 232, 246, 0.28);
+}
+
+.route-panel-toggle svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 180ms ease;
 }
 
 .route-panel--collapsed .route-panel-content {
-  display: none;
+  display: none !important;
 }
 
-/* Scrollable results area (error + stats + comparison cards). Kept separate
-   from the input/suggestions area above so the autocomplete dropdown (which
-   opens upward, outside normal flow) is never clipped. */
-.route-results {
+.route-panel--collapsed {
+  overflow: hidden;
+}
+
+.route-panel--collapsed .route-panel-toggle {
+  margin: 0 auto;
   display: flex;
+}
+
+.route-panel--collapsed .route-panel-inner {
+  padding-top: 0;
+  gap: 0;
+}
+.route-action-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(50, 210, 171, 0.35);
+}
+
+.route-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* Field Menu (Dropdown) */
+.route-field-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 6px;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--shadow-strong);
+  z-index: 50;
+  display: none;
+  overflow: hidden;
+  min-width: 180px;
+  animation: route-menu-in 150ms ease;
+}
+
+@keyframes route-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-field-menu.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.route-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: all 100ms ease;
+  touch-action: manipulation;
+  outline: none;
+  white-space: nowrap;
+}
+
+.route-menu-item:last-child {
+  border-bottom: none;
+}
+
+.route-menu-item:hover {
+  background: var(--surface);
+}
+
+.route-menu-item:active {
+  background: var(--surface-strong);
+}
+
+.route-menu-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--text-dim);
+}
+
+/* Results Area */
+.route-results {
+  display: none;
   flex-direction: column;
   gap: 10px;
   max-height: 280px;
@@ -828,10 +1047,16 @@
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
 .route-results:empty {
   max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .route-results::-webkit-scrollbar {
@@ -843,252 +1068,7 @@
   border-radius: 4px;
 }
 
-/* Input group */
-.route-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 
-.route-input-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.route-input-pin {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-.route-input-pin--a {
-  background: var(--clear);
-}
-
-.route-input-pin--b {
-  background: var(--glare);
-}
-
-.route-input {
-  flex: 1;
-  min-width: 0;
-  padding: 7px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-size: 12.5px;
-  font-family: 'Inter', sans-serif;
-  outline: none;
-  transition: border-color 200ms ease, background 200ms ease;
-  touch-action: manipulation;
-}
-
-/* iOS Safari auto-zooms the whole page on focus if an input's font-size is
-   under 16px. Force 16px on touch-sized screens so tapping "From"/"To"
-   doesn't unexpectedly zoom the map/panel. */
-@media (max-width: 600px) {
-  .route-input {
-    font-size: 16px;
-  }
-}
-
-.route-input::placeholder {
-  color: var(--text-dim);
-}
-
-.route-input:focus {
-  border-color: var(--clear);
-  background: var(--surface-strong);
-}
-
-.route-pick-btn {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  cursor: pointer;
-  color: var(--text-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 200ms ease, border-color 200ms ease;
-  padding: 0;
-}
-
-.route-pick-btn svg {
-  width: 15px;
-  height: 15px;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.route-comparison-stats span {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.route-comparison-stat-icon {
-  display: inline-flex;
-  width: 13px;
-  height: 13px;
-}
-
-.route-comparison-stat-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.route-location-btn {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-dim);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  cursor: pointer;
-  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
-}
-
-.route-location-btn svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.route-location-btn:hover,
-.route-location-btn--active {
-  color: var(--clear);
-  border-color: var(--clear);
-  background: rgba(50, 210, 171, 0.1);
-}
-
-.route-location-btn--loading svg {
-  animation: route-location-spin 0.8s linear infinite;
-}
-
-@keyframes route-location-spin {
-  to { transform: rotate(360deg); }
-}
-
-.route-pick-btn:hover {
-  color: var(--clear);
-  background: var(--surface-strong);
-}
-
-.route-pick-btn--active {
-  color: var(--ink);
-  background: var(--clear);
-  border-color: var(--clear);
-}
-
-/* Suggestions dropdown — opens UPWARD into the open map area above the panel */
-.route-suggestions {
-  position: absolute;
-  bottom: 100%;
-  left: 26px;
-  right: 72px;
-  margin-bottom: 4px;
-  background: var(--panel-solid);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  box-shadow: 0 4px 16px var(--shadow-strong);
-  z-index: 30;
-  display: none;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.route-suggestion {
-  width: 100%;
-  padding: 7px 10px;
-  font: inherit;
-  font-size: 11.5px;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  transition: background 150ms ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.route-suggestion:hover,
-.route-suggestion:focus-visible,
-.route-suggestion--active {
-  background: var(--surface-strong);
-  outline: none;
-}
-
-.route-suggestion:not(:last-child) {
-  border-bottom: 1px solid var(--border);
-}
-
-/* Action buttons */
-.route-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.route-btn {
-  padding: 7px 14px;
-  border-radius: 7px;
-  font-size: 12.5px;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: all 200ms ease;
-  border: 1px solid transparent;
-  touch-action: manipulation;
-}
-
-.route-btn--primary {
-  flex: 1;
-  background: var(--clear);
-  color: #0C1018;
-  border: none;
-}
-
-.route-btn--primary:hover {
-  filter: brightness(1.1);
-}
-
-.route-btn--secondary {
-  background: var(--surface);
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-}
-
-.route-btn--secondary:hover {
-  background: var(--surface-strong);
-  color: var(--text);
-}
 
 /* Error message */
 .route-error {
@@ -1295,9 +1275,28 @@
 .route-comparison-stats {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px 10px;
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.route-comparison-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: middle;
+  color: currentColor;
+}
+
+.route-comparison-stat-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .route-comparison-count {
@@ -1430,9 +1429,130 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — compact mobile route panel
+   RESPONSIVE — Compact Bottom Navigation
    ═══════════════════════════════════════════════════════════════════════════ */
 
+@media (max-width: 768px) {
+  .route-panel {
+    bottom: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+    right: auto;
+    width: min(320px, calc(100vw - 20px));
+  }
+
+  .route-panel-inner {
+    padding: 9px 10px;
+    gap: 7px;
+  }
+
+  .route-input-group {
+    gap: 5px;
+  }
+
+  .route-input-button {
+    padding: 7px 9px;
+    font-size: 11.5px;
+  }
+
+  .route-clear-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .route-action-btn {
+    width: 100%;
+    height: 34px;
+  }
+
+  .route-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .route-field-menu {
+    min-width: 160px;
+  }
+
+  .route-menu-item {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .route-panel {
+    bottom: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 8px;
+    right: auto;
+    width: min(320px, calc(100vw - 16px));
+  }
+
+  .route-panel-inner {
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .route-input-group {
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .route-input-field {
+    flex-direction: row;
+  }
+
+  .route-input-button {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .route-field-label {
+    font-size: 10px;
+  }
+
+  .route-clear-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .route-clear-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .route-action-btn {
+    width: 100%;
+    height: 32px;
+    align-self: stretch;
+  }
+
+  .route-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .route-field-menu {
+    min-width: 140px;
+    margin-top: 4px;
+  }
+
+  .route-menu-item {
+    padding: 8px 9px;
+    font-size: 11.5px;
+    gap: 6px;
+  }
+
+  .route-menu-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Old mobile styles (kept for reference but override with new styles above) */
 @media (max-width: 600px) {
   .route-panel {
     bottom: 8px;
@@ -1441,75 +1561,10 @@
     right: 8px;
     width: auto;
     max-width: none;
-    /* The inner .route-results area is independently scroll-bounded, so this
-       max-height is a generous safety net rather than the main constraint —
-       it should rarely be hit, avoiding the old bug where long comparison
-       lists silently overflowed past the card's visible edge. */
-    max-height: 78vh;
-    border-radius: 12px;
-  }
-
-  .route-panel--collapsed {
-    max-height: 42px;
   }
 
   .route-results {
     max-height: 34vh;
-  }
-
-  .route-panel-header {
-    padding: 9px 12px;
-  }
-
-  .route-panel-title {
-    font-size: 13px;
-  }
-
-  .route-panel-content {
-    padding: 0 10px 10px;
-    gap: 8px;
-  }
-
-  .route-input-row {
-    gap: 5px;
-  }
-
-  .route-input-pin {
-    width: 18px;
-    height: 18px;
-    font-size: 9.5px;
-  }
-
-  .route-input {
-    padding: 6px 9px;
-    /* font-size intentionally left at 16px (set above) to prevent iOS zoom */
-    border-radius: 6px;
-  }
-
-  .route-pick-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-    border-radius: 6px;
-    touch-action: manipulation;
-  }
-
-  .route-location-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-  }
-
-  .route-btn {
-    padding: 6px 10px;
-    font-size: 11.5px;
-    border-radius: 6px;
-  }
-
-  .route-suggestions {
-    left: 22px;
-    right: 68px;
-    max-height: 160px;
   }
 
   .route-stats {
@@ -1554,44 +1609,14 @@
     bottom: max(4px, env(safe-area-inset-bottom));
     left: 4px;
     right: 4px;
-    max-height: 80vh;
+  }
+
+  .route-panel-inner {
+    padding: 6px;
+    gap: 6px;
   }
 
   .route-results {
     max-height: 30vh;
-  }
-
-  .route-panel-header {
-    padding: 8px 10px;
-  }
-
-  .route-panel-content {
-    padding: 0 8px 8px;
-    gap: 7px;
-  }
-
-  .route-input {
-    padding: 5px 8px;
-    /* font-size stays 16px (set at the 600px breakpoint) to prevent iOS zoom */
-  }
-
-  .route-pick-btn {
-    width: 26px;
-    height: 26px;
-    touch-action: manipulation;
-  }
-
-  .route-location-btn {
-    width: 26px;
-    height: 26px;
-  }
-
-  .route-actions {
-    gap: 5px;
-  }
-
-  .route-btn {
-    padding: 5px 8px;
-    font-size: 11px;
   }
 }

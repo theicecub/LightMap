@@ -663,7 +663,6 @@ function renderWeatherStrip() {
         <span class="ws-value">${wmo.text}</span>
       </div>
       <div class="ws-item">
-        <span class="ws-label">${tr.temp}</span>
         <span class="ws-value">${temp}</span>
       </div>
       <div class="ws-item">

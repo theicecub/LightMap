@@ -848,10 +848,10 @@ function clearRoute() {
   routeState.lastRouteOrigin = null;
   routeState.currentZoneLevel = null;
 
-  const inputA = document.getElementById('routeInputA');
-  const inputB = document.getElementById('routeInputB');
-  if (inputA) inputA.value = '';
-  if (inputB) inputB.value = '';
+  const fieldValueA = document.getElementById('routeFieldValueA');
+  const fieldValueB = document.getElementById('routeFieldValueB');
+  if (fieldValueA) fieldValueA.textContent = '';
+  if (fieldValueB) fieldValueB.textContent = '';
 
   removeRouteLayers();
 
@@ -860,39 +860,13 @@ function clearRoute() {
 
   if (map) map.getCanvas().style.cursor = '';
 
-  updateLocationButton();
   updateRoutePanel();
 }
 
+
 // ════════════════════════════════════════════════════════════════════════════
-// LIVE GEOLOCATION
+// MAP VISUALIZATION
 // ════════════════════════════════════════════════════════════════════════════
-
-function updateLocationButton() {
-  const button = document.getElementById('routeLocationBtn');
-  if (button) button.classList.toggle('route-location-btn--active', routeState.followsUserLocation);
-}
-
-function stopFollowingUserLocation() {
-  routeState.followsUserLocation = false;
-  routeState.lastRouteOrigin = null;
-  updateLocationButton();
-}
-
-function updateUserMarker() {
-  const position = routeState.userPosition;
-  if (!position || !map) return;
-
-  if (!routeState.userMarker) {
-    const el = document.createElement('div');
-    el.className = 'route-user-marker';
-    routeState.userMarker = new maplibregl.Marker({ element: el })
-      .setLngLat([position.lng, position.lat])
-      .addTo(map);
-  } else {
-    routeState.userMarker.setLngLat([position.lng, position.lat]);
-  }
-}
 
 function getCurrentZoneLevel() {
   const position = routeState.userPosition;
@@ -1031,32 +1005,6 @@ function ensureLocationWatch() {
     handleLocationError,
     { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
   );
-}
-
-function useCurrentLocationForPointA() {
-  if (!navigator.geolocation) {
-    showRouteError(rt('locationUnavailable'));
-    return;
-  }
-
-  const button = document.getElementById('routeLocationBtn');
-  if (button) button.classList.add('route-location-btn--loading');
-
-  navigator.geolocation.getCurrentPosition((geoPosition) => {
-    if (button) button.classList.remove('route-location-btn--loading');
-    const accepted = handleUserPosition(geoPosition);
-    routeState.followsUserLocation = true;
-    updateLocationButton();
-    if (accepted) setPointAToUserLocation(true);
-    if (accepted && map && routeState.userPosition) {
-      map.flyTo({ center: [routeState.userPosition.lng, routeState.userPosition.lat], zoom: Math.max(map.getZoom(), 15) });
-    }
-    ensureLocationWatch();
-  }, handleLocationError, {
-    enableHighAccuracy: true,
-    maximumAge: 0,
-    timeout: 20000,
-  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1309,12 +1257,14 @@ function showRouteError(msg) {
 
 function updateRoutePanel() {
   const panel = document.getElementById('routePanelBody');
+  const resultsContainer = document.getElementById('routeResults');
   if (!panel) return;
 
   const tr = ROUTE_I18N[currentLang];
 
   if (routeState.loading) {
     panel.innerHTML = `<div class="route-loading"><span class="route-spinner"></span>${rt('loading')}</div>`;
+    if (resultsContainer) resultsContainer.style.display = 'flex';
     return;
   }
 
@@ -1324,8 +1274,11 @@ function updateRoutePanel() {
           ${routeState.currentZoneLevel === 'danger' ? rt('inDangerZone') : rt('inWarningZone')}
         </div>`
       : '';
+    if (resultsContainer) resultsContainer.style.display = routeState.currentZoneLevel ? 'flex' : 'none';
     return;
   }
+
+  if (resultsContainer) resultsContainer.style.display = 'flex';
 
   const route = routeState.routes[routeState.selectedRouteIdx];
   const hasAlt = routeState.routes.length > 1;
@@ -1416,108 +1369,6 @@ function updateRoutePanel() {
 // UI — AUTOCOMPLETE
 // ════════════════════════════════════════════════════════════════════════════
 
-function createAutocomplete(inputId, suggestionsId, pointKey) {
-  const input = document.getElementById(inputId);
-  const suggBox = document.getElementById(suggestionsId);
-  if (!input || !suggBox) return;
-
-  let debounceTimer = null;
-  let requestVersion = 0;
-  let results = [];
-  let activeIndex = -1;
-
-  const hideSuggestions = () => {
-    suggBox.replaceChildren();
-    suggBox.style.display = 'none';
-    input.setAttribute('aria-expanded', 'false');
-    input.removeAttribute('aria-activedescendant');
-    activeIndex = -1;
-  };
-
-  const selectResult = index => {
-    const result = results[index];
-    if (!result) return;
-    input.value = result.label;
-    hideSuggestions();
-    routeState[pointKey] = { lng: result.lng, lat: result.lat, label: result.label };
-    if (pointKey === 'pointA') stopFollowingUserLocation();
-    updateEndpointMarker(pointKey);
-    tryBuildRoute();
-  };
-
-  const setActiveResult = index => {
-    if (!results.length) return;
-    activeIndex = (index + results.length) % results.length;
-    const optionId = `${suggestionsId}-option-${activeIndex}`;
-    input.setAttribute('aria-activedescendant', optionId);
-    suggBox.querySelectorAll('.route-suggestion').forEach((button, buttonIndex) => {
-      const isActive = buttonIndex === activeIndex;
-      button.classList.toggle('route-suggestion--active', isActive);
-      button.setAttribute('aria-selected', String(isActive));
-    });
-  };
-
-  const showSuggestions = nextResults => {
-    results = nextResults;
-    activeIndex = -1;
-    suggBox.replaceChildren();
-    results.forEach((result, index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.id = `${suggestionsId}-option-${index}`;
-      button.className = 'route-suggestion';
-      button.setAttribute('role', 'option');
-      button.setAttribute('aria-selected', 'false');
-      button.textContent = result.place;
-      button.addEventListener('mousedown', event => event.preventDefault());
-      button.addEventListener('click', () => selectResult(index));
-      suggBox.append(button);
-    });
-    suggBox.style.display = 'block';
-    input.setAttribute('aria-expanded', 'true');
-  };
-
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    const query = input.value.trim();
-    const thisRequestVersion = ++requestVersion;
-    if (query.length < 2) {
-      hideSuggestions();
-      return;
-    }
-
-    debounceTimer = setTimeout(async () => {
-      const nextResults = await geocodeSearch(query);
-      if (thisRequestVersion !== requestVersion || input.value.trim() !== query) return;
-      if (nextResults.length === 0) {
-        hideSuggestions();
-        return;
-      }
-      showSuggestions(nextResults);
-    }, ROUTE_CONFIG.debounceMs);
-  });
-
-  input.addEventListener('keydown', event => {
-    if (event.key === 'ArrowDown' && results.length) {
-      event.preventDefault();
-      setActiveResult(activeIndex + 1);
-    } else if (event.key === 'ArrowUp' && results.length) {
-      event.preventDefault();
-      setActiveResult(activeIndex - 1);
-    } else if (event.key === 'Enter' && activeIndex >= 0) {
-      event.preventDefault();
-      selectResult(activeIndex);
-    } else if (event.key === 'Escape') {
-      hideSuggestions();
-    }
-  });
-
-  input.addEventListener('blur', () => setTimeout(hideSuggestions, 200));
-  input.addEventListener('focus', () => {
-    if (results.length && input.value.trim().length >= 2) showSuggestions(results);
-  });
-}
-
 function updateEndpointMarker(pointKey) {
   const point = routeState[pointKey];
   const markerKey = pointKey === 'pointA' ? 'markerA' : 'markerB';
@@ -1556,30 +1407,16 @@ function initMapClickPicker() {
     if (!routeState.pickingFor) return;
 
     const { lng, lat } = e.lngLat;
-    const pointKey = routeState.pickingFor === 'A' ? 'pointA' : 'pointB';
-    const inputId = routeState.pickingFor === 'A' ? 'routeInputA' : 'routeInputB';
-
-    routeState[pointKey] = {
+    const field = routeState.pickingFor;
+    
+    setPoint(field, {
       lng,
       lat,
       label: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-    };
-
-    if (pointKey === 'pointA') stopFollowingUserLocation();
-
-    const input = document.getElementById(inputId);
-    if (input) input.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
-    updateEndpointMarker(pointKey);
+    });
 
     routeState.pickingFor = null;
     map.getCanvas().style.cursor = '';
-
-    document.querySelectorAll('.route-pick-btn').forEach(btn => {
-      btn.classList.remove('route-pick-btn--active');
-    });
-
-    tryBuildRoute();
   });
 }
 
@@ -1588,9 +1425,10 @@ function initMapClickPicker() {
 // ════════════════════════════════════════════════════════════════════════════
 
 function initRouteModule() {
-  createAutocomplete('routeInputA', 'routeSuggestionsA', 'pointA');
-  createAutocomplete('routeInputB', 'routeSuggestionsB', 'pointB');
-
+  // Initialize field buttons and menus
+  initFieldMenus();
+  
+  // Build button
   const buildBtn = document.getElementById('routeBuildBtn');
   if (buildBtn) {
     buildBtn.addEventListener('click', () => {
@@ -1600,53 +1438,176 @@ function initRouteModule() {
     });
   }
 
-  const clearBtn = document.getElementById('routeClearBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', clearRoute);
+  const panelToggle = document.getElementById('routePanelToggle');
+  if (panelToggle) {
+    panelToggle.addEventListener('click', () => {
+      const panel = document.getElementById('routePanel');
+      if (!panel) return;
+
+      const nextCollapsed = !panel.classList.contains('route-panel--collapsed');
+      panel.classList.toggle('route-panel--collapsed', nextCollapsed);
+
+      const toggleIcon = panelToggle.querySelector('svg');
+      if (toggleIcon) {
+        toggleIcon.style.transform = nextCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
+
+      panelToggle.setAttribute('aria-label', nextCollapsed ? 'Развернуть панель маршрута' : 'Свернуть панель маршрута');
+      panelToggle.setAttribute('title', nextCollapsed ? 'Развернуть панель маршрута' : 'Свернуть панель маршрута');
+      panelToggle.setAttribute('aria-expanded', String(!nextCollapsed));
+    });
   }
 
-  const locationBtn = document.getElementById('routeLocationBtn');
-  if (locationBtn) locationBtn.addEventListener('click', useCurrentLocationForPointA);
+  // Clear buttons
+  const clearA = document.getElementById('routeClearA');
+  const clearB = document.getElementById('routeClearB');
+  if (clearA) clearA.addEventListener('click', () => clearPoint('A'));
+  if (clearB) clearB.addEventListener('click', () => clearPoint('B'));
 
-  document.querySelectorAll('.route-pick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.pick;
+  initMapClickPicker();
+  applyRouteLangText();
+  updateRoutePanel();
+}
 
-      if (routeState.pickingFor === target) {
-        routeState.pickingFor = null;
-        btn.classList.remove('route-pick-btn--active');
-        if (map) map.getCanvas().style.cursor = '';
-      } else {
-        routeState.pickingFor = target;
-        document.querySelectorAll('.route-pick-btn').forEach(b => {
-          b.classList.toggle('route-pick-btn--active', b === btn);
-        });
-        if (map) map.getCanvas().style.cursor = 'crosshair';
-      }
+function initFieldMenus() {
+  ['A', 'B'].forEach(field => {
+    const inputBtn = document.getElementById(field === 'A' ? 'routeInputABtn' : 'routeInputBBtn');
+    const menu = document.getElementById(`routeFieldMenu${field}`);
+    
+    if (!inputBtn || !menu) return;
+
+    // Toggle menu on button click
+    inputBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const allMenus = document.querySelectorAll('.route-field-menu');
+      allMenus.forEach(m => {
+        if (m !== menu) m.classList.remove('active');
+      });
+      menu.classList.toggle('active');
+    });
+
+    // Menu item clicks
+    menu.querySelectorAll('.route-menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = item.dataset.action;
+        const itemField = item.dataset.field;
+        
+        if (action === 'address') {
+          openAddressInput(itemField);
+        } else if (action === 'geolocation') {
+          useGeolocation(itemField);
+        } else if (action === 'map') {
+          startMapPicker(itemField);
+        }
+        
+        menu.classList.remove('active');
+      });
     });
   });
 
-  const panelToggle = document.getElementById('routePanelToggle');
-  const panelEl = document.getElementById('routePanel');
-  const panelHeader = panelEl?.querySelector('.route-panel-header');
-  if (panelToggle && panelEl) {
-    const togglePanel = () => {
-      panelEl.classList.toggle('route-panel--collapsed');
-    };
-    panelToggle.addEventListener('click', (e) => { e.stopPropagation(); togglePanel(); });
-    if (panelHeader) {
-      panelHeader.addEventListener('click', (e) => {
-        if (e.target.closest('.route-panel-content')) return;
-        togglePanel();
+  // Close menus on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.route-input-field')) {
+      document.querySelectorAll('.route-field-menu.active').forEach(m => {
+        m.classList.remove('active');
       });
     }
+  });
+}
+
+function openAddressInput(field) {
+  const addressInput = prompt(field === 'A' ? 'Введите адрес (откуда):' : 'Введите адрес (куда):', 
+                               routeState[field === 'A' ? 'pointA' : 'pointB']?.label || '');
+  
+  if (addressInput && addressInput.trim()) {
+    const query = addressInput.trim();
+    geocodeSearch(query).then(results => {
+      if (results.length > 0) {
+        selectPointFromGeocoding(field, results[0]);
+      } else {
+        alert(`Адрес "${query}" не найден`);
+      }
+    }).catch(err => {
+      console.error('Geocoding error:', err);
+      alert('Ошибка при поиске адреса');
+    });
+  }
+}
+
+function useGeolocation(field) {
+  if (!navigator.geolocation) {
+    alert('Геолокация не поддерживается вашим браузером');
+    return;
   }
 
-  initMapClickPicker();
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude: lat, longitude: lng } = position.coords;
+      setPoint(field, { lng, lat, label: '📍 Мое местоположение' });
+      if (field === 'A') routeState.followsUserLocation = true;
+    },
+    (error) => {
+      const tr = ROUTE_I18N[currentLang];
+      let message = tr.locationUnavailable;
+      if (error.code === 1) message = tr.locationDenied;
+      if (error.code === 3) message = tr.locationAccuracyPoor;
+      alert(message);
+    }
+  );
+}
 
-  applyRouteLangText();
-  updateLocationButton();
+function startMapPicker(field) {
+  routeState.pickingFor = field;
+  if (map) map.getCanvas().style.cursor = 'crosshair';
+}
 
+function selectPointFromGeocoding(field, result) {
+  setPoint(field, { lng: result.lng, lat: result.lat, label: result.label });
+  if (field === 'A') routeState.followsUserLocation = false;
+}
+
+function setPoint(field, point) {
+  const pointKey = field === 'A' ? 'pointA' : 'pointB';
+  const fieldValueId = field === 'A' ? 'routeFieldValueA' : 'routeFieldValueB';
+  
+  routeState[pointKey] = point;
+  
+  const fieldValue = document.getElementById(fieldValueId);
+  if (fieldValue) {
+    fieldValue.textContent = point.label;
+  }
+  
+  updateEndpointMarker(pointKey);
+  tryBuildRoute();
+}
+
+function clearPoint(field) {
+  const pointKey = field === 'A' ? 'pointA' : 'pointB';
+  const fieldValueId = field === 'A' ? 'routeFieldValueA' : 'routeFieldValueB';
+  const markerKey = field === 'A' ? 'markerA' : 'markerB';
+
+  routeState[pointKey] = null;
+  routeState.buildRequestId += 1;
+  routeState.routes = [];
+  routeState.selectedRouteIdx = 0;
+  routeState.active = false;
+  routeState.loading = false;
+  routeState.currentZoneLevel = null;
+  routeState.followsUserLocation = false;
+
+  const fieldValue = document.getElementById(fieldValueId);
+  if (fieldValue) {
+    fieldValue.textContent = '';
+  }
+
+  if (routeState[markerKey]) {
+    routeState[markerKey].remove();
+    routeState[markerKey] = null;
+  }
+
+  removeRouteLayers();
+  if (map) map.getCanvas().style.cursor = '';
   updateRoutePanel();
 }
 
@@ -1654,38 +1615,34 @@ function applyRouteLangText() {
   const tr = ROUTE_I18N[currentLang];
   if (!tr) return;
 
-  const inputA = document.getElementById('routeInputA');
-  const inputB = document.getElementById('routeInputB');
-  if (inputA) inputA.placeholder = tr.placeholderA;
-  if (inputB) inputB.placeholder = tr.placeholderB;
-
-  const titleEl = document.querySelector('.route-panel-title');
-  if (titleEl) titleEl.textContent = tr.safeRoute;
-
+  // Update button labels
+  const inputABtn = document.getElementById('routeInputABtn');
+  const inputBBtn = document.getElementById('routeInputBBtn');
   const buildBtn = document.getElementById('routeBuildBtn');
-  if (buildBtn) buildBtn.textContent = tr.buildRoute;
-
-  const clearBtn = document.getElementById('routeClearBtn');
-  if (clearBtn) clearBtn.textContent = tr.clearRoute;
-
-  const locationBtn = document.getElementById('routeLocationBtn');
-  if (locationBtn) {
-    locationBtn.title = tr.useCurrentLocation;
-    locationBtn.setAttribute('aria-label', tr.useCurrentLocation);
+  
+  if (inputABtn) {
+    const label = inputABtn.querySelector('.route-field-label');
+    if (label) label.textContent = tr.placeholderA || 'Откуда';
+  }
+  
+  if (inputBBtn) {
+    const label = inputBBtn.querySelector('.route-field-label');
+    if (label) label.textContent = tr.placeholderB || 'Куда';
   }
 
-  if (routeState.followsUserLocation) {
-    const inputA = document.getElementById('routeInputA');
-    if (inputA) inputA.value = tr.currentLocation;
-    if (routeState.pointA) routeState.pointA.label = tr.currentLocation;
-  }
-
-  document.querySelectorAll('.route-pick-btn').forEach(btn => {
-    const label = btn.dataset.pick === 'A' ? tr.clickMapA : tr.clickMapB;
-    btn.setAttribute('title', label);
-    btn.setAttribute('aria-label', label);
-    btn.innerHTML = ROUTE_ICONS.mapPin;
+  // Update menu item labels
+  ['A', 'B'].forEach(field => {
+    const menu = document.getElementById(`routeFieldMenu${field}`);
+    if (!menu) return;
+    
+    const items = menu.querySelectorAll('.route-menu-item');
+    if (items[0]) items[0].querySelector('span').textContent = 'Ввести адрес';
+    if (items[1]) items[1].querySelector('span').textContent = 'Мое местоположение';
+    if (items[2]) items[2].querySelector('span').textContent = 'Выбрать на карте';
   });
+
+  if (buildBtn) buildBtn.title = tr.buildRoute || 'Построить маршрут';
+  if (buildBtn) buildBtn.setAttribute('aria-label', tr.buildRoute || 'Построить маршрут');
 }
 
 function waitForMapAndInit() {
