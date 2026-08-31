@@ -841,21 +841,7 @@ function closePopup() {
 function getDangerTimeForBuilding(building, date = new Date()) {
   if (!building) return '—';
 
-  const seasonKey = getSeasonKey(date);
-  const seasonMap = building.dangerTime_by_season || {};
-  const currentSeasonValue = seasonMap[seasonKey];
-  if (typeof currentSeasonValue === 'string' && currentSeasonValue.trim()) {
-    return currentSeasonValue.trim();
-  }
-
-  for (const key of ['winter', 'spring', 'summer', 'autumn']) {
-    const value = seasonMap[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return building.dangerTime || 'no glare';
+  return getBuildingDangerWindow(building, date) || building.dangerTime || 'no glare';
 }
 
 // Перегенерирует HTML уже открытого попапа (вызывается при смене языка,

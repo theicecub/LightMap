@@ -2,21 +2,121 @@
   {
     "id": 1,
     "name": "Abu Dhabi Plaza",
-    "address": "ул. Сыганак 60/5",
+    "address": "СѓР». РЎС‹РіР°РЅР°Рє 60/5",
     "lat": 51.12257682152757,
     "lng": 71.42800365052331,
-    "baseLux": 8261,
+    "baseLux": 9329,
     "period": "both",
-    "glass": "Ламинированное стекло",
+    "glass": "Р›Р°РјРёРЅРёСЂРѕРІР°РЅРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 180,
     "name_en": "Abu Dhabi Plaza",
     "address_en": "Syganak St. 60/5",
     "glass_en": "Laminated glass",
     "dangerTime_by_season": {
-      "winter": "10:04-14:22",
-      "spring": "no glare",
-      "summer": "no glare",
-      "autumn": "no glare"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:50-14:22"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "10:04-14:22"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "10:02-14:38"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:48-15:04"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "09:26-10:46 14:10-15:30"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "09:08-09:52 15:06-15:48"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "08:56-09:10 15:42-15:56"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "08:32-08:48 15:16-15:30"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:40-09:28 14:28-15:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "09:02-10:30 13:24-14:54"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:26-14:36"
+        }
+      ]
     },
     "reflectance_used": 0.15,
     "reflectance_basis": "laminated"
@@ -24,576 +124,3176 @@
   {
     "id": 2,
     "name": "Talan Towers",
-    "address": "ул. Достык 16",
+    "address": "СѓР». Р”РѕСЃС‚С‹Рє 16",
     "lat": 51.125043753584954,
     "lng": 71.43291321421682,
-    "baseLux": 28280,
+    "baseLux": 28391,
     "period": "evening",
-    "glass": "Высокоселективное стекло",
+    "glass": "Р’С‹СЃРѕРєРѕСЃРµР»РµРєС‚РёРІРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 250,
     "name_en": "Talan Towers",
     "address_en": "Dostyk St. 16",
     "glass_en": "High-selective glass",
     "dangerTime_by_season": {
-      "winter": "11:38-15:18",
-      "spring": "16:08-17:50",
-      "summer": "04:52-05:00 18:04-19:40",
-      "autumn": "16:00-17:40"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "11:32-15:18"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "11:40-15:18"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "11:46-15:34"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "11:48-16:00"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:34"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-17:04"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:28"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:52"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:18"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:40"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-19:00"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:18"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:32"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:38"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-19:38"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:28"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:08"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:42"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:10"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:36"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-17:02"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:56"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "11:24-15:32"
+        }
+      ]
     },
     "reflectance_used": 0.45,
     "reflectance_basis": "high-selective"
   },
   {
     "id": 3,
-    "name": "Хан Шатыр",
-    "address": "просп. Туран, 37",
+    "name": "РҐР°РЅ РЁР°С‚С‹СЂ",
+    "address": "РїСЂРѕСЃРї. РўСѓСЂР°РЅ, 37",
     "lat": 51.13246944940683,
     "lng": 71.40367673211153,
-    "baseLux": 5060,
+    "baseLux": 5048,
     "period": "morning",
-    "glass": "Трехслойная мембрана",
+    "glass": "РўСЂРµС…СЃР»РѕР№РЅР°СЏ РјРµРјР±СЂР°РЅР°",
     "orientation": 120,
     "name_en": "Khan Shatyr",
     "address_en": "Turan Ave. 37",
     "glass_en": "Three-layer membrane",
     "dangerTime_by_season": {
-      "winter": "no glare",
-      "spring": "08:36-08:40",
-      "summer": "no glare",
-      "autumn": "08:12-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "no glare"
+        }
+      ]
     },
     "reflectance_used": 0.08,
-    "reflectance_basis": "membrane (non-glass)"
+    "reflectance_basis": "membrane"
   },
   {
     "id": 4,
-    "name": "Бизнес-центр «Москва»",
-    "address": "ул. Достык, 18",
+    "name": "Р‘РёР·РЅРµСЃ-С†РµРЅС‚СЂ В«РњРѕСЃРєРІР°В»",
+    "address": "СѓР». Р”РѕСЃС‚С‹Рє, 18",
     "lat": 51.12460897442751,
     "lng": 71.43427958423301,
-    "baseLux": 15363,
+    "baseLux": 15825,
     "period": "evening",
-    "glass": "Панорамное фасадное стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ С„Р°СЃР°РґРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 270,
     "name_en": "\"Moscow\" Business Center",
     "address_en": "Dostyk St. 18",
     "glass_en": "Panoramic facade glass",
     "dangerTime_by_season": {
-      "winter": "no glare",
-      "spring": "16:08-17:40",
-      "summer": "18:04-19:34",
-      "autumn": "16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "13:54-14:30"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "14:02-14:50"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "13:48-15:34"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:14"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:50"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:16"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:44"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:08"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:32"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-18:52"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:10"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:26"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:32"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-19:30"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:20"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:00"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:34"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:00"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:14"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:36"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "13:26-15:02"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 5,
-    "name": "Северное Сияние",
-    "address": "ул. Достык, 5",
+    "name": "РЎРµРІРµСЂРЅРѕРµ РЎРёСЏРЅРёРµ",
+    "address": "СѓР». Р”РѕСЃС‚С‹Рє, 5",
     "lat": 51.12780175944153,
     "lng": 71.42213831345616,
-    "baseLux": 40084,
+    "baseLux": 41058,
     "period": "morning",
-    "glass": "Зеркальное архитектурное стекло",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅРѕРµ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 90,
     "name_en": "Severnoye Siyaniye (Northern Lights)",
     "address_en": "Dostyk St. 5",
     "glass_en": "Mirrored architectural glass",
     "dangerTime_by_season": {
-      "winter": "09:06-11:30",
-      "spring": "06:54-08:40",
-      "summer": "05:00-06:30",
-      "autumn": "06:30-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "08:52-11:24"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:06-11:30"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:04-11:38"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "08:48-11:44"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:20-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "07:50-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:20-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "06:46-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:10-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:40-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:14-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "04:54-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "04:42-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "04:42-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "04:50-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:04-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:24-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "05:46-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:10-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:32-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "06:58-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:24-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "07:56-10:30"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:26-11:20"
+        }
+      ]
     },
     "reflectance_used": 0.65,
     "reflectance_basis": "mirrored"
   },
   {
     "id": 6,
-    "name": "Бизнес-центр «Астаналык»",
-    "address": "ул. Динмухамеда Конаева, 33",
+    "name": "Р‘РёР·РЅРµСЃ-С†РµРЅС‚СЂ В«РђСЃС‚Р°РЅР°Р»С‹РєВ»",
+    "address": "СѓР». Р”РёРЅРјСѓС…Р°РјРµРґР° РљРѕРЅР°РµРІР°, 33",
     "lat": 51.130678053681216,
     "lng": 71.43431213679109,
-    "baseLux": 15742,
+    "baseLux": 15775,
     "period": "morning",
-    "glass": "Стеклянный навесной фасад",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅС‹Р№ РЅР°РІРµСЃРЅРѕР№ С„Р°СЃР°Рґ",
     "orientation": 110,
     "name_en": "\"Astanalyk\" Business Center",
     "address_en": "Dinmukhamed Konayev St. 33",
     "glass_en": "Curtain-wall glass facade",
     "dangerTime_by_season": {
-      "winter": "09:28-12:08",
-      "spring": "07:08-08:40",
-      "summer": "05:10-06:30",
-      "autumn": "06:46-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:14-12:02"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:28-12:06"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:26-12:18"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:06-12:30"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:04-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:02-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:26-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:58-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:34-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:18-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:10-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:10-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:16-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:28-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:46-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:04-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:26-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:48-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:30"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:46-12:04"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 7,
-    "name": "Бизнес-центр «Алтын-Орда»",
-    "address": "пр. Мангилик Ел, 8/2",
+    "name": "Р‘РёР·РЅРµСЃ-С†РµРЅС‚СЂ В«РђР»С‚С‹РЅ-РћСЂРґР°В»",
+    "address": "РїСЂ. РњР°РЅРіРёР»РёРє Р•Р», 8/2",
     "lat": 51.12753530636626,
     "lng": 71.43936010333385,
-    "baseLux": 15254,
+    "baseLux": 15776,
     "period": "morning",
-    "glass": "Панорамное архитектурное стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 100,
     "name_en": "\"Altyn-Orda\" Business Center",
     "address_en": "Mangilik El Ave. 8/2",
     "glass_en": "Panoramic architectural glass",
     "dangerTime_by_season": {
-      "winter": "09:36-11:22",
-      "spring": "07:08-08:40",
-      "summer": "05:04-06:30",
-      "autumn": "06:46-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:20-11:18"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:38-11:20"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:32-11:34"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:10-11:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:38-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:06-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:00-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:26-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:56-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:32-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:14-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:04-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:04-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:10-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:24-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:42-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:02-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:24-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:46-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:16-10:30"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:50-11:22"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 8,
-    "name": "Изумрудный квартал (башни A/B)",
-    "address": "ул. Динмухамеда Конаева, 8",
+    "name": "РР·СѓРјСЂСѓРґРЅС‹Р№ РєРІР°СЂС‚Р°Р» (Р±Р°С€РЅРё A/B)",
+    "address": "СѓР». Р”РёРЅРјСѓС…Р°РјРµРґР° РљРѕРЅР°РµРІР°, 8",
     "lat": 51.13035215997953,
     "lng": 71.42245808089339,
-    "baseLux": 34446,
+    "baseLux": 41037,
     "period": "morning",
-    "glass": "Зеркальное стекло",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 160,
     "name_en": "Emerald Quarter (Towers A/B)",
     "address_en": "Dinmukhamed Konayev St. 8",
     "glass_en": "Mirrored glass",
     "dangerTime_by_season": {
-      "winter": "09:00-15:12",
-      "spring": "07:04-08:40",
-      "summer": "no glare",
-      "autumn": "06:42-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "08:48-15:10"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:02-15:12"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:00-15:26"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "08:46-15:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:22-10:46 14:10-16:10"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "07:54-09:52 15:06-16:22"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:28-09:10 15:42-16:12"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "06:58-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:30-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "06:14-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "06:16-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "06:28-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "06:38-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "06:24-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:20-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:28-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:44-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:04-08:48 15:16-15:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:28-09:28 14:28-15:52"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "07:58-10:30 13:24-15:36"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:26-15:20"
+        }
+      ]
     },
     "reflectance_used": 0.65,
     "reflectance_basis": "mirrored"
   },
   {
     "id": 9,
-    "name": "ЖК «Триумф Астаны»",
-    "address": "пр. Кабанбай батыра, 11",
+    "name": "Р–Рљ В«РўСЂРёСѓРјС„ РђСЃС‚Р°РЅС‹В»",
+    "address": "РїСЂ. РљР°Р±Р°РЅР±Р°Р№ Р±Р°С‚С‹СЂР°, 11",
     "lat": 51.14015931767077,
     "lng": 71.41507162203148,
-    "baseLux": 36637,
+    "baseLux": 40905,
     "period": "morning",
-    "glass": "Зеркальные стеклопакеты",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅС‹Рµ СЃС‚РµРєР»РѕРїР°РєРµС‚С‹",
     "orientation": 145,
     "name_en": "\"Triumph of Astana\" Residential Complex",
     "address_en": "Kabanbay Batyr Ave. 11",
     "glass_en": "Mirrored double-glazed units",
     "dangerTime_by_season": {
-      "winter": "09:00-14:56",
-      "spring": "06:58-08:40",
-      "summer": "05:28-06:30",
-      "autumn": "06:36-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "08:48-14:52"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:00-14:54"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:00-15:08"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "08:46-15:22"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:20-10:46 14:10-15:30"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "07:52-09:52 15:06-15:20"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:24-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "06:52-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:20-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:54-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:36-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:26-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:26-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:28-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:32-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:36-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:46-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:00-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:18-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:38-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:00-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:26-09:28 14:28-14:52"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "07:56-10:32 13:24-15:02"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:24-14:56"
+        }
+      ]
     },
     "reflectance_used": 0.65,
     "reflectance_basis": "mirrored"
   },
   {
     "id": 10,
-    "name": "Байтерек",
-    "address": "Бульвар Нуржол, 14",
+    "name": "Р‘Р°Р№С‚РµСЂРµРє",
+    "address": "Р‘СѓР»СЊРІР°СЂ РќСѓСЂР¶РѕР», 14",
     "lat": 51.128310151593574,
     "lng": 71.43029781319242,
-    "baseLux": 10105,
+    "baseLux": 10113,
     "period": "both",
-    "glass": "Тонированное стекло",
+    "glass": "РўРѕРЅРёСЂРѕРІР°РЅРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": null,
     "omnidirectional": true,
     "name_en": "Baiterek",
     "address_en": "Nurzhol Boulevard 14",
     "glass_en": "Tinted glass",
     "dangerTime_by_season": {
-      "winter": "09:48-14:38",
-      "spring": "07:24-08:40 16:08-17:24",
-      "summer": "05:14-06:30 18:04-19:18",
-      "autumn": "07:02-08:16 16:00-17:14"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:34-14:38"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:50-14:36"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:46-14:56"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:26-15:24"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:56-10:46 14:10-16:02"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:22-09:52 15:06-16:34"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:52-09:10 15:42-17:00"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:18-08:30 16:14-17:26"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:42-07:50 16:44-17:52"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "06:10-07:20 17:06-18:16"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:46-06:54 17:26-18:36"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:26-06:38 17:44-18:56"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:16-06:28 17:58-19:10"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:14-06:28 18:04-19:18"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:22-06:34 18:02-19:16"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:36-06:48 17:54-19:04"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:56-07:06 17:34-18:44"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:16-07:26 17:08-18:18"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:40-07:50 16:34-17:44"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "07:02-08:16 15:58-17:10"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:28-08:48 15:16-16:34"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:58-09:28 14:28-15:58"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:32-10:30 13:24-15:24"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:06-14:56"
+        }
+      ]
     },
     "reflectance_used": 0.15,
     "reflectance_basis": "tinted"
   },
   {
     "id": 11,
-    "name": "Нур Алем (сфера EXPO)",
-    "address": "территория ЭКСПО, пр. Мәңгілік Ел",
+    "name": "РќСѓСЂ РђР»РµРј (СЃС„РµСЂР° EXPO)",
+    "address": "С‚РµСЂСЂРёС‚РѕСЂРёСЏ Р­РљРЎРџРћ, РїСЂ. РњУ™ТЈРіС–Р»С–Рє Р•Р»",
     "lat": 51.0891927108529,
     "lng": 71.41589448841293,
-    "baseLux": 16847,
+    "baseLux": 16855,
     "period": "both",
-    "glass": "Стеклянная сферическая оболочка",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅР°СЏ СЃС„РµСЂРёС‡РµСЃРєР°СЏ РѕР±РѕР»РѕС‡РєР°",
     "orientation": null,
     "omnidirectional": true,
     "name_en": "Nur Alem (EXPO sphere)",
     "address_en": "EXPO grounds, Mangilik El Ave.",
     "glass_en": "Spherical glass shell",
     "dangerTime_by_season": {
-      "winter": "09:20-15:06",
-      "spring": "07:08-08:40 16:08-17:40",
-      "summer": "04:56-06:30 18:04-19:38",
-      "autumn": "06:44-08:16 16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:08-15:06"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:22-15:04"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:20-15:22"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-15:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46 14:12-16:22"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:04-09:50 15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10 15:42-17:18"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:00-08:30 16:14-17:44"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:24-07:50 16:44-18:10"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:54-07:20 17:06-18:32"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:28-06:54 17:28-18:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:08-06:38 17:44-19:14"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "04:58-06:28 17:58-19:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "04:56-06:28 18:04-19:36"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:04-06:34 18:02-19:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:18-06:48 17:54-19:22"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:40-07:06 17:34-19:00"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:00-07:26 17:08-18:34"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:24-07:50 16:34-18:00"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:46-08:16 15:58-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48 15:16-16:52"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28 14:28-16:18"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:30 13:26-15:44"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:42-15:20"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 12,
-    "name": "Дворец Независимости",
-    "address": "пр. Тәуелсіздік",
+    "name": "Р”РІРѕСЂРµС† РќРµР·Р°РІРёСЃРёРјРѕСЃС‚Рё",
+    "address": "РїСЂ. РўУ™СѓРµР»СЃС–Р·РґС–Рє",
     "lat": 51.120563632635736,
     "lng": 71.47266671067665,
-    "baseLux": 13254,
+    "baseLux": 15826,
     "period": "evening",
-    "glass": "Стеклянная трапеция с металлической решёткой",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅР°СЏ С‚СЂР°РїРµС†РёСЏ СЃ РјРµС‚Р°Р»Р»РёС‡РµСЃРєРѕР№ СЂРµС€С‘С‚РєРѕР№",
     "orientation": 200,
     "name_en": "Palace of Independence",
     "address_en": "Tauelsizdik Ave.",
     "glass_en": "Glass trapezoid with metal grid",
     "dangerTime_by_season": {
-      "winter": "09:48-15:04",
-      "spring": "16:08-17:18",
-      "summer": "no glare",
-      "autumn": "16:00-17:06"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:38-15:02"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:50-15:02"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:50-15:18"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:40-15:44"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "09:26-10:46 14:10-16:16"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "09:18-09:50 15:06-16:42"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:02"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:20"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-17:28"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-17:28"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-17:32"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:22"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:56-17:02"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:14-16:36"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:50-09:28 14:28-16:08"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "09:00-10:30 13:24-15:38"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:18-15:16"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 13,
-    "name": "Дворец Мира и Согласия (Пирамида)",
-    "address": "пр. Тәуелсіздік",
+    "name": "Р”РІРѕСЂРµС† РњРёСЂР° Рё РЎРѕРіР»Р°СЃРёСЏ (РџРёСЂР°РјРёРґР°)",
+    "address": "РїСЂ. РўУ™СѓРµР»СЃС–Р·РґС–Рє",
     "lat": 51.12298260469731,
     "lng": 71.46370318362385,
-    "baseLux": 16852,
+    "baseLux": 16854,
     "period": "both",
-    "glass": "Стеклянные грани пирамиды",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅС‹Рµ РіСЂР°РЅРё РїРёСЂР°РјРёРґС‹",
     "orientation": null,
     "omnidirectional": true,
     "name_en": "Palace of Peace and Reconciliation (Pyramid)",
     "address_en": "Tauelsizdik Ave.",
     "glass_en": "Glass faces of the pyramid",
     "dangerTime_by_season": {
-      "winter": "09:20-15:06",
-      "spring": "07:08-08:40 16:08-17:40",
-      "summer": "04:56-06:30 18:04-19:38",
-      "autumn": "06:44-08:16 16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:08-15:04"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:22-15:04"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:20-15:20"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-15:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46 14:10-16:22"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:04-09:52 15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10 15:42-17:18"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:00-08:30 16:14-17:44"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:24-07:50 16:44-18:10"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:54-07:20 17:06-18:32"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:28-06:54 17:26-18:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:08-06:38 17:44-19:14"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "04:58-06:28 17:58-19:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "04:56-06:28 18:04-19:36"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:04-06:34 18:02-19:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:18-06:48 17:54-19:22"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:40-07:06 17:34-19:00"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:00-07:26 17:08-18:34"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:24-07:50 16:34-18:00"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:46-08:16 15:58-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48 15:14-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28 14:28-16:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:30 13:24-15:44"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:42-15:20"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 14,
-    "name": "Дворец творчества «Шабыт»",
-    "address": "пр. Кабанбай батыра",
+    "name": "Р”РІРѕСЂРµС† С‚РІРѕСЂС‡РµСЃС‚РІР° В«РЁР°Р±С‹С‚В»",
+    "address": "РїСЂ. РљР°Р±Р°РЅР±Р°Р№ Р±Р°С‚С‹СЂР°",
     "lat": 51.12290729938051,
     "lng": 71.47287192439045,
-    "baseLux": 16855,
+    "baseLux": 16856,
     "period": "both",
-    "glass": "Стеклянный конусообразный фасад",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅС‹Р№ РєРѕРЅСѓСЃРѕРѕР±СЂР°Р·РЅС‹Р№ С„Р°СЃР°Рґ",
     "orientation": null,
     "omnidirectional": true,
     "name_en": "\"Shabyt\" Palace of Creativity",
     "address_en": "Kabanbay Batyr Ave.",
     "glass_en": "Cone-shaped glass facade",
     "dangerTime_by_season": {
-      "winter": "09:20-15:06",
-      "spring": "07:08-08:40 16:08-17:40",
-      "summer": "04:56-06:30 18:04-19:38",
-      "autumn": "06:44-08:16 16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:08-15:04"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:22-15:04"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:20-15:20"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-15:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46 14:10-16:22"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:04-09:52 15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:34-09:10 15:42-17:18"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:00-08:30 16:14-17:44"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:24-07:50 16:44-18:08"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:54-07:20 17:06-18:32"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:28-06:54 17:26-18:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:08-06:38 17:44-19:12"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "04:58-06:28 17:58-19:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "04:56-06:28 18:04-19:36"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:04-06:34 18:02-19:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:18-06:48 17:54-19:22"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:38-07:06 17:34-19:00"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:00-07:26 17:08-18:34"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:24-07:50 16:34-18:00"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:46-08:16 15:56-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48 15:14-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28 14:28-16:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:30 13:24-15:44"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:42-15:20"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 15,
-    "name": "Башня «Темір Жолы» (КТЖ)",
-    "address": "пр. Мәңгілік Ел",
+    "name": "Р‘Р°С€РЅСЏ В«РўРµРјС–СЂ Р–РѕР»С‹В» (РљРўР–)",
+    "address": "РїСЂ. РњУ™ТЈРіС–Р»С–Рє Р•Р»",
     "lat": 51.13084195522708,
     "lng": 71.42109841891599,
-    "baseLux": 11705,
+    "baseLux": 12631,
     "period": "both",
-    "glass": "Витражное остекление офисного фасада",
+    "glass": "Р’РёС‚СЂР°Р¶РЅРѕРµ РѕСЃС‚РµРєР»РµРЅРёРµ РѕС„РёСЃРЅРѕРіРѕ С„Р°СЃР°РґР°",
     "orientation": 220,
     "name_en": "\"Temir Zholy\" Tower (KTZ / Kazakhstan Railways)",
     "address_en": "Mangilik El Ave.",
     "glass_en": "Stained-glass office facade",
     "dangerTime_by_season": {
-      "winter": "10:50-14:56",
-      "spring": "16:08-17:26",
-      "summer": "18:04-18:18",
-      "autumn": "16:00-17:14"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "10:40-14:56"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "10:52-14:54"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "10:54-15:12"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "10:50-15:40"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:12"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:42"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:06"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:28"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-17:46"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-17:58"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-18:06"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-18:10"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-18:14"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-18:16"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:04-18:20"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-18:20"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:14"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:02"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:38"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:10"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-16:40"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:08"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "10:16-10:32 13:24-15:36"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "10:26-15:10"
+        }
+      ]
     },
     "reflectance_used": 0.2,
-    "reflectance_basis": "stained-glass (generic)"
+    "reflectance_basis": "stained-glass"
   },
   {
     "id": 16,
     "name": "Astana Tower",
-    "address": "Есильский р-н",
+    "address": "Р•СЃРёР»СЊСЃРєРёР№ СЂ-РЅ",
     "lat": 51.15326993834346,
     "lng": 71.42918477879022,
-    "baseLux": 13750,
+    "baseLux": 15537,
     "period": "both",
-    "glass": "Панорамное стекло, структурный фасад",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ СЃС‚РµРєР»Рѕ, СЃС‚СЂСѓРєС‚СѓСЂРЅС‹Р№ С„Р°СЃР°Рґ",
     "orientation": 180,
     "name_en": "Astana Tower",
     "address_en": "Yesil District",
     "glass_en": "Panoramic glass, structural facade",
     "dangerTime_by_season": {
-      "winter": "09:30-14:56",
-      "spring": "08:08-08:40 16:08-16:40",
-      "summer": "no glare",
-      "autumn": "07:52-08:16 16:00-16:24"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:18-14:54"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:32-14:54"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:30-15:10"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:16-15:34"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:54-10:48 14:10-16:02"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:32-09:52 15:06-16:24"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "08:16-09:10 15:42-16:34"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "08:06-08:30 16:14-16:36"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "07:52-08:16 15:58-16:22"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:54-08:48 15:14-16:10"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:06-09:30 14:28-15:50"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:30-10:32 13:24-15:26"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:56-15:06"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "structural glazing (generic)"
+    "reflectance_basis": "structural glazing"
   },
   {
     "id": 17,
-    "name": "Зелёный квартал",
-    "address": "Есильский р-н",
+    "name": "Р—РµР»С‘РЅС‹Р№ РєРІР°СЂС‚Р°Р»",
+    "address": "Р•СЃРёР»СЊСЃРєРёР№ СЂ-РЅ",
     "lat": 51.13021814420195,
     "lng": 71.39058525359164,
-    "baseLux": 15123,
+    "baseLux": 15793,
     "period": "evening",
-    "glass": "Стеклянный навесной фасад",
+    "glass": "РЎС‚РµРєР»СЏРЅРЅС‹Р№ РЅР°РІРµСЃРЅРѕР№ С„Р°СЃР°Рґ",
     "orientation": 135,
     "name_en": "Green Quarter",
     "address_en": "Yesil District",
     "glass_en": "Curtain-wall glass facade",
     "dangerTime_by_season": {
-      "winter": "09:22-13:40",
-      "spring": "07:14-08:40",
-      "summer": "05:44-06:30",
-      "autumn": "06:52-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:08-13:36"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:22-13:40"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:20-13:52"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-14:04"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:06-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:38-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:06-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:36-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "06:12-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:54-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:46-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:42-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:44-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:50-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:56-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "06:04-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:16-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:34-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:52-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:14-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:30"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:32 13:24-13:40"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:42-13:38"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 18,
-    "name": "Национальная библиотека (Библиотека Елбасы)",
-    "address": "пр. Тәуелсіздік",
+    "name": "РќР°С†РёРѕРЅР°Р»СЊРЅР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (Р‘РёР±Р»РёРѕС‚РµРєР° Р•Р»Р±Р°СЃС‹)",
+    "address": "РїСЂ. РўУ™СѓРµР»СЃС–Р·РґС–Рє",
     "lat": 51.127228110226795,
     "lng": 71.42738260411048,
-    "baseLux": 15132,
+    "baseLux": 15798,
     "period": "both",
-    "glass": "Сферический стеклянный купол",
+    "glass": "РЎС„РµСЂРёС‡РµСЃРєРёР№ СЃС‚РµРєР»СЏРЅРЅС‹Р№ РєСѓРїРѕР»",
     "orientation": 135,
     "omnidirectional": false,
     "name_en": "National Library (Elbasy Library)",
     "address_en": "Tauelsizdik Ave.",
     "glass_en": "Spherical glass dome",
     "dangerTime_by_season": {
-      "winter": "09:20-13:40",
-      "spring": "07:12-08:40",
-      "summer": "05:44-06:30",
-      "autumn": "06:52-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:08-13:36"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:22-13:40"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:20-13:50"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-14:04"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:06-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:38-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:06-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:36-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "06:12-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:54-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:44-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:42-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:44-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:50-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:56-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "06:04-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:16-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:34-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:52-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:14-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:30 13:24-13:40"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:42-13:38"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 19,
-    "name": "Ж/д вокзал «Нұрлы Жол»",
-    "address": "Есильский р-н",
+    "name": "Р–/Рґ РІРѕРєР·Р°Р» В«РќТ±СЂР»С‹ Р–РѕР»В»",
+    "address": "Р•СЃРёР»СЊСЃРєРёР№ СЂ-РЅ",
     "lat": 51.11160220466827,
     "lng": 71.53105585708367,
-    "baseLux": 10916,
+    "baseLux": 12355,
     "period": "both",
-    "glass": "Стекло и металл, витражный фасад",
+    "glass": "РЎС‚РµРєР»Рѕ Рё РјРµС‚Р°Р»Р», РІРёС‚СЂР°Р¶РЅС‹Р№ С„Р°СЃР°Рґ",
     "orientation": 170,
     "name_en": "\"Nurly Zhol\" Railway Station",
     "address_en": "Yesil District",
     "glass_en": "Glass and metal stained facade",
     "dangerTime_by_season": {
-      "winter": "09:36-14:34",
-      "spring": "07:58-08:38",
-      "summer": "no glare",
-      "autumn": "07:40-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:22-14:34"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:36-14:34"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:34-14:50"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:20-15:12"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:56-10:46 14:10-15:36"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:32-09:50 15:06-15:50"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "08:12-09:10 15:42-15:52"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:54-08:28"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "07:42-07:48"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "07:40-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:48-08:48 15:14-15:28"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:04-09:28 14:28-15:18"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:32-10:30 13:24-15:02"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:58-14:44"
+        }
+      ]
     },
     "reflectance_used": 0.2,
-    "reflectance_basis": "stained-glass (generic)"
+    "reflectance_basis": "stained-glass"
   },
   {
     "id": 20,
     "name": "Millennium Park",
-    "address": "ул. Касыма Аманжолова (жилой комплекс)",
+    "address": "СѓР». РљР°СЃС‹РјР° РђРјР°РЅР¶РѕР»РѕРІР° (Р¶РёР»РѕР№ РєРѕРјРїР»РµРєСЃ)",
     "lat": 51.12272659540985,
     "lng": 71.47610002949703,
-    "baseLux": 15704,
+    "baseLux": 15763,
     "period": "evening",
-    "glass": "Панорамные стеклопакеты, алюминиевые фасадные системы",
+    "glass": "РџР°РЅРѕСЂР°РјРЅС‹Рµ СЃС‚РµРєР»РѕРїР°РєРµС‚С‹, Р°Р»СЋРјРёРЅРёРµРІС‹Рµ С„Р°СЃР°РґРЅС‹Рµ СЃРёСЃС‚РµРјС‹",
     "orientation": 250,
     "name_en": "Millennium Park",
     "address_en": "Kasym Amanzholov St. (residential complex)",
     "glass_en": "Panoramic double-glazed units, aluminum facade systems",
     "dangerTime_by_season": {
-      "winter": "12:18-14:58",
-      "spring": "16:08-17:40",
-      "summer": "18:04-19:24",
-      "autumn": "16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "12:10-14:58"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "12:20-14:58"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "12:22-15:16"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "12:22-15:44"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:20"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:16"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:42"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:06"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:28"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-18:46"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:04"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:16"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:22"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-19:22"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:12"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:54"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:30"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:58"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:56-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:14-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:42"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "11:58-15:16"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 21,
-    "name": "Министерство финансов Республики Казахстан",
-    "address": "пр. Мәңгілік Ел, 8",
+    "name": "РњРёРЅРёСЃС‚РµСЂСЃС‚РІРѕ С„РёРЅР°РЅСЃРѕРІ Р РµСЃРїСѓР±Р»РёРєРё РљР°Р·Р°С…СЃС‚Р°РЅ",
+    "address": "РїСЂ. РњУ™ТЈРіС–Р»С–Рє Р•Р», 8",
     "lat": 51.128226547862056,
     "lng": 71.43995731995513,
-    "baseLux": 13359,
+    "baseLux": 15792,
     "period": "both",
-    "glass": "Структурное остекление, Low-E стекло",
+    "glass": "РЎС‚СЂСѓРєС‚СѓСЂРЅРѕРµ РѕСЃС‚РµРєР»РµРЅРёРµ, Low-E СЃС‚РµРєР»Рѕ",
     "orientation": 210,
     "name_en": "Ministry of Finance of the Republic of Kazakhstan",
     "address_en": "Mangilik El Ave. 8",
     "glass_en": "Structural glazing, Low-E glass",
     "dangerTime_by_season": {
-      "winter": "10:06-15:04",
-      "spring": "16:08-17:28",
-      "summer": "no glare",
-      "autumn": "16:00-17:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:56-15:04"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "10:06-15:04"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "10:08-15:20"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "10:02-15:46"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "09:54-10:46 14:10-16:18"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:46"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:08"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-17:46"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-17:54"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-17:56"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-17:56"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-18:06"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-17:58"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:38"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:12"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:14-16:42"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "09:22-09:28 14:28-16:12"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "09:26-10:30 13:24-15:42"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:40-15:18"
+        }
+      ]
     },
     "reflectance_used": 0.25,
     "reflectance_basis": "Low-E"
   },
   {
     "id": 22,
-    "name": "Архив Президента Республики Казахстан",
-    "address": "пр. Мәңгілік Ел, 15",
+    "name": "РђСЂС…РёРІ РџСЂРµР·РёРґРµРЅС‚Р° Р РµСЃРїСѓР±Р»РёРєРё РљР°Р·Р°С…СЃС‚Р°РЅ",
+    "address": "РїСЂ. РњУ™ТЈРіС–Р»С–Рє Р•Р», 15",
     "lat": 51.11823643312307,
     "lng": 71.4336439869567,
-    "baseLux": 15255,
+    "baseLux": 15775,
     "period": "morning",
-    "glass": "Панорамное архитектурное стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 100,
     "name_en": "Presidential Archive of the Republic of Kazakhstan",
     "address_en": "Mangilik El Ave. 15",
     "glass_en": "Panoramic architectural glass",
     "dangerTime_by_season": {
-      "winter": "09:36-11:22",
-      "spring": "07:08-08:40",
-      "summer": "05:04-06:30",
-      "autumn": "06:46-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:20-11:18"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:38-11:20"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:32-11:34"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:10-11:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:38-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:06-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:00-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:26-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:56-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:32-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:14-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:04-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:04-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:12-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:24-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:42-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:02-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:24-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:46-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:16-10:30"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:50-11:22"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 23,
-    "name": "Казмедиа орталығы",
-    "address": "ул. Д. Кунаева, 4",
+    "name": "РљР°Р·РјРµРґРёР° РѕСЂС‚Р°Р»С‹Т“С‹",
+    "address": "СѓР». Р”. РљСѓРЅР°РµРІР°, 4",
     "lat": 51.131731694374906,
     "lng": 71.42046953541535,
-    "baseLux": 18546,
+    "baseLux": 22158,
     "period": "both",
-    "glass": "Панорамное селективное Low-E стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ СЃРµР»РµРєС‚РёРІРЅРѕРµ Low-E СЃС‚РµРєР»Рѕ",
     "orientation": 200,
     "name_en": "Kazmedia Center",
     "address_en": "D. Kunayev St. 4",
     "glass_en": "Panoramic selective Low-E glass",
     "dangerTime_by_season": {
-      "winter": "09:32-15:14",
-      "spring": "16:08-17:30",
-      "summer": "no glare",
-      "autumn": "16:00-17:18"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:22-15:12"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:34-15:12"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:34-15:28"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:24-15:54"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "09:08-10:46 14:10-16:24"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:58-09:52 15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "08:56-09:10 15:42-17:12"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:32"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-17:44"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-17:48"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-17:44"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-17:54"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-17:52"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:38"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "08:32-08:48 15:16-16:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:30-09:28 14:28-16:18"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:42-10:32 13:24-15:48"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:02-15:26"
+        }
+      ]
     },
     "reflectance_used": 0.35,
     "reflectance_basis": "selective Low-E"
   },
   {
     "id": 24,
-    "name": "КазМунайГаз",
-    "address": "пр. Кабанбай батыра, 19",
+    "name": "РљР°Р·РњСѓРЅР°Р№Р“Р°Р·",
+    "address": "РїСЂ. РљР°Р±Р°РЅР±Р°Р№ Р±Р°С‚С‹СЂР°, 19",
     "lat": 51.13215109245026,
     "lng": 71.41315271579835,
-    "baseLux": 27818,
+    "baseLux": 28355,
     "period": "both",
-    "glass": "Высокоселективное стекло, навесной фасад",
+    "glass": "Р’С‹СЃРѕРєРѕСЃРµР»РµРєС‚РёРІРЅРѕРµ СЃС‚РµРєР»Рѕ, РЅР°РІРµСЃРЅРѕР№ С„Р°СЃР°Рґ",
     "orientation": 230,
     "name_en": "KazMunayGas",
     "address_en": "Kabanbay Batyr Ave. 19",
     "glass_en": "High-selective glass, curtain-wall facade",
     "dangerTime_by_season": {
-      "winter": "10:24-15:20",
-      "spring": "16:08-17:48",
-      "summer": "18:04-19:24",
-      "autumn": "16:00-17:38"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "10:16-15:20"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "10:24-15:20"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "10:30-15:36"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "10:32-16:02"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "10:34-10:46 14:10-16:34"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-17:02"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:26"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:50"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:14"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:34"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-18:52"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:06"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:18"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:24"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:04-19:22"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:16"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:00"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:36"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:06"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:34"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-17:00"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "10:02-10:32 13:24-15:56"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "10:08-15:32"
+        }
+      ]
     },
     "reflectance_used": 0.45,
     "reflectance_basis": "high-selective"
   },
   {
     "id": 25,
-    "name": "Дом министерств",
-    "address": "пр. Мәңгілік Ел, 8, блок 4",
+    "name": "Р”РѕРј РјРёРЅРёСЃС‚РµСЂСЃС‚РІ",
+    "address": "РїСЂ. РњУ™ТЈРіС–Р»С–Рє Р•Р», 8, Р±Р»РѕРє 4",
     "lat": 51.128103084024126,
     "lng": 71.43932538408556,
-    "baseLux": 36293,
+    "baseLux": 44308,
     "period": "both",
-    "glass": "Золотое зеркальное остекление, парные конусовидные высотки",
+    "glass": "Р—РѕР»РѕС‚РѕРµ Р·РµСЂРєР°Р»СЊРЅРѕРµ РѕСЃС‚РµРєР»РµРЅРёРµ, РїР°СЂРЅС‹Рµ РєРѕРЅСѓСЃРѕРІРёРґРЅС‹Рµ РІС‹СЃРѕС‚РєРё",
     "orientation": 205,
     "name_en": "House of Ministries",
     "address_en": "Mangilik El Ave. 8, block 4",
     "glass_en": "Golden mirrored glazing, twin cone-shaped towers",
     "dangerTime_by_season": {
-      "winter": "09:16-15:28",
-      "spring": "16:08-17:48",
-      "summer": "18:04-18:16",
-      "autumn": "16:00-17:38"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:04-15:26"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:16-15:26"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:16-15:42"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:08-16:06"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:54-10:46 14:10-16:36"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:52-09:52 15:06-17:06"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "09:02-09:10 15:42-17:28"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:50"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:10"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:22"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-18:28"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-18:20"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-18:14"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-18:14"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-18:20"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-18:30"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:38"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:02"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:32"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "08:38-08:48 15:16-17:02"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:20-09:28 14:28-16:30"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:26-10:30 13:24-16:00"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:44-15:38"
+        }
+      ]
     },
     "reflectance_used": 0.7,
     "reflectance_basis": "gold mirrored"
   },
   {
     "id": 26,
-    "name": "БЦ SAAD",
-    "address": "ул. Достык, 2",
+    "name": "Р‘Р¦ SAAD",
+    "address": "СѓР». Р”РѕСЃС‚С‹Рє, 2",
     "lat": 51.128797015082874,
     "lng": 71.40743293222327,
-    "baseLux": 18264,
+    "baseLux": 18947,
     "period": "both",
-    "glass": "Панорамное селективное стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ СЃРµР»РµРєС‚РёРІРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 260,
     "name_en": "SAAD Business Center",
     "address_en": "Dostyk St. 2",
     "glass_en": "Panoramic selective glass",
     "dangerTime_by_season": {
-      "winter": "12:46-15:00",
-      "spring": "16:08-17:44",
-      "summer": "04:58-05:00 18:04-19:36",
-      "autumn": "16:00-17:34"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "12:38-15:02"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "12:48-15:00"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "12:50-15:18"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "12:50-15:48"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:24"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:56"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:22"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:48"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:12"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:34"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-18:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:12"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:34"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:04-19:32"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:22"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:02"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:36"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:04"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:30"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-16:54"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:20"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:46"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "12:26-15:20"
+        }
+      ]
     },
     "reflectance_used": 0.3,
-    "reflectance_basis": "selective (no Low-E specified)"
+    "reflectance_basis": "selective"
   },
   {
     "id": 27,
-    "name": "Бизнес-центр Санкт-Петербург",
-    "address": "ул. Достык, 20",
+    "name": "Р‘РёР·РЅРµСЃ-С†РµРЅС‚СЂ РЎР°РЅРєС‚-РџРµС‚РµСЂР±СѓСЂРі",
+    "address": "СѓР». Р”РѕСЃС‚С‹Рє, 20",
     "lat": 51.124492690997485,
     "lng": 71.43609212621853,
-    "baseLux": 38979,
+    "baseLux": 41134,
     "period": "evening",
-    "glass": "Зеркальное фасадное стекло",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅРѕРµ С„Р°СЃР°РґРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 265,
     "name_en": "\"Saint Petersburg\" Business Center",
     "address_en": "Dostyk St. 20",
     "glass_en": "Mirrored facade glass",
     "dangerTime_by_season": {
-      "winter": "12:34-15:22",
-      "spring": "16:08-17:54",
-      "summer": "04:42-05:00 18:04-19:52",
-      "autumn": "16:00-17:44"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "12:28-15:22"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "12:34-15:20"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "12:42-15:38"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "12:46-16:04"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:36"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-17:08"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:32"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:58"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:24"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:46"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-19:08"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:26"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:42"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:50"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-19:48"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:36"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:14"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:48"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-18:14"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:40"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:16-17:06"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:32"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-16:00"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "12:22-15:36"
+        }
+      ]
     },
     "reflectance_used": 0.65,
     "reflectance_basis": "mirrored"
@@ -601,134 +3301,734 @@
   {
     "id": 28,
     "name": "Beijing Palace Soluxe Hotel Astana",
-    "address": "ул. Сыганак, 45",
+    "address": "СѓР». РЎС‹РіР°РЅР°Рє, 45",
     "lat": 51.12341980479718,
     "lng": 71.43294683605592,
-    "baseLux": 13638,
+    "baseLux": 15495,
     "period": "both",
-    "glass": "Панорамное архитектурное стекло",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅРѕРµ СЃС‚РµРєР»Рѕ",
     "orientation": 190,
     "name_en": "Beijing Palace Soluxe Hotel Astana",
     "address_en": "Syganak St. 45",
     "glass_en": "Panoramic architectural glass",
     "dangerTime_by_season": {
-      "winter": "09:38-15:00",
-      "spring": "16:08-17:04",
-      "summer": "no glare",
-      "autumn": "16:00-16:50"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:26-15:00"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:38-15:00"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:38-15:16"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:26-15:40"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "09:08-10:46 14:10-16:10"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:52-09:52 15:06-16:36"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "08:42-09:10 15:42-16:52"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:02"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-17:02"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-16:58"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-16:46"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "08:18-08:48 15:16-16:26"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "08:24-09:28 14:28-16:02"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:42-10:30 13:24-15:34"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "09:04-15:12"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 29,
     "name": "Highvill Ishim",
-    "address": "ул. Жумекена Нажимеденова, 4",
+    "address": "СѓР». Р–СѓРјРµРєРµРЅР° РќР°Р¶РёРјРµРґРµРЅРѕРІР°, 4",
     "lat": 51.12029787114182,
     "lng": 71.45899528461447,
-    "baseLux": 15799,
+    "baseLux": 15765,
     "period": "evening",
-    "glass": "Панорамное остекление, Low-E стеклопакеты",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ РѕСЃС‚РµРєР»РµРЅРёРµ, Low-E СЃС‚РµРєР»РѕРїР°РєРµС‚С‹",
     "orientation": 240,
     "name_en": "Highvill Ishim",
     "address_en": "Zhumeken Nazhimedenov St. 4",
     "glass_en": "Panoramic glazing, Low-E double-glazed units",
     "dangerTime_by_season": {
-      "winter": "11:38-15:02",
-      "spring": "16:08-17:38",
-      "summer": "18:04-19:14",
-      "autumn": "16:00-17:28"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "11:30-15:02"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "11:38-15:02"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "11:42-15:18"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "11:42-15:46"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:22"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:16"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:42"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:04"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:24"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:26-18:42"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-18:56"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:08"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:14"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:02-19:12"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:06"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:50"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:56"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:24"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:14-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:44"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "11:18-15:18"
+        }
+      ]
     },
     "reflectance_used": 0.25,
     "reflectance_basis": "Low-E"
   },
   {
     "id": 30,
-    "name": "ЖК «Гранд Алатау»",
-    "address": "ул. Желтоксан, 2/3 (правый берег)",
+    "name": "Р–Рљ В«Р“СЂР°РЅРґ РђР»Р°С‚Р°СѓВ»",
+    "address": "СѓР». Р–РµР»С‚РѕРєСЃР°РЅ, 2/3 (РїСЂР°РІС‹Р№ Р±РµСЂРµРі)",
     "lat": 51.16203946335745,
     "lng": 71.41956948293551,
-    "baseLux": 15707,
+    "baseLux": 15772,
     "period": "evening",
-    "glass": "Полностью остеклённый фасад",
+    "glass": "РџРѕР»РЅРѕСЃС‚СЊСЋ РѕСЃС‚РµРєР»С‘РЅРЅС‹Р№ С„Р°СЃР°Рґ",
     "orientation": 250,
     "name_en": "\"Grand Alatau\" Residential Complex",
     "address_en": "Zheltoksan St. 2/3 (right bank)",
     "glass_en": "Fully glazed facade",
     "dangerTime_by_season": {
-      "winter": "12:18-14:58",
-      "spring": "16:08-17:40",
-      "summer": "18:04-19:24",
-      "autumn": "16:00-17:30"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "12:10-14:58"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "12:20-14:56"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "12:22-15:16"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "12:22-15:44"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "14:10-16:20"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "15:06-16:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "15:42-17:18"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "16:14-17:42"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:08"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:28"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-18:48"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:04"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:16"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:22"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:04-19:22"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:12"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-18:54"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:30"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:34-17:58"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "15:58-17:26"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "15:14-16:50"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "14:28-16:16"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "13:24-15:42"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "11:58-15:16"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   },
   {
     "id": 31,
-    "name": "Ледовый дворец «Барыс Арена»",
-    "address": "пр. Туран, 57",
+    "name": "Р›РµРґРѕРІС‹Р№ РґРІРѕСЂРµС† В«Р‘Р°СЂС‹СЃ РђСЂРµРЅР°В»",
+    "address": "РїСЂ. РўСѓСЂР°РЅ, 57",
     "lat": 51.1092151336879,
     "lng": 71.39557803306054,
-    "baseLux": 25372,
+    "baseLux": 25371,
     "period": "both",
-    "glass": "Зеркальное стекло фасада",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅРѕРµ СЃС‚РµРєР»Рѕ С„Р°СЃР°РґР°",
     "orientation": 335,
     "omnidirectional": false,
     "name_en": "\"Barys Arena\" Ice Palace",
     "address_en": "Turan Ave. 57",
     "glass_en": "Mirrored facade glass",
     "dangerTime_by_season": {
-      "winter": "no glare",
-      "spring": "no glare",
-      "summer": "04:42-05:00 18:04-19:52",
-      "autumn": "16:50-17:22"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "no glare"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "17:04-17:34"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "16:44-18:14"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "17:06-18:40"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "17:28-19:06"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "17:44-19:26"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "17:58-19:44"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "18:04-19:50"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "18:04-19:48"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "17:54-19:34"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "17:34-19:12"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "17:08-18:42"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "16:38-18:04"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "16:52-17:14"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "no glare"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "no glare"
+        }
+      ]
     },
     "reflectance_used": 0.65,
     "reflectance_basis": "mirrored"
   },
   {
     "id": 32,
-    "name": "Transport Tower («Зажигалка»)",
-    "address": "пр. Кабанбай батыра, 32/1",
+    "name": "Transport Tower (В«Р—Р°Р¶РёРіР°Р»РєР°В»)",
+    "address": "РїСЂ. РљР°Р±Р°РЅР±Р°Р№ Р±Р°С‚С‹СЂР°, 32/1",
     "lat": 51.1284,
     "lng": 71.4251,
-    "baseLux": 24211,
+    "baseLux": 25276,
     "period": "both",
-    "glass": "Зеркальное отражающее стекло с напылением",
+    "glass": "Р—РµСЂРєР°Р»СЊРЅРѕРµ РѕС‚СЂР°Р¶Р°СЋС‰РµРµ СЃС‚РµРєР»Рѕ СЃ РЅР°РїС‹Р»РµРЅРёРµРј",
     "orientation": 135,
     "name_en": "Transport Tower (\"The Lighter\")",
     "address_en": "Kabanbay Batyr Ave. 32/1",
     "glass_en": "Mirrored reflective coated glass",
     "dangerTime_by_season": {
-      "winter": "09:08-14:12",
-      "spring": "07:02-08:40",
-      "summer": "05:20-06:30",
-      "autumn": "06:40-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "08:56-14:06"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:08-14:10"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:08-14:22"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "08:52-14:32"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:26-10:46 14:10-14:38"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "07:56-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:28-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "06:56-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:24-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "05:58-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:36-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:24-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:20-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:22-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:26-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:34-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:48-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:02-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:22-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:42-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:04-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:30-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:02-10:30 13:24-14:08"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:30-14:06"
+        }
+      ]
     },
     "reflectance_used": 0.4,
-    "reflectance_basis": "confirmed source value (not keyword-guessed)"
+    "reflectance_basis": "confirmed source value"
   },
   {
     "id": 33,
-    "name": "Отель St. Regis Astana",
-    "address": "пр. Кабанбай батыра",
+    "name": "РћС‚РµР»СЊ St. Regis Astana",
+    "address": "РїСЂ. РљР°Р±Р°РЅР±Р°Р№ Р±Р°С‚С‹СЂР°",
     "lat": 51.129,
     "lng": 71.416,
-    "baseLux": 15817,
+    "baseLux": 15778,
     "period": "morning",
-    "glass": "Панорамное фасадное остекление",
+    "glass": "РџР°РЅРѕСЂР°РјРЅРѕРµ С„Р°СЃР°РґРЅРѕРµ РѕСЃС‚РµРєР»РµРЅРёРµ",
     "orientation": 120,
     "name_en": "St. Regis Astana Hotel",
     "address_en": "Kabanbay Batyr Ave.",
     "glass_en": "Panoramic facade glazing",
     "dangerTime_by_season": {
-      "winter": "09:24-12:48",
-      "spring": "07:10-08:40",
-      "summer": "05:18-06:30",
-      "autumn": "06:48-08:16"
+      "winter": [
+        {
+          "period": "Dec 1-15",
+          "dangerTime": "09:10-12:42"
+        },
+        {
+          "period": "Dec 16-31",
+          "dangerTime": "09:24-12:46"
+        },
+        {
+          "period": "Jan 1-15",
+          "dangerTime": "09:22-12:58"
+        },
+        {
+          "period": "Jan 16-31",
+          "dangerTime": "09:04-13:08"
+        },
+        {
+          "period": "Feb 1-15",
+          "dangerTime": "08:36-10:46"
+        },
+        {
+          "period": "Feb 16-31",
+          "dangerTime": "08:04-09:52"
+        }
+      ],
+      "spring": [
+        {
+          "period": "Mar 1-15",
+          "dangerTime": "07:36-09:10"
+        },
+        {
+          "period": "Mar 16-31",
+          "dangerTime": "07:02-08:30"
+        },
+        {
+          "period": "Apr 1-15",
+          "dangerTime": "06:30-07:50"
+        },
+        {
+          "period": "Apr 16-31",
+          "dangerTime": "06:02-07:20"
+        },
+        {
+          "period": "May 1-15",
+          "dangerTime": "05:40-06:54"
+        },
+        {
+          "period": "May 16-31",
+          "dangerTime": "05:26-06:38"
+        }
+      ],
+      "summer": [
+        {
+          "period": "Jun 1-15",
+          "dangerTime": "05:18-06:28"
+        },
+        {
+          "period": "Jun 16-31",
+          "dangerTime": "05:18-06:28"
+        },
+        {
+          "period": "Jul 1-15",
+          "dangerTime": "05:24-06:34"
+        },
+        {
+          "period": "Jul 16-31",
+          "dangerTime": "05:36-06:48"
+        },
+        {
+          "period": "Aug 1-15",
+          "dangerTime": "05:50-07:06"
+        },
+        {
+          "period": "Aug 16-31",
+          "dangerTime": "06:08-07:26"
+        }
+      ],
+      "autumn": [
+        {
+          "period": "Sep 1-15",
+          "dangerTime": "06:28-07:50"
+        },
+        {
+          "period": "Sep 16-31",
+          "dangerTime": "06:48-08:16"
+        },
+        {
+          "period": "Oct 1-15",
+          "dangerTime": "07:12-08:48"
+        },
+        {
+          "period": "Oct 16-31",
+          "dangerTime": "07:40-09:28"
+        },
+        {
+          "period": "Nov 1-15",
+          "dangerTime": "08:12-10:32"
+        },
+        {
+          "period": "Nov 16-31",
+          "dangerTime": "08:44-12:44"
+        }
+      ]
     },
     "reflectance_used": 0.25,
-    "reflectance_basis": "panoramic (generic, unconfirmed)"
+    "reflectance_basis": "panoramic"
   }
 ]

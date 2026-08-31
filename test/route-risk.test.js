@@ -140,15 +140,21 @@ test('danger window is derived from season data instead of returning undefined',
 
   const building = {
     dangerTime_by_season: {
-      winter: '10:04-14:22',
-      spring: 'no glare',
-      summer: 'no glare',
-      autumn: 'no glare',
+      winter: [
+        { period: 'Dec 1-15', dangerTime: '09:50-14:22' },
+        { period: 'Jan 1-15', dangerTime: '10:04-14:22' },
+        { period: 'Jan 16-31', dangerTime: '09:48-15:04' },
+        { period: 'Feb 1-15', dangerTime: 'no glare' },
+      ],
+      spring: [{ period: 'Mar 1-15', dangerTime: 'no glare' }],
+      summer: [{ period: 'Jun 1-15', dangerTime: 'no glare' }],
+      autumn: [{ period: 'Sep 1-15', dangerTime: 'no glare' }],
     },
   };
 
   assert.equal(context.popupTestApi.getSeasonKey(new Date('2025-01-15T12:00:00Z')), 'winter');
   assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-01-15T12:00:00Z')), '10:04-14:22');
+  assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-01-16T12:00:00Z')), '09:48-15:04');
   assert.equal(context.popupTestApi.getDangerTimeForBuilding(building, new Date('2025-06-01T12:00:00Z')), 'no glare');
   assert.equal(context.popupTestApi.isBuildingGlareActive(building, new Date('2025-01-15T06:00:00Z')), true);
   assert.equal(context.popupTestApi.isBuildingGlareActive(building, new Date('2025-01-15T05:00:00Z')), false);
