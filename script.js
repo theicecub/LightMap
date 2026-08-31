@@ -299,10 +299,21 @@ function setLang(lang) {
   renderMarkers();
   refreshOpenPopup();
 
-  const langSelect = document.getElementById('langSelect');
-  if (langSelect) {
-    langSelect.value = lang;
-  }
+  updateLanguageSwitcher(lang);
+}
+
+function updateLanguageSwitcher(lang) {
+  const labels = {
+    ru: '🇷🇺 РУС',
+    en: '🇬🇧 ENG',
+    kk: '🇰🇿 ҚАЗ',
+  };
+  const value = document.getElementById('langSwitcherValue');
+  if (value) value.textContent = labels[lang] || labels.ru;
+
+  document.querySelectorAll('.lang-menu-option').forEach((option) => {
+    option.setAttribute('aria-selected', String(option.dataset.lang === lang));
+  });
 }
 
 function applyLangToStaticText() {
@@ -726,11 +737,36 @@ function initUi() {
   applyLangToStaticText();
 
   // Language switcher
-  const langSelect = document.getElementById('langSelect');
-  if (langSelect) {
-    langSelect.value = currentLang;
-    langSelect.addEventListener('change', (event) => {
-      setLang(event.target.value);
+  const langSwitcher = document.getElementById('langSwitcher');
+  const langSwitcherButton = document.getElementById('langSwitcherButton');
+  const langMenu = document.getElementById('langMenu');
+  const closeLanguageMenu = () => {
+    if (!langMenu || !langSwitcherButton) return;
+    langMenu.hidden = true;
+    langSwitcherButton.setAttribute('aria-expanded', 'false');
+  };
+
+  updateLanguageSwitcher(currentLang);
+  if (langSwitcherButton && langMenu) {
+    langSwitcherButton.addEventListener('click', () => {
+      const isOpen = !langMenu.hidden;
+      langMenu.hidden = isOpen;
+      langSwitcherButton.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    langMenu.querySelectorAll('.lang-menu-option').forEach((option) => {
+      option.addEventListener('click', () => {
+        setLang(option.dataset.lang);
+        closeLanguageMenu();
+        langSwitcherButton.focus();
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+      if (langSwitcher && !langSwitcher.contains(event.target)) closeLanguageMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeLanguageMenu();
     });
   }
 

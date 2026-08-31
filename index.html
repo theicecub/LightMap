@@ -52,12 +52,14 @@
 
       <div class="topbar-controls">
         <div class="lang-switcher" id="langSwitcher">
-          <label class="sr-only" for="langSelect">Language</label>
-          <select id="langSelect" class="lang-select" aria-label="Language">
-            <option value="ru">🇷🇺 РУС</option>
-            <option value="en">🇬🇧 ENG</option>
-            <option value="kk">🇰🇿 ҚАЗ</option>
-          </select>
+          <button class="lang-select" id="langSwitcherButton" type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">
+            <span id="langSwitcherValue">🇷🇺 РУС</span>
+          </button>
+          <div class="lang-menu" id="langMenu" role="listbox" aria-label="Language" hidden>
+            <button class="lang-menu-option" type="button" role="option" data-lang="ru" aria-selected="true">🇷🇺 РУС</button>
+            <button class="lang-menu-option" type="button" role="option" data-lang="en" aria-selected="false">🇬🇧 ENG</button>
+            <button class="lang-menu-option" type="button" role="option" data-lang="kk" aria-selected="false">🇰🇿 ҚАЗ</button>
+          </div>
         </div>
 
         <label class="switch" id="themeToggle">
