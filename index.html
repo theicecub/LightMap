@@ -113,6 +113,17 @@
                 <span>Выбрать на карте</span>
               </button>
             </div>
+            <div class="route-address-search" id="routeAddressSearchA" role="dialog" aria-modal="false" aria-label="Поиск адреса" hidden>
+              <div class="route-address-search__input-row">
+                <svg class="route-address-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input class="route-address-search__input" id="routeAddressInputA" type="search" autocomplete="off" autocapitalize="words" spellcheck="false" aria-autocomplete="list" aria-controls="routeAddressSuggestionsA">
+                <button class="route-address-search__close" type="button" data-close-address-search="A" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                </button>
+              </div>
+              <div class="route-address-search__status" id="routeAddressStatusA" aria-live="polite"></div>
+              <div class="route-address-search__suggestions" id="routeAddressSuggestionsA" role="listbox"></div>
+            </div>
             <button class="route-clear-btn" id="routeClearA" title="Очистить поле" aria-label="Очистить откуда">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>
             </button>
@@ -137,6 +148,17 @@
                 <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z"></path><circle cx="12" cy="10.5" r="2.25"></circle></svg>
                 <span>Выбрать на карте</span>
               </button>
+            </div>
+            <div class="route-address-search" id="routeAddressSearchB" role="dialog" aria-modal="false" aria-label="Поиск адреса" hidden>
+              <div class="route-address-search__input-row">
+                <svg class="route-address-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input class="route-address-search__input" id="routeAddressInputB" type="search" autocomplete="off" autocapitalize="words" spellcheck="false" aria-autocomplete="list" aria-controls="routeAddressSuggestionsB">
+                <button class="route-address-search__close" type="button" data-close-address-search="B" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                </button>
+              </div>
+              <div class="route-address-search__status" id="routeAddressStatusB" aria-live="polite"></div>
+              <div class="route-address-search__suggestions" id="routeAddressSuggestionsB" role="listbox"></div>
             </div>
             <button class="route-clear-btn" id="routeClearB" title="Очистить поле" aria-label="Очистить куда">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>

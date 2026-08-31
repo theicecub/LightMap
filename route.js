@@ -11,6 +11,16 @@ const ROUTE_I18N = {
     placeholderA: 'Откуда',
     placeholderB: 'Куда',
     buildRoute: 'Построить маршрут',
+    collapseRoutePanel: 'Свернуть панель маршрута',
+    expandRoutePanel: 'Развернуть панель маршрута',
+    enterAddress: 'Ввести адрес',
+    addressSearchPlaceholder: 'Введите адрес или место',
+    addressSearchHint: 'Начните вводить адрес',
+    addressSearchLoading: 'Ищем адреса…',
+    addressSearchEmpty: 'Ничего не найдено',
+    closeAddressSearch: 'Закрыть поиск',
+    myLocation: 'Мое местоположение',
+    chooseOnMap: 'Выбрать на карте',
     clearRoute: 'Очистить',
     clickMapA: 'Кликните по карте для точки А',
     clickMapB: 'Кликните по карте для точки Б',
@@ -79,6 +89,16 @@ const ROUTE_I18N = {
     placeholderA: 'From',
     placeholderB: 'To',
     buildRoute: 'Build route',
+    collapseRoutePanel: 'Collapse route panel',
+    expandRoutePanel: 'Expand route panel',
+    enterAddress: 'Enter address',
+    addressSearchPlaceholder: 'Enter an address or place',
+    addressSearchHint: 'Start typing an address',
+    addressSearchLoading: 'Searching addresses…',
+    addressSearchEmpty: 'No places found',
+    closeAddressSearch: 'Close search',
+    myLocation: 'My location',
+    chooseOnMap: 'Choose on map',
     clearRoute: 'Clear',
     clickMapA: 'Click map for point A',
     clickMapB: 'Click map for point B',
@@ -147,6 +167,16 @@ const ROUTE_I18N = {
     placeholderA: 'Қайдан',
     placeholderB: 'Қайда',
     buildRoute: 'Маршрут құру',
+    collapseRoutePanel: 'Маршрут панелін жию',
+    expandRoutePanel: 'Маршрут панелін ашу',
+    enterAddress: 'Мекенжай енгізу',
+    addressSearchPlaceholder: 'Мекенжайды немесе орынды енгізіңіз',
+    addressSearchHint: 'Мекенжайды тере бастаңыз',
+    addressSearchLoading: 'Мекенжайлар ізделуде…',
+    addressSearchEmpty: 'Ештеңе табылмады',
+    closeAddressSearch: 'Іздеуді жабу',
+    myLocation: 'Менің орналасқан жерім',
+    chooseOnMap: 'Картадан таңдау',
     clearRoute: 'Жою',
     clickMapA: 'А нүктесін таңдау үшін картадан басыңыз',
     clickMapB: 'Б нүктесін таңдау үшін картадан басыңыз',
@@ -294,6 +324,13 @@ const routeState = {
 
 // Geocoding cache: query → { results, timestamp }
 const geocodeCache = new Map();
+const addressSearchState = {
+  activeField: null,
+  results: [],
+  activeIndex: -1,
+  debounceId: null,
+  requestId: 0,
+};
 
 // MapTiler stores some streets under their full official name.  In everyday
 // input users often omit the first name, so keep known aliases in one form
@@ -399,10 +436,14 @@ async function geocodeSearch(query) {
         const address = item.full_address_name || item.address_name || item.address?.name || '';
         const name = item.name || item.full_name || '';
         const label = addressSearch ? (address || name) : (name || address);
+        const detail = addressSearch
+          ? (name && name !== label ? name : '')
+          : (address && address !== label ? address : '');
         return {
           lng: item.point?.lon,
           lat: item.point?.lat,
           label,
+          detail,
           place: label,
           item,
         };
@@ -1458,8 +1499,9 @@ function initRouteModule() {
         toggleIcon.style.transform = nextCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
       }
 
-      panelToggle.setAttribute('aria-label', nextCollapsed ? 'Развернуть панель маршрута' : 'Свернуть панель маршрута');
-      panelToggle.setAttribute('title', nextCollapsed ? 'Развернуть панель маршрута' : 'Свернуть панель маршрута');
+      const toggleLabel = rt(nextCollapsed ? 'expandRoutePanel' : 'collapseRoutePanel');
+      panelToggle.setAttribute('aria-label', toggleLabel);
+      panelToggle.setAttribute('title', toggleLabel);
       panelToggle.setAttribute('aria-expanded', String(!nextCollapsed));
     });
   }
@@ -1482,9 +1524,12 @@ function initFieldMenus() {
 
     if (!inputBtn || !menu) return;
 
+    initAddressSearch(field);
+
     // Toggle menu on button click
     inputBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      closeAllAddressSearches();
       const allMenus = document.querySelectorAll('.route-field-menu');
       allMenus.forEach(m => {
         if (m !== menu) m.classList.remove('active');
@@ -1518,27 +1563,195 @@ function initFieldMenus() {
       document.querySelectorAll('.route-field-menu.active').forEach(m => {
         m.classList.remove('active');
       });
+      closeAllAddressSearches();
     }
   });
 }
 
 function openAddressInput(field) {
-  const addressInput = prompt(field === 'A' ? 'Введите адрес (откуда):' : 'Введите адрес (куда):',
-    routeState[field === 'A' ? 'pointA' : 'pointB']?.label || '');
+  const search = document.getElementById(`routeAddressSearch${field}`);
+  const input = document.getElementById(`routeAddressInput${field}`);
+  if (!search || !input) return;
 
-  if (addressInput && addressInput.trim()) {
-    const query = addressInput.trim();
-    geocodeSearch(query).then(results => {
-      if (results.length > 0) {
-        selectPointFromGeocoding(field, results[0]);
-      } else {
-        alert(`Адрес "${query}" не найден`);
-      }
-    }).catch(err => {
-      console.error('Geocoding error:', err);
-      alert('Ошибка при поиске адреса');
-    });
+  document.querySelectorAll('.route-field-menu.active').forEach(menu => menu.classList.remove('active'));
+  closeAllAddressSearches(field);
+
+  const existingPoint = routeState[field === 'A' ? 'pointA' : 'pointB'];
+  input.value = existingPoint?.label || '';
+  search.hidden = false;
+  addressSearchState.activeField = field;
+  addressSearchState.results = [];
+  addressSearchState.activeIndex = -1;
+  renderAddressSearch(field, [], input.value.trim().length < 2 ? 'hint' : 'loading');
+
+  window.setTimeout(() => {
+    input.focus({ preventScroll: true });
+    if (input.value) input.select();
+    if (input.value.trim().length >= 2) queueAddressSearch(field);
+  }, 0);
+}
+
+function initAddressSearch(field) {
+  const search = document.getElementById(`routeAddressSearch${field}`);
+  const input = document.getElementById(`routeAddressInput${field}`);
+  const closeButton = search?.querySelector('[data-close-address-search]');
+  if (!search || !input || input.dataset.addressSearchReady === 'true') return;
+
+  input.dataset.addressSearchReady = 'true';
+  input.addEventListener('input', () => queueAddressSearch(field));
+  input.addEventListener('keydown', event => handleAddressSearchKeydown(field, event));
+  closeButton?.addEventListener('click', () => closeAddressSearch(field, true));
+}
+
+function closeAllAddressSearches(exceptField = null) {
+  ['A', 'B'].forEach(field => {
+    if (field !== exceptField) closeAddressSearch(field);
+  });
+}
+
+function closeAddressSearch(field, returnFocus = false) {
+  const search = document.getElementById(`routeAddressSearch${field}`);
+  if (!search || search.hidden) return;
+
+  search.hidden = true;
+  addressSearchState.requestId += 1;
+  if (addressSearchState.debounceId) window.clearTimeout(addressSearchState.debounceId);
+  addressSearchState.debounceId = null;
+  if (addressSearchState.activeField === field) {
+    addressSearchState.activeField = null;
+    addressSearchState.results = [];
+    addressSearchState.activeIndex = -1;
   }
+
+  if (returnFocus) {
+    document.getElementById(field === 'A' ? 'routeInputABtn' : 'routeInputBBtn')?.focus();
+  }
+}
+
+function queueAddressSearch(field) {
+  const input = document.getElementById(`routeAddressInput${field}`);
+  const search = document.getElementById(`routeAddressSearch${field}`);
+  if (!input || !search || search.hidden || addressSearchState.activeField !== field) return;
+
+  const query = input.value.trim();
+  addressSearchState.requestId += 1;
+  const requestId = addressSearchState.requestId;
+  if (addressSearchState.debounceId) window.clearTimeout(addressSearchState.debounceId);
+
+  if (query.length < 2) {
+    addressSearchState.results = [];
+    addressSearchState.activeIndex = -1;
+    renderAddressSearch(field, [], 'hint');
+    return;
+  }
+
+  renderAddressSearch(field, [], 'loading');
+  addressSearchState.debounceId = window.setTimeout(async () => {
+    try {
+      const results = await geocodeSearch(query);
+      if (!isCurrentAddressSearch(field, query, requestId)) return;
+      addressSearchState.results = results;
+      addressSearchState.activeIndex = -1;
+      renderAddressSearch(field, results, results.length ? 'results' : 'empty');
+    } catch (error) {
+      console.warn('[Address search] Failed to load suggestions:', error);
+      if (isCurrentAddressSearch(field, query, requestId)) renderAddressSearch(field, [], 'empty');
+    }
+  }, ROUTE_CONFIG.debounceMs);
+}
+
+function isCurrentAddressSearch(field, query, requestId) {
+  const search = document.getElementById(`routeAddressSearch${field}`);
+  const input = document.getElementById(`routeAddressInput${field}`);
+  return addressSearchState.activeField === field && !search?.hidden &&
+    input?.value.trim() === query && addressSearchState.requestId === requestId;
+}
+
+function renderAddressSearch(field, results, state) {
+  const input = document.getElementById(`routeAddressInput${field}`);
+  const status = document.getElementById(`routeAddressStatus${field}`);
+  const suggestions = document.getElementById(`routeAddressSuggestions${field}`);
+  if (!input || !status || !suggestions) return;
+
+  const tr = ROUTE_I18N[currentLang] || ROUTE_I18N.ru;
+  status.textContent = state === 'hint' ? tr.addressSearchHint :
+    state === 'loading' ? tr.addressSearchLoading :
+      state === 'empty' ? tr.addressSearchEmpty : '';
+  suggestions.replaceChildren();
+  input.setAttribute('aria-expanded', String(results.length > 0));
+  input.removeAttribute('aria-activedescendant');
+
+  results.forEach((result, index) => {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'route-address-suggestion';
+    option.id = `routeAddressOption${field}${index}`;
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', 'false');
+
+    const pin = document.createElement('span');
+    pin.className = 'route-address-suggestion__pin';
+    pin.setAttribute('aria-hidden', 'true');
+    pin.textContent = '⌖';
+    const text = document.createElement('span');
+    text.className = 'route-address-suggestion__text';
+    const label = document.createElement('span');
+    label.className = 'route-address-suggestion__label';
+    label.textContent = result.label;
+    text.append(label);
+    if (result.detail) {
+      const detail = document.createElement('span');
+      detail.className = 'route-address-suggestion__detail';
+      detail.textContent = result.detail;
+      text.append(detail);
+    }
+    option.append(pin, text);
+    option.addEventListener('click', () => selectAddressSuggestion(field, index));
+    suggestions.append(option);
+  });
+}
+
+function handleAddressSearchKeydown(field, event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAddressSearch(field, true);
+    return;
+  }
+
+  const count = addressSearchState.results.length;
+  if (!count || addressSearchState.activeField !== field) return;
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const shift = event.key === 'ArrowDown' ? 1 : -1;
+    const nextIndex = addressSearchState.activeIndex < 0
+      ? (shift > 0 ? 0 : count - 1)
+      : (addressSearchState.activeIndex + shift + count) % count;
+    setAddressSuggestionActive(field, nextIndex);
+  } else if (event.key === 'Enter' && addressSearchState.activeIndex >= 0) {
+    event.preventDefault();
+    selectAddressSuggestion(field, addressSearchState.activeIndex);
+  }
+}
+
+function setAddressSuggestionActive(field, index) {
+  addressSearchState.activeIndex = index;
+  const input = document.getElementById(`routeAddressInput${field}`);
+  document.querySelectorAll(`#routeAddressSuggestions${field} .route-address-suggestion`).forEach((option, optionIndex) => {
+    const isActive = optionIndex === index;
+    option.classList.toggle('is-active', isActive);
+    option.setAttribute('aria-selected', String(isActive));
+    if (isActive) {
+      input?.setAttribute('aria-activedescendant', option.id);
+      option.scrollIntoView({ block: 'nearest' });
+    }
+  });
+}
+
+function selectAddressSuggestion(field, index) {
+  const result = addressSearchState.results[index];
+  if (!result) return;
+  selectPointFromGeocoding(field, result);
+  closeAddressSearch(field);
 }
 
 function useGeolocation(field) {
@@ -1625,6 +1838,7 @@ function applyRouteLangText() {
   const inputABtn = document.getElementById('routeInputABtn');
   const inputBBtn = document.getElementById('routeInputBBtn');
   const buildBtn = document.getElementById('routeBuildBtn');
+  const panelToggle = document.getElementById('routePanelToggle');
 
   if (inputABtn) {
     const label = inputABtn.querySelector('.route-field-label');
@@ -1639,16 +1853,43 @@ function applyRouteLangText() {
   // Update menu item labels
   ['A', 'B'].forEach(field => {
     const menu = document.getElementById(`routeFieldMenu${field}`);
-    if (!menu) return;
+    if (menu) {
+      const items = menu.querySelectorAll('.route-menu-item');
+      if (items[0]) {
+        items[0].querySelector('span').textContent = tr.enterAddress;
+        items[0].title = tr.enterAddress;
+      }
+      if (items[1]) {
+        items[1].querySelector('span').textContent = tr.myLocation;
+        items[1].title = tr.myLocation;
+      }
+      if (items[2]) {
+        items[2].querySelector('span').textContent = tr.chooseOnMap;
+        items[2].title = tr.chooseOnMap;
+      }
+    }
 
-    const items = menu.querySelectorAll('.route-menu-item');
-    if (items[0]) items[0].querySelector('span').textContent = 'Ввести адрес';
-    if (items[1]) items[1].querySelector('span').textContent = 'Мое местоположение';
-    if (items[2]) items[2].querySelector('span').textContent = 'Выбрать на карте';
+    const input = document.getElementById(`routeAddressInput${field}`);
+    const search = document.getElementById(`routeAddressSearch${field}`);
+    const closeButton = search?.querySelector('[data-close-address-search]');
+    if (input) input.placeholder = tr.addressSearchPlaceholder;
+    if (search) search.setAttribute('aria-label', tr.enterAddress);
+    if (closeButton) {
+      closeButton.setAttribute('aria-label', tr.closeAddressSearch);
+      closeButton.title = tr.closeAddressSearch;
+    }
   });
 
   if (buildBtn) buildBtn.title = tr.buildRoute || 'Построить маршрут';
   if (buildBtn) buildBtn.setAttribute('aria-label', tr.buildRoute || 'Построить маршрут');
+
+  if (panelToggle) {
+    const panel = document.getElementById('routePanel');
+    const isCollapsed = panel?.classList.contains('route-panel--collapsed');
+    const toggleLabel = tr[isCollapsed ? 'expandRoutePanel' : 'collapseRoutePanel'] || 'Свернуть панель маршрута';
+    panelToggle.setAttribute('aria-label', toggleLabel);
+    panelToggle.setAttribute('title', toggleLabel);
+  }
 }
 
 function waitForMapAndInit() {
