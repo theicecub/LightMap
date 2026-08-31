@@ -1468,6 +1468,7 @@ function initMapClickPicker() {
 function initRouteModule() {
   // Initialize field buttons and menus
   initFieldMenus();
+  initRoutePanelKeyboardAvoidance();
 
   // Build button
   const buildBtn = document.getElementById('routeBuildBtn');
@@ -1515,6 +1516,32 @@ function initRouteModule() {
   initMapClickPicker();
   applyRouteLangText();
   updateRoutePanel();
+}
+
+// On iOS browsers the virtual keyboard may overlay the layout viewport instead
+// of resizing it. Keep the route panel directly above that overlay.
+function initRoutePanelKeyboardAvoidance() {
+  const panel = document.getElementById('routePanel');
+  if (!panel || panel.dataset.keyboardAvoidanceReady === 'true') return;
+
+  panel.dataset.keyboardAvoidanceReady = 'true';
+  const updatePanelOffset = () => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const overlayHeight = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    // Small changes are browser chrome, not the on-screen keyboard.
+    const keyboardHeight = overlayHeight > 100 ? Math.round(overlayHeight) : 0;
+    panel.style.setProperty('--route-keyboard-offset', `${keyboardHeight}px`);
+    panel.classList.toggle('route-panel--above-keyboard', keyboardHeight > 0);
+  };
+
+  window.visualViewport?.addEventListener('resize', updatePanelOffset);
+  window.visualViewport?.addEventListener('scroll', updatePanelOffset);
+  window.addEventListener('resize', updatePanelOffset);
+  document.addEventListener('focusin', updatePanelOffset);
+  document.addEventListener('focusout', () => window.setTimeout(updatePanelOffset, 150));
+  updatePanelOffset();
 }
 
 function initFieldMenus() {

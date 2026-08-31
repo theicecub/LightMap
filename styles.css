@@ -1121,7 +1121,7 @@ body,
 
 .route-panel {
   position: absolute;
-  bottom: 12px;
+  bottom: calc(12px + var(--route-keyboard-offset, 0px));
   left: 12px;
   right: auto;
   width: min(320px, calc(100vw - 24px));
@@ -1134,6 +1134,7 @@ body,
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 10;
   overflow: visible;
+  isolation: isolate;
   transition: all 200ms ease;
 }
 
@@ -1171,6 +1172,9 @@ body,
 }
 
 .route-input-button {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   flex: 1;
   min-width: 0;
   padding: 8px 10px;
@@ -1203,21 +1207,23 @@ body,
 }
 
 .route-field-label {
-  display: inline;
+  flex: 0 0 auto;
   color: var(--text-dim);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  margin-right: 4px;
+  margin: 0;
 }
 
 .route-field-value {
-  display: inline;
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   color: var(--text);
   font-weight: 500;
-  max-width: calc(100% - 40px);
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
@@ -1288,7 +1294,7 @@ body,
   height: 30px;
   border: 1px solid rgba(223, 232, 246, 0.18);
   border-radius: 8px;
-  background: rgba(16, 22, 30, 0.24);
+  background: rgba(223, 232, 246, 0.1);
   color: var(--text);
   display: flex;
   align-items: center;
@@ -1300,15 +1306,12 @@ body,
   flex-shrink: 0;
 }
 
-.route-panel-toggle:hover {
-  background: rgba(223, 232, 246, 0.1);
-  border-color: rgba(223, 232, 246, 0.28);
-}
+
 
 .route-panel-toggle svg {
   width: 15px;
   height: 15px;
-  transition: transform 180ms ease;
+  transition: transform 500ms ease;
 }
 
 .route-panel--collapsed .route-panel-content {
@@ -1316,26 +1319,34 @@ body,
 }
 
 .route-panel--collapsed {
+  right: auto;
+  width: min(320px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
   overflow: hidden;
 }
 
 .route-panel--collapsed .route-panel-toggle {
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   display: flex;
 }
 
 .route-panel--collapsed .route-panel-inner {
-  padding-top: 0;
+  padding: 6px;
   gap: 0;
 }
 
+.route-panel--collapsed .route-panel-toggle svg {
+  transform: rotate(180deg);
+}
+
 .route-action-btn:hover {
-  transform: scale(1.05);
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(50, 210, 171, 0.35);
 }
 
 .route-action-btn:active {
-  transform: scale(0.95);
+  transform: translateY(0) scale(0.98);
 }
 
 /* Field Menu (Dropdown) */
@@ -1505,6 +1516,7 @@ body,
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .route-address-suggestion__text {
@@ -1977,8 +1989,7 @@ body,
 
 @media (max-width: 768px) {
   .route-panel {
-    bottom: 10px;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + var(--route-keyboard-offset, 0px));
     left: 10px;
     right: auto;
     width: min(320px, calc(100vw - 20px));
@@ -2025,8 +2036,7 @@ body,
 
 @media (max-width: 480px) {
   .route-panel {
-    bottom: 8px;
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--route-keyboard-offset, 0px));
     left: 8px;
     right: auto;
     width: min(320px, calc(100vw - 16px));
@@ -2115,8 +2125,7 @@ body,
 /* Old mobile styles (kept for reference but override with new styles above) */
 @media (max-width: 600px) {
   .route-panel {
-    bottom: 8px;
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--route-keyboard-offset, 0px));
     left: 8px;
     right: 8px;
     width: auto;
@@ -2165,8 +2174,7 @@ body,
 
 @media (max-width: 374px) {
   .route-panel {
-    bottom: 4px;
-    bottom: max(4px, env(safe-area-inset-bottom));
+    bottom: calc(max(4px, env(safe-area-inset-bottom)) + var(--route-keyboard-offset, 0px));
     left: 4px;
     right: 4px;
   }
