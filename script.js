@@ -57,6 +57,14 @@ const I18N = {
     // Header
     subtitle: 'Карта опасных световых зон от фасадов зданий для водителей',
     darkMode: 'Dark Mode',
+    driverMode: 'Режим вождения',
+    driverLocation: 'Геолокация',
+    driverWaitingForGps: 'Ожидание GPS…',
+    driverLocationActive: 'Геолокация активна',
+    driverLocationUnavailable: 'Геолокация недоступна',
+    driverNearestDanger: 'До ближайшей опасности',
+    driverNoDanger: 'Опасностей не найдено',
+    driverLocationPermission: 'Разрешите доступ к геолокации',
     // Weather strip
     loadingWeather: 'Загрузка погоды…',
     weatherUnavailable: 'Погода недоступна',
@@ -128,6 +136,14 @@ const I18N = {
     // Header
     subtitle: 'Map of hazardous glare zones from building facades for drivers',
     darkMode: 'Dark Mode',
+    driverMode: 'Driving mode',
+    driverLocation: 'Location',
+    driverWaitingForGps: 'Waiting for GPS…',
+    driverLocationActive: 'Location active',
+    driverLocationUnavailable: 'Location unavailable',
+    driverNearestDanger: 'Distance to nearest danger',
+    driverNoDanger: 'No danger found',
+    driverLocationPermission: 'Allow location access',
     // Weather strip
     loadingWeather: 'Loading weather…',
     weatherUnavailable: 'Weather unavailable',
@@ -197,6 +213,14 @@ const I18N = {
     metaDescription: 'Астанадағы ғимарат қасбеттерінен шығатын қауіпті жарықтың интерактивті картасы',
     subtitle: 'Жүргізушілерге арналған ғимарат қасбеттерінен түсетін қауіпті жарық аймақтарының картасы',
     darkMode: 'Қараңғы режим',
+    driverMode: 'Жүргізу режимі',
+    driverLocation: 'Геолокация',
+    driverWaitingForGps: 'GPS күтілуде…',
+    driverLocationActive: 'Геолокация қосулы',
+    driverLocationUnavailable: 'Геолокация қолжетімсіз',
+    driverNearestDanger: 'Ең жақын қауіпке дейін',
+    driverNoDanger: 'Қауіп табылмады',
+    driverLocationPermission: 'Геолокацияға рұқсат беріңіз',
     loadingWeather: 'Ауа райы жүктелуде…',
     weatherUnavailable: 'Ауа райы қолжетімсіз',
     temp: 'Темп.',
@@ -330,6 +354,15 @@ function applyLangToStaticText() {
   // Dark mode label
   const srLabel = document.querySelector('.switch__sr');
   if (srLabel) srLabel.textContent = tr.darkMode;
+
+  const driverModeToggle = document.getElementById('driverModeToggle');
+  const driverModeLabel = document.getElementById('driverModeLabel');
+  if (driverModeLabel) driverModeLabel.textContent = tr.driverMode;
+  if (driverModeToggle) {
+    driverModeToggle.setAttribute('aria-label', tr.driverMode);
+    driverModeToggle.title = tr.driverMode;
+  }
+  updateDriverModeLabels();
 
   // Weather strip loading
   const wsLoading = document.querySelector('.weather-strip-loading span:last-child');
@@ -509,28 +542,53 @@ async function fetchWeather() {
 
 
 // ════════════════════════════════════════════════════════════════════════════
-//  РАСЧЁТ ПОЛОЖЕНИЯ СОЛНЦА (упрощённый)
+//  РАСЧЁТ ПОЛОЖЕНИЯ СОЛНЦА
 // ════════════════════════════════════════════════════════════════════════════
+
+function normalizeDegrees(value) {
+  return ((value % 360) + 360) % 360;
+}
 
 function getSunPosition(date, lat, lng) {
   const rad = Math.PI / 180;
-  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
-  const declination = 23.45 * Math.sin(rad * (360 / 365) * (dayOfYear - 81));
+  const deg = 180 / Math.PI;
+  const julianDate = date.getTime() / 86400000 + 2440587.5;
+  const daysSinceJ2000 = julianDate - 2451545.0;
 
-  const hourUTC = date.getUTCHours() + date.getUTCMinutes() / 60;
-  const solarNoon = 12 - lng / 15;
-  const hourAngle = (hourUTC - solarNoon) * 15;
+  // This Julian-date formulation naturally includes leap days and uses the
+  // instant represented by Date, so it does not depend on the browser timezone.
+  const meanLongitude = normalizeDegrees(280.46 + 0.9856474 * daysSinceJ2000);
+  const meanAnomaly = normalizeDegrees(357.528 + 0.9856003 * daysSinceJ2000);
+  const eclipticLongitude = meanLongitude +
+    1.915 * Math.sin(meanAnomaly * rad) +
+    0.02 * Math.sin(2 * meanAnomaly * rad);
+  const obliquity = 23.439 - 0.0000004 * daysSinceJ2000;
+  const declination = Math.asin(
+    Math.sin(obliquity * rad) * Math.sin(eclipticLongitude * rad),
+  );
+  const rightAscension = normalizeDegrees(Math.atan2(
+    Math.cos(obliquity * rad) * Math.sin(eclipticLongitude * rad),
+    Math.cos(eclipticLongitude * rad),
+  ) * deg);
+  const equationOfTimeMinutes = 4 * (((meanLongitude - rightAscension + 540) % 360) - 180);
+  const utcMinutes = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
+  const trueSolarMinutes = normalizeDegrees((utcMinutes + 4 * lng + equationOfTimeMinutes) / 4) * 4;
+  const hourAngle = (trueSolarMinutes / 4 - 180) * rad;
+  const latitude = lat * rad;
 
-  const sinAlt = Math.sin(lat * rad) * Math.sin(declination * rad) +
-                 Math.cos(lat * rad) * Math.cos(declination * rad) * Math.cos(hourAngle * rad);
-  const altitude = Math.asin(sinAlt) / rad;
+  const sinAltitude = Math.sin(latitude) * Math.sin(declination) +
+    Math.cos(latitude) * Math.cos(declination) * Math.cos(hourAngle);
+  const altitude = Math.asin(Math.max(-1, Math.min(1, sinAltitude))) * deg;
 
-  const cosAz = (Math.sin(declination * rad) - Math.sin(lat * rad) * sinAlt) /
-                (Math.cos(lat * rad) * Math.cos(Math.asin(sinAlt)));
-  let azimuth = Math.acos(Math.max(-1, Math.min(1, cosAz))) / rad;
-  if (hourAngle > 0) azimuth = 360 - azimuth;
+  // atan2 avoids division by cos(altitude), which is ill-conditioned near the
+  // horizon. Azimuth is mathematically undefined at zenith, but this remains
+  // finite and continuous everywhere relevant to glare calculations.
+  const azimuth = normalizeDegrees((Math.atan2(
+    Math.sin(hourAngle),
+    Math.cos(hourAngle) * Math.sin(latitude) - Math.tan(declination) * Math.cos(latitude),
+  ) + Math.PI) * deg);
 
-  return { altitude, azimuth };
+  return { altitude, azimuth, equationOfTimeMinutes };
 }
 
 
@@ -576,18 +634,30 @@ function computeTimeSunMultiplier(building) {
   else altMul = 0.25;                          // Солнце высоко — блик уходит вниз
 
   // Ориентация фасада vs азимут солнца
-  if (building.orientation != null && building.orientation !== 0) {
-    // Отражение максимально когда солнце светит прямо на фасад
-    // Угол отклонения
-    let angleDiff = Math.abs(sun.azimuth - building.orientation);
-    if (angleDiff > 180) angleDiff = 360 - angleDiff;
+  if (building.orientation != null) {
+    // Отражение максимально когда солнце светит прямо на фасад.
+    // orientation может быть числом (один фасад) или массивом чисел
+    // (несколько граней здания, каждая смотрит в свою сторону) —
+    // берём ту грань, что сейчас ближе всего к солнцу.
+    const orientations = Array.isArray(building.orientation)
+      ? building.orientation
+      : [building.orientation];
 
-    // Окно отражения ±60° от нормали фасада
+    let angleDiff = Infinity;
+    orientations.forEach(orient => {
+      let diff = Math.abs(sun.azimuth - orient);
+      if (diff > 180) diff = 360 - diff;
+      if (diff < angleDiff) angleDiff = diff;
+    });
+
+    // Окно отражения ±90° от нормали фасада. За пределами 90° солнце светит
+    // на здание сзади/сбоку — эта грань физически не может отразить его в
+    // сторону наблюдателя, поэтому множитель обнуляется, а не просто падает.
     let orientMul;
     if (angleDiff < 30)       orientMul = 1.0;
     else if (angleDiff < 60)  orientMul = 0.6;
     else if (angleDiff < 90)  orientMul = 0.3;
-    else                      orientMul = 0.1;
+    else                      orientMul = 0;
 
     altMul *= orientMul;
   }
@@ -619,6 +689,7 @@ function recalcDanger() {
     b.weatherMul = weatherMul; // сохраняем, чтобы показать в попапе без повторного пересчёта
   });
   updateStats();
+  updateDriverModeStatus();
 }
 
 // Пересчёт каждую минуту
@@ -724,6 +795,181 @@ function updateLegendNote() {
   }
 }
 
+// Драйверский режим показывает только GPS и расстояние до ближайшей
+// опасной точки. Расстояние считается локально по координатам зданий.
+const driverModeState = {
+  active: false,
+  watchId: null,
+  userPosition: null,
+  userMarker: null,
+  hasCenteredMap: false,
+};
+
+function driverHaversine(lat1, lng1, lat2, lng2) {
+  const earthRadius = 6371000;
+  const toRadians = value => value * Math.PI / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function updateDriverModeLabels() {
+  const tr = I18N[currentLang];
+  const locationLabel = document.getElementById('driverLocationLabel');
+  const dangerLabel = document.getElementById('driverDangerLabel');
+  if (locationLabel) locationLabel.textContent = tr.driverLocation;
+  if (dangerLabel) dangerLabel.textContent = tr.driverNearestDanger;
+  updateDriverModeStatus();
+}
+
+function formatDriverDistance(distance) {
+  const tr = I18N[currentLang];
+  if (distance < 1000) return `${Math.max(1, Math.round(distance))} ${tr.meters}`;
+  return `${(distance / 1000).toLocaleString(tr.locale, { maximumFractionDigits: 1 })} ${tr.km}`;
+}
+
+function getNearestDangerDistance(position) {
+  if (!position) return null;
+  const dangerousBuildings = buildings.filter(building => building.level === 'danger');
+  if (!dangerousBuildings.length) return null;
+  return Math.min(...dangerousBuildings.map(building =>
+    driverHaversine(position.lat, position.lng, building.lat, building.lng)
+  ));
+}
+
+function updateDriverModeStatus() {
+  const tr = I18N[currentLang];
+  const locationValue = document.getElementById('driverLocationValue');
+  const dangerValue = document.getElementById('driverDangerValue');
+  if (!locationValue || !dangerValue) return;
+
+  if (!driverModeState.userPosition) {
+    locationValue.textContent = driverModeState.active
+      ? tr.driverWaitingForGps
+      : tr.driverLocationUnavailable;
+    dangerValue.textContent = '—';
+    return;
+  }
+
+  locationValue.textContent = tr.driverLocationActive;
+  const distance = getNearestDangerDistance(driverModeState.userPosition);
+  dangerValue.textContent = distance == null ? tr.driverNoDanger : formatDriverDistance(distance);
+}
+
+function updateDriverUserMarker() {
+  if (!map || !driverModeState.userPosition) return;
+  const { lat, lng } = driverModeState.userPosition;
+  if (!driverModeState.userMarker) {
+    const element = document.createElement('div');
+    element.className = 'driver-user-marker';
+    element.setAttribute('aria-hidden', 'true');
+    driverModeState.userMarker = new maplibregl.Marker({ element })
+      .setLngLat([lng, lat])
+      .addTo(map);
+  } else {
+    driverModeState.userMarker.setLngLat([lng, lat]);
+  }
+
+  if (driverModeState.active && !driverModeState.hasCenteredMap) {
+    driverModeState.hasCenteredMap = true;
+    map.easeTo({ center: [lng, lat], duration: 700 });
+  }
+}
+
+function handleDriverLocation(position) {
+  const { latitude, longitude, accuracy } = position.coords;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+  driverModeState.userPosition = {
+    lat: latitude,
+    lng: longitude,
+    accuracy: Number.isFinite(accuracy) ? accuracy : null,
+  };
+  updateDriverUserMarker();
+  updateDriverModeStatus();
+}
+
+function handleDriverLocationError(error) {
+  const tr = I18N[currentLang];
+  const locationValue = document.getElementById('driverLocationValue');
+  if (locationValue) {
+    locationValue.textContent = error?.code === 1
+      ? tr.driverLocationPermission
+      : tr.driverLocationUnavailable;
+  }
+}
+
+function startDriverLocationWatch() {
+  if (!navigator.geolocation) {
+    handleDriverLocationError({ code: 0 });
+    return;
+  }
+  if (driverModeState.watchId != null) return;
+  driverModeState.watchId = navigator.geolocation.watchPosition(
+    handleDriverLocation,
+    handleDriverLocationError,
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+  );
+}
+
+function stopDriverLocationWatch() {
+  if (driverModeState.watchId != null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(driverModeState.watchId);
+  }
+  driverModeState.watchId = null;
+}
+
+function setDriverMapExtrasHidden(hidden) {
+  if (!map) return;
+  [
+    'route-alt',
+    'route-safe',
+    'route-warning',
+    'route-danger',
+    'route-hitarea-danger',
+    'route-hitarea-warning',
+    'route-casing',
+    'route-points',
+  ].forEach(layerId => {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', hidden ? 'none' : 'visible');
+    }
+  });
+}
+
+function setDriverMode(active) {
+  const toggle = document.getElementById('driverModeToggle');
+  const overlay = document.getElementById('driverModeOverlay');
+  driverModeState.active = active;
+  driverModeState.hasCenteredMap = false;
+  document.body.classList.toggle('driver-mode', active);
+  setDriverMapExtrasHidden(active);
+  if (toggle) toggle.setAttribute('aria-pressed', String(active));
+  if (overlay) overlay.hidden = !active;
+
+  if (active) {
+    updateDriverModeStatus();
+    startDriverLocationWatch();
+    updateDriverUserMarker();
+  } else {
+    stopDriverLocationWatch();
+    if (driverModeState.userMarker) {
+      driverModeState.userMarker.remove();
+      driverModeState.userMarker = null;
+    }
+    driverModeState.userPosition = null;
+  }
+}
+
+function initDriverMode() {
+  const toggle = document.getElementById('driverModeToggle');
+  if (!toggle || toggle.dataset.ready === 'true') return;
+  toggle.dataset.ready = 'true';
+  toggle.addEventListener('click', () => setDriverMode(!driverModeState.active));
+  updateDriverModeLabels();
+}
+
 
 // ════════════════════════════════════════════════════════════════════════════
 //  КАРТА
@@ -771,6 +1017,7 @@ function initUi() {
   }
 
   recalcDanger();
+  initDriverMode();
   renderWeatherStrip();
   updateLegendNote();
 }
@@ -819,6 +1066,7 @@ function initMap() {
       mapContainer.style.opacity = '1';
     }
     renderMarkers();
+    updateDriverUserMarker();
     fetchWeather(); // загрузить погоду после инициализации карты
   });
 }
@@ -1027,10 +1275,12 @@ function applyTheme(theme) {
   }
 }
 
-switchInput.addEventListener('change', () => {
-  const nextTheme = switchInput.checked ? 'light' : 'dark';
-  applyTheme(nextTheme);
-});
+if (switchInput) {
+  switchInput.addEventListener('change', () => {
+    const nextTheme = switchInput.checked ? 'light' : 'dark';
+    applyTheme(nextTheme);
+  });
+}
 
 window.addEventListener('pageshow', () => {
   const restoredTheme = readStoredTheme();

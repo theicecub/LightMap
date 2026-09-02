@@ -144,6 +144,45 @@ body,
   margin-left: auto;
 }
 
+.driver-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.driver-mode-toggle svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.driver-mode-toggle .driver-mode-legacy-icon {
+  display: none;
+}
+
+.driver-mode-toggle:hover,
+.driver-mode-toggle:active {
+  background: rgba(50, 210, 171, 0.14);
+  border-color: rgba(50, 210, 171, 0.52);
+  color: var(--clear);
+}
+
+.driver-mode-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(50, 210, 171, 0.22);
+}
+
 .lang-switcher {
   position: relative;
   display: flex;
@@ -565,6 +604,180 @@ body,
 .map-wrap.map-theme-settled::after {
   opacity: 0;
   transition-duration: 260ms, var(--theme-duration);
+}
+
+.driver-mode-overlay {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  display: grid;
+  gap: 8px;
+  width: min(320px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.driver-mode-overlay[hidden] {
+  display: none;
+}
+
+.driver-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-top-color: var(--border-top);
+  border-radius: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px var(--shadow-strong);
+}
+
+.driver-mode-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex: 0 0 30px;
+}
+
+.driver-mode-card-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.driver-location-icon {
+  background: rgba(56, 189, 248, 0.16);
+  color: #38BDF8;
+}
+
+.driver-danger-icon {
+  background: rgba(255, 112, 91, 0.16);
+  color: var(--glare);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.driver-mode-card-label {
+  display: block;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.driver-mode-card-value {
+  display: block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.driver-danger-value {
+  color: var(--glare);
+  font-size: 24px;
+}
+
+.driver-user-marker {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #1683E8;
+  box-shadow: 0 0 0 7px rgba(22, 131, 232, 0.22), 0 3px 12px rgba(0, 0, 0, 0.42);
+}
+
+.driver-mode .topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 30;
+  border-bottom: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.driver-mode .topbar-controls,
+.driver-mode .driver-mode-toggle {
+  pointer-events: auto;
+}
+
+.driver-mode .topbar-controls {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.driver-mode .brand,
+.driver-mode .weather-strip,
+.driver-mode .lang-switcher,
+.driver-mode #themeToggle,
+.driver-mode .route-panel,
+.driver-mode .legend,
+.driver-mode .maplibregl-ctrl-top-right,
+.driver-mode .maplibregl-popup,
+.driver-mode .route-endpoint-marker,
+.driver-mode .route-user-marker {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .driver-mode-toggle {
+    width: 38px;
+    min-width: 38px;
+    height: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .driver-mode-toggle > span {
+    display: none;
+  }
+
+  .driver-mode .topbar-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: auto;
+  }
+
+  .driver-mode-overlay {
+    top: 10px;
+    left: 10px;
+    width: min(300px, calc(100vw - 20px));
+  }
+
+  .driver-mode-card {
+    gap: 9px;
+    padding: 11px 12px;
+  }
+
+  .driver-mode-card-value {
+    font-size: 15px;
+  }
+
+  .driver-danger-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 374px) {
+  .driver-mode-toggle {
+    width: 36px;
+    min-width: 36px;
+    height: 34px;
+  }
+
+  .driver-mode-card-label {
+    font-size: 9px;
+  }
 }
 
 .legend {

@@ -633,8 +633,9 @@ function computeVisibilityCoef(building, segStart, segEnd, sunAzimuth) {
 
   let orientCoef = 1.0;
   if (building.orientation != null && building.orientation !== 0) {
-    const reflectAz = (sunAzimuth + 180) % 360;
-    const orientDiff = angleDiff(reflectAz, building.orientation);
+    // `orientation` is the outward facade normal. A facade can reflect direct
+    // sunlight only when that normal faces the sun, matching computeTimeSunMultiplier.
+    const orientDiff = angleDiff(sunAzimuth, building.orientation);
     if (orientDiff < 30) orientCoef = 1.0;
     else if (orientDiff < 60) orientCoef = 0.6;
     else if (orientDiff < 90) orientCoef = 0.3;
@@ -978,8 +979,8 @@ function setPointAToUserLocation(forceRouteUpdate = false) {
   routeState.lastRouteOrigin = { lng: position.lng, lat: position.lat };
   routeState.lastLocationRouteUpdateAt = Date.now();
 
-  const inputA = document.getElementById('routeInputA');
-  if (inputA) inputA.value = rt('currentLocation');
+  const fieldValueA = document.getElementById('routeFieldValueA');
+  if (fieldValueA) fieldValueA.textContent = rt('currentLocation');
   updateEndpointMarker('pointA');
 
   if (routeState.pointB) buildSafeRoute();
@@ -1026,7 +1027,10 @@ function handleUserPosition(geoPosition) {
 
   const previousLevel = routeState.currentZoneLevel;
   refreshCurrentZoneLevel();
-  if (previousLevel !== routeState.currentZoneLevel) updateRoutePanel();
+  if (previousLevel !== routeState.currentZoneLevel) {
+    updateRoutePanel();
+    if (routeState.currentZoneLevel) playGlareWarning();
+  }
   return true;
 }
 
@@ -1474,6 +1478,7 @@ function initRouteModule() {
   const buildBtn = document.getElementById('routeBuildBtn');
   if (buildBtn) {
     buildBtn.addEventListener('click', () => {
+      enableGlareAudio();
       if (routeState.pointA && routeState.pointB) {
         buildSafeRoute();
       }
@@ -1782,6 +1787,7 @@ function selectAddressSuggestion(field, index) {
 }
 
 function useGeolocation(field) {
+  enableGlareAudio();
   if (!navigator.geolocation) {
     alert('Геолокация не поддерживается вашим браузером');
     return;

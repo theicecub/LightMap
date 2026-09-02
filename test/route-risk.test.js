@@ -21,7 +21,7 @@ function sourceBetween(source, startMarker, endMarker) {
 const seasonalGlareSource = glareWindowSource;
 const sunAndLuxSource = seasonalGlareSource + sourceBetween(
   scriptSource,
-  'function getSunPosition',
+  'function normalizeDegrees',
   '\nfunction levelOf',
 );
 const routeRiskSource = sourceBetween(
@@ -77,17 +77,21 @@ function loadRiskFunctions({ now = new Date('2024-03-21T07:15:00.000Z'), buildin
   return { api: context.routeTestApi, context };
 }
 
-test('getSunPosition distinguishes solar noon from night and returns a valid azimuth', () => {
+test('getSunPosition uses equation of time, stays finite at low altitude, and is timezone independent', () => {
   const { api } = loadRiskFunctions();
   const equatorialNoon = api.getSunPosition(new Date('2024-03-21T12:00:00.000Z'), 0, 0);
   const equatorialMorning = api.getSunPosition(new Date('2024-03-21T09:00:00.000Z'), 0, 0);
   const equatorialEvening = api.getSunPosition(new Date('2024-03-21T15:00:00.000Z'), 0, 0);
   const astanaNight = api.getSunPosition(new Date('2024-03-21T00:00:00.000Z'), 51.128, 71.430);
+  const nearHorizon = api.getSunPosition(new Date('2024-03-21T00:30:00.000Z'), 0, 0);
 
-  assert.ok(equatorialNoon.altitude > 89);
+  assert.ok(equatorialNoon.altitude > 88);
+  assert.ok(Math.abs(equatorialNoon.equationOfTimeMinutes) > 1);
   assert.ok(equatorialMorning.azimuth > 80 && equatorialMorning.azimuth < 100);
   assert.ok(equatorialEvening.azimuth > 260 && equatorialEvening.azimuth < 280);
   assert.ok(astanaNight.altitude < 0);
+  assert.ok(Number.isFinite(nearHorizon.azimuth));
+  assert.ok(Number.isFinite(nearHorizon.altitude));
 });
 
 test('haversine returns zero for one point, is symmetric, and matches one latitude degree', () => {
@@ -121,8 +125,8 @@ test('risk helpers apply distance falloff, exposure time, and directional visibi
   assert.equal(api.distanceFalloff(150, 300), 0.5);
   assert.equal(api.distanceFalloff(300, 300), 0);
   assert.equal(api.estimateExposureTime(100, 60, 600), 10);
-  assert.equal(api.computeVisibilityCoef({ orientation: 270 }, segmentStart, segmentEnd, 90), 1);
-  assert.equal(api.computeVisibilityCoef({ orientation: 90 }, segmentStart, segmentEnd, 90), 0.1);
+  assert.equal(api.computeVisibilityCoef({ orientation: 90 }, segmentStart, segmentEnd, 90), 1);
+  assert.equal(api.computeVisibilityCoef({ orientation: 270 }, segmentStart, segmentEnd, 90), 0.1);
 });
 
 test('danger window is derived from season data instead of returning undefined', () => {
@@ -173,7 +177,7 @@ test('evaluateRoute scores only nearby buildings and preserves contribution tota
     lat: 51.128,
     lng: 71.4305,
     baseLux: 1000000,
-    orientation: (sun.azimuth + 180) % 360,
+    orientation: sun.azimuth,
     dangerTime_by_season: {
       winter: '00:00-23:59',
       spring: '00:00-23:59',

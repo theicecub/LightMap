@@ -51,6 +51,21 @@
       </div>
 
       <div class="topbar-controls">
+        <button class="driver-mode-toggle" id="driverModeToggle" type="button" aria-pressed="false" aria-label="Режим вождения" title="Режим вождения">
+          <svg class="driver-mode-legacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75s-7.5-2.608-7.5-9.75a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+          <svg class="driver-mode-wheel-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M12 14l0 7" />
+            <path d="M10 12l-6.75 -2" />
+            <path d="M14 12l6.75 -2" />
+          </svg>
+          <span id="driverModeLabel">Режим вождения</span>
+        </button>
         <div class="lang-switcher" id="langSwitcher">
           <button class="lang-select" id="langSwitcherButton" type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">
             <span id="langSwitcherValue">🇷🇺 РУС</span>
@@ -85,6 +100,28 @@
 
   <main class="map-wrap">
     <div id="map"></div>
+
+    <div class="driver-mode-overlay" id="driverModeOverlay" hidden aria-live="polite">
+      <div class="driver-mode-card driver-location-card">
+        <span class="driver-mode-card-icon driver-location-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75s-7.5-2.608-7.5-9.75a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+        </span>
+        <div>
+          <span class="driver-mode-card-label" id="driverLocationLabel">Геолокация</span>
+          <strong class="driver-mode-card-value" id="driverLocationValue">Ожидание GPS…</strong>
+        </div>
+      </div>
+      <div class="driver-mode-card driver-danger-card">
+        <span class="driver-mode-card-icon driver-danger-icon" aria-hidden="true">!</span>
+        <div>
+          <span class="driver-mode-card-label" id="driverDangerLabel">До ближайшей опасности</span>
+          <strong class="driver-mode-card-value driver-danger-value" id="driverDangerValue">—</strong>
+        </div>
+      </div>
+    </div>
 
     <!-- Safe Route Panel — Redesigned Compact Version -->
     <div class="route-panel" id="routePanel">
@@ -189,6 +226,7 @@
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script src="ui-utils.js"></script>
 <script src="glare-window.js"></script>
+<script src="glare-audio.js"></script>
 <script src="script.js"></script>
 <script src="route.js"></script>
 </body>
