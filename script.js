@@ -920,31 +920,12 @@ function stopDriverLocationWatch() {
   driverModeState.watchId = null;
 }
 
-function setDriverMapExtrasHidden(hidden) {
-  if (!map) return;
-  [
-    'route-alt',
-    'route-safe',
-    'route-warning',
-    'route-danger',
-    'route-hitarea-danger',
-    'route-hitarea-warning',
-    'route-casing',
-    'route-points',
-  ].forEach(layerId => {
-    if (map.getLayer(layerId)) {
-      map.setLayoutProperty(layerId, 'visibility', hidden ? 'none' : 'visible');
-    }
-  });
-}
-
 function setDriverMode(active) {
   const toggle = document.getElementById('driverModeToggle');
   const overlay = document.getElementById('driverModeOverlay');
   driverModeState.active = active;
   driverModeState.hasCenteredMap = false;
   document.body.classList.toggle('driver-mode', active);
-  setDriverMapExtrasHidden(active);
   if (toggle) toggle.setAttribute('aria-pressed', String(active));
   if (overlay) overlay.hidden = !active;
 
