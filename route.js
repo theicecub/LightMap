@@ -48,10 +48,10 @@ const ROUTE_I18N = {
     segmentSafe: 'Безопасно',
     blindingBuilding: 'Слепящее здание',
     reason: 'Причина',
-    luxAtBuilding: 'Освещённость здания',
+    luxAtBuilding: 'Освещённость в глазу водителя',
     exposureTime: 'Время воздействия',
     visibilityCoef: 'Коэффициент видимости',
-    directionMatch: 'Направление движения совпадает с направлением на солнце',
+    directionMatch: 'Зеркальное отражение солнца направлено на водителя',
     nearbyBuilding: 'Ближайшее здание',
     distance: 'Расстояние до маршрута',
     meters: 'м',
@@ -126,10 +126,10 @@ const ROUTE_I18N = {
     segmentSafe: 'Safe',
     blindingBuilding: 'Blinding building',
     reason: 'Reason',
-    luxAtBuilding: 'Building illuminance',
+    luxAtBuilding: "Illuminance at driver's eye",
     exposureTime: 'Exposure time',
     visibilityCoef: 'Visibility coefficient',
-    directionMatch: 'Movement direction matches sun direction',
+    directionMatch: 'Specular sun reflection is aimed at the driver',
     nearbyBuilding: 'Nearest building',
     distance: 'Distance to route',
     meters: 'm',
@@ -204,10 +204,10 @@ const ROUTE_I18N = {
     segmentSafe: 'Қауіпсіз',
     blindingBuilding: 'Көз шағылдыратын ғимарат',
     reason: 'Себебі',
-    luxAtBuilding: 'Ғимараттың жарықтануы',
+    luxAtBuilding: 'Жүргізуші көзіндегі жарықтану',
     exposureTime: 'Әсер ету уақыты',
     visibilityCoef: 'Көріну коэффициенті',
-    directionMatch: 'Қозғалыс бағыты күн бағытымен сәйкес келеді',
+    directionMatch: 'Күннің айналық шағылысы жүргізушіге бағытталған',
     nearbyBuilding: 'Ең жақын ғимарат',
     distance: 'Маршрутқа дейінгі қашықтық',
     meters: 'м',
@@ -265,10 +265,13 @@ function getVisibilityText(value) {
 
 function getRouteRiskStatus(route) {
   if (!route) return { label: rt('riskSafe'), level: 'safe' };
-  if (route.dangerZoneCount > 0 || route.totalRiskScore > 20000) {
+  // totalRiskScore — суммарная «доза ослепления» (лк·с): освещённость в глазу
+  // × время воздействия. Пороги: ~20 000 лк в течение 5 с = 100 000 лк·с
+  // (опасно), ~5 000 лк в течение 4 с = 20 000 лк·с (внимание).
+  if (route.dangerZoneCount > 0 || route.totalRiskScore > 100000) {
     return { label: rt('riskDanger'), level: 'danger' };
   }
-  if (route.warningZoneCount > 0 || route.totalRiskScore > 5000) {
+  if (route.warningZoneCount > 0 || route.totalRiskScore > 20000) {
     return { label: rt('riskMedium'), level: 'warning' };
   }
   return { label: rt('riskSafe'), level: 'safe' };
@@ -285,8 +288,10 @@ const ROUTE_CONFIG = {
   proximity: [71.430, 51.128], // Astana center — bias geocoding results
   // Astana bounding box [west, south, east, north] — hard-restrict geocoding to city only
   cityBbox: [71.10, 50.95, 71.80, 51.30],
-  searchRadius: 300,           // meters — building proximity to route
-  sunAngleTolerance: 30,       // degrees — movement vs sun direction ±
+  searchRadius: 1200,          // meters — upper bound for candidate buildings near a route.
+                               // The real reach is computed by tracing the specular ray
+                               // against the facade plane (computeSpecularGlare), not a
+                               // fixed radius.
   segmentChunkSize: 100,       // meters — chunk route into segments for coloring
   maxSuggestions: 6,
   cacheTTL: 5 * 60 * 1000,     // 5 min geocoding cache
@@ -470,21 +475,27 @@ async function geocodeSearch(query) {
 // ROUTING — MapTiler Directions API with alternatives
 // ════════════════════════════════════════════════════════════════════════════
 
-// Request a single OSRM route through an ordered list of {lng, lat} waypoints
+// Request a single OSRM route through an ordered list of {lng, lat} waypoints.
+// Annotations give per-node travel durations so the sun position can be
+// advanced along the route instead of being frozen at departure time.
 async function fetchOsrmRoute(waypoints) {
   const coords = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
   const url = `${ROUTE_CONFIG.directionsUrl}/${coords}` +
     `?alternatives=true` +
     `&steps=true` +
     `&geometries=geojson` +
-    `&overview=full`;
+    `&overview=full` +
+    `&annotations=duration`;
 
   try {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) return [];
-    return data.routes;
+    return data.routes.map(r => ({
+      ...r,
+      nodeDurations: r.legs?.[0]?.annotation?.duration ?? null,
+    }));
   } catch (err) {
     console.warn('[Routing] Failed:', err);
     return [];
@@ -616,44 +627,54 @@ function fmtETA(durationS) {
 // RISK SCORING
 // ════════════════════════════════════════════════════════════════════════════
 
-function computeVisibilityCoef(building, segStart, segEnd, sunAzimuth) {
+// Наблюдательная геометрия блика для конкретного водителя на конкретном
+// сегменте. Строит цепочку «Солнце → фасад → отражённый луч → глаз водителя»
+// через computeSpecularGlare (3D-трассировка), плюс поле зрения: взгляд
+// водителя аппроксимируется направлением движения (глаза следуют за дорогой).
+//   segStart/segEnd — концы сегмента; sunAlt/sunAz — Солнце на этом сегменте.
+// Возвращает { factor, dist }: factor — доля пикового блика, дошедшая до глаз.
+function computeDriverGlareCoef(building, segStart, segEnd, sunAlt, sunAz) {
   const moveBearing = bearing(segStart.lat, segStart.lng, segEnd.lat, segEnd.lng);
-  const sunMoveDiff = angleDiff(moveBearing, sunAzimuth);
+  const midLat = (segStart.lat + segEnd.lat) / 2;
+  const midLng = (segStart.lng + segEnd.lng) / 2;
 
-  let dirCoef;
-  if (sunMoveDiff <= ROUTE_CONFIG.sunAngleTolerance) {
-    dirCoef = 1.0;
-  } else if (sunMoveDiff <= ROUTE_CONFIG.sunAngleTolerance + 30) {
-    dirCoef = 0.5;
-  } else if (sunMoveDiff <= 90) {
-    dirCoef = 0.2;
-  } else {
-    dirCoef = 0.05;
+  // Смещение глаз водителя относительно здания в локальных метрах (ENU).
+  const eyeEastM = (midLng - building.lng) * metersPerDegLng(building.lat);
+  const eyeNorthM = (midLat - building.lat) * METERS_PER_DEG_LAT;
+
+  // Поле зрения: зрачок направлен по курсу движения. Блик в центре обзора
+  // опаснее, чем в периферии; позади — только через зеркала.
+  const toBuilding = bearing(midLat, midLng, building.lat, building.lng);
+  const lookDiff = angleDiff(moveBearing, toBuilding);
+  let fovCoef;
+  if (lookDiff <= 45) fovCoef = 1;
+  else if (lookDiff <= 90) fovCoef = 0.5;
+  else if (lookDiff <= 135) fovCoef = 0.1;
+  else fovCoef = 0.02;
+
+  const normals = getFacadeNormals(building);
+  const isOmni = building.omnidirectional === true || normals.length === 0;
+
+  if (isOmni) {
+    // Сфера/конус/пирамида: нет единой плоскости стекла. Приближение —
+    // рассеянная засветка + слабое зеркальное пятно, когда солнце находится
+    // «за спиной» водителя (направление на солнце близко к направлению
+    // «водитель → здание»).
+    const toDriver = bearing(building.lat, building.lng, midLat, midLng);
+    const sunDriverDiff = angleDiff(sunAz, toDriver);
+    const alignment = Math.max(0, Math.cos(sunDriverDiff * Math.PI / 180));
+    const factor = DIFFUSE_GLARE_FLOOR + 0.45 * alignment;
+    return { factor: factor * fovCoef, dist: Math.hypot(eyeEastM, eyeNorthM) };
   }
 
-  let orientCoef = 1.0;
-  if (building.orientation != null && building.orientation !== 0) {
-    // `orientation` is the outward facade normal. A facade can reflect direct
-    // sunlight only when that normal faces the sun, matching computeTimeSunMultiplier.
-    const orientDiff = angleDiff(sunAzimuth, building.orientation);
-    if (orientDiff < 30) orientCoef = 1.0;
-    else if (orientDiff < 60) orientCoef = 0.6;
-    else if (orientDiff < 90) orientCoef = 0.3;
-    else orientCoef = 0.1;
-  }
-
-  return dirCoef * orientCoef;
+  const ray = computeSpecularGlare(building, sunAlt, sunAz, eyeEastM, eyeNorthM);
+  return { factor: ray.factor * fovCoef, dist: ray.dist, incidence: ray.incidence };
 }
 
 function estimateExposureTime(segLengthM, routeDurationS, routeDistanceM) {
   if (routeDistanceM === 0) return 0;
   const avgSpeed = routeDistanceM / routeDurationS;
   return segLengthM / avgSpeed;
-}
-
-function distanceFalloff(distM, radius) {
-  if (distM >= radius) return 0;
-  return Math.max(0.1, 1 - distM / radius);
 }
 
 // Buildings are static for the lifetime of a loaded dataset. Indexing them once
@@ -727,35 +748,71 @@ function getSegmentBuildingCandidates(segmentCoords, searchRadius) {
   return candidates;
 }
 
-function evaluateRoute(routeGeojson, durationS, distanceM) {
+// Оценка риска маршрута. Солнце пересчитывается для каждого сегмента по
+// времени его проезда (для длинных поездок оно заметно смещается), а итог —
+// физические величины: пиковая освещённость в глазу водителя (лк) и «доза
+// ослепления» (лк·с = освещённость × время воздействия).
+//   routeGeojson — GeoJSON LineString с .coordinates;
+//   durationS/distanceM — общее время (с) и длина (м) маршрута;
+//   nodeDurationsSec — поточечные длительности OSRM (annotation.duration)
+//                      или null (равномерное распределение времени);
+//   startTimeMs — момент выезда (по умолчанию «сейчас»).
+function evaluateRoute(routeGeojson, durationS, distanceM, nodeDurationsSec, startTimeMs) {
   const coords = routeGeojson.coordinates;
+  if (!coords || coords.length < 2) {
+    return {
+      segments: [], totalRiskScore: 0, dangerZoneCount: 0, warningZoneCount: 0,
+      distance: distanceM, duration: durationS, coordinates: coords || [],
+    };
+  }
   const weatherMul = computeWeatherMultiplier();
-  const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
-  const sunAzimuth = sun.azimuth;
-  const sunAltitude = sun.altitude;
+  const start = Number.isFinite(startTimeMs) ? startTimeMs : Date.now();
+  const n = coords.length;
 
-  const sunActive = sunAltitude > 0;
+  // Время проезда каждой точки маршрута — чтобы Солнце эволюционировало
+  // вдоль маршрута, а не замирало в момент выезда.
+  const timesMs = new Array(n);
+  timesMs[0] = start;
+  const hasNodeDurations = Array.isArray(nodeDurationsSec) && nodeDurationsSec.length >= n - 1;
+  const uniformStepMs = (durationS * 1000) / (n - 1);
+  for (let i = 1; i < n; i++) {
+    const dt = hasNodeDurations ? (Number(nodeDurationsSec[i - 1]) || 0) * 1000 : uniformStepMs;
+    timesMs[i] = timesMs[i - 1] + dt;
+  }
 
   const segments = [];
-  let currentSeg = { coords: [coords[0]], length: 0, riskScore: 0, nearbyBuildings: [] };
+  let currentSeg = {
+    coords: [coords[0]], startIdx: 0, endIdx: 0, length: 0,
+    riskScore: 0, dose: 0, peakLux: 0, nearbyBuildings: [],
+  };
 
-  for (let i = 1; i < coords.length; i++) {
+  for (let i = 1; i < n; i++) {
     const prev = coords[i - 1];
     const curr = coords[i];
     const segLen = haversine(prev[1], prev[0], curr[1], curr[0]);
 
     currentSeg.coords.push(curr);
+    currentSeg.endIdx = i;
     currentSeg.length += segLen;
 
-    if (currentSeg.length >= ROUTE_CONFIG.segmentChunkSize || i === coords.length - 1) {
-      if (sunActive) {
-        const segStart = { lat: currentSeg.coords[0][1], lng: currentSeg.coords[0][0] };
-        const segEnd = { lat: currentSeg.coords[currentSeg.coords.length - 1][1], lng: currentSeg.coords[currentSeg.coords.length - 1][0] };
+    if (currentSeg.length >= ROUTE_CONFIG.segmentChunkSize || i === n - 1) {
+      const segStart = { lat: currentSeg.coords[0][1], lng: currentSeg.coords[0][0] };
+      const segEnd = {
+        lat: currentSeg.coords[currentSeg.coords.length - 1][1],
+        lng: currentSeg.coords[currentSeg.coords.length - 1][0],
+      };
 
-        let segRisk = 0;
+      // Солнце в момент проезда СЕРЕДИНЫ сегмента.
+      const midIdx = currentSeg.startIdx + Math.floor((currentSeg.endIdx - currentSeg.startIdx) / 2);
+      const midTime = timesMs[midIdx];
+      const sun = getSunPosition(new Date(midTime), ASTANA.lat, ASTANA.lng);
+      const sunAzimuth = sun.azimuth;
+      const sunAltitude = sun.altitude;
 
-        // The grid/bbox query removes distant buildings before the expensive
-        // point-to-polyline distance calculation.
+      let segDose = 0;
+      let segPeakLux = 0;
+
+      if (sunAltitude > 0) {
         const nearbyCandidates = getSegmentBuildingCandidates(
           currentSeg.coords,
           ROUTE_CONFIG.searchRadius,
@@ -768,44 +825,63 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
             const d = pointToSegmentDist({ lat: b.lat, lng: b.lng }, a, c);
             if (d < minDist) minDist = d;
           }
+          if (minDist >= ROUTE_CONFIG.searchRadius) continue;
 
-          if (minDist < ROUTE_CONFIG.searchRadius) {
-            const effLux = computeEffectiveLux(b, weatherMul);
-            if (effLux <= 0) continue;
+          // Вне сезонного окна опасности здание не бликует.
+          if (!isBuildingGlareActive(b, new Date(midTime))) continue;
 
-            const visCoef = computeVisibilityCoef(b, segStart, segEnd, sunAzimuth);
-            const falloff = distanceFalloff(minDist, ROUTE_CONFIG.searchRadius);
-            const exposureTime = estimateExposureTime(currentSeg.length, durationS, distanceM);
+          // Геометрия наблюдателя: попадает ли отражённый луч в глаз водителя.
+          const glare = computeDriverGlareCoef(b, segStart, segEnd, sunAltitude, sunAzimuth);
+          if (glare.factor <= 0) continue;
 
-            const contribution = effLux * exposureTime * visCoef * falloff;
-
-            if (contribution > 0) {
-              segRisk += contribution;
-              currentSeg.nearbyBuildings.push({
-                building: b,
-                distance: Math.round(minDist),
-                lux: effLux,
-                exposureTime: Math.round(exposureTime),
-                visibilityCoef: visCoef,
-                falloff: falloff,
-                contribution: Math.round(contribution),
-              });
-            }
+          // Геометрия «Солнце → фасад».
+          let solarFactor;
+          if (b.omnidirectional === true || getFacadeNormals(b).length === 0) {
+            solarFactor = solarGlareFactor(sunAltitude, 90 - sunAltitude);
+          } else {
+            const inc = glare.incidence != null ? glare.incidence : (90 - sunAltitude);
+            solarFactor = solarGlareFactor(sunAltitude, inc);
           }
-        }
+          if (solarFactor <= 0) continue;
 
-        currentSeg.riskScore = Math.round(segRisk);
-      } else {
-        currentSeg.riskScore = 0;
+          // Освещённость в глазу водителя (лк) — итог полной оптической цепочки.
+          const eyeLux = computeEyeIlluminance(b, weatherMul, solarFactor, glare.factor, glare.dist);
+          if (eyeLux <= 0) continue;
+
+          const exposureTime = estimateExposureTime(currentSeg.length, durationS, distanceM);
+          const contribution = eyeLux * exposureTime; // лк·с — доза ослепления
+
+          segDose += contribution;
+          if (eyeLux > segPeakLux) segPeakLux = eyeLux;
+
+          currentSeg.nearbyBuildings.push({
+            building: b,
+            distance: Math.round(glare.dist != null ? glare.dist : minDist),
+            lux: Math.round(eyeLux),
+            exposureTime: Math.round(exposureTime),
+            visibilityCoef: glare.factor,
+            falloff: Math.exp(-(glare.dist || 0) / 10000),
+            contribution: Math.round(contribution),
+          });
+        }
       }
 
-      const riskPerMeter = currentSeg.length > 0 ? currentSeg.riskScore / currentSeg.length : 0;
-      if (riskPerMeter > 500) currentSeg.level = 'danger';
-      else if (riskPerMeter > 100) currentSeg.level = 'warning';
+      currentSeg.riskScore = Math.round(segDose);
+      currentSeg.dose = segDose;
+      currentSeg.peakLux = segPeakLux;
+
+      // Уровень сегмента — по ПИКОВОЙ освещённости в глазу (физический порог):
+      // 20 000 лк — сопоставимо с прямым взглядом на низкое солнце (опасно),
+      // 5 000 лк — заметное ослепление (внимание).
+      if (segPeakLux >= 20000) currentSeg.level = 'danger';
+      else if (segPeakLux >= 5000) currentSeg.level = 'warning';
       else currentSeg.level = 'safe';
 
       segments.push(currentSeg);
-      currentSeg = { coords: [curr], length: 0, riskScore: 0, nearbyBuildings: [] };
+      currentSeg = {
+        coords: [curr], startIdx: i, endIdx: i, length: 0,
+        riskScore: 0, dose: 0, peakLux: 0, nearbyBuildings: [],
+      };
     }
   }
 
@@ -813,13 +889,13 @@ function evaluateRoute(routeGeojson, durationS, distanceM) {
     s.nearbyBuildings.sort((a, b) => b.contribution - a.contribution);
   });
 
-  const totalRisk = segments.reduce((sum, s) => sum + s.riskScore, 0);
+  const totalDose = segments.reduce((sum, s) => sum + s.dose, 0);
   const dangerZones = segments.filter(s => s.level === 'danger').length;
   const warningZones = segments.filter(s => s.level === 'warning').length;
 
   return {
     segments,
-    totalRiskScore: totalRisk,
+    totalRiskScore: Math.round(totalDose), // доза ослепления, лк·с
     dangerZoneCount: dangerZones,
     warningZoneCount: warningZones,
     distance: distanceM,
@@ -853,7 +929,7 @@ async function buildSafeRoute() {
     }
 
     const evaluated = rawRoutes.map(r =>
-      evaluateRoute(r.geometry, r.duration, r.distance)
+      evaluateRoute(r.geometry, r.duration, r.distance, r.nodeDurations, Date.now())
     );
 
     if (requestId !== routeState.buildRequestId) return;
@@ -914,15 +990,32 @@ function getCurrentZoneLevel() {
   const position = routeState.userPosition;
   if (!position) return null;
 
-  // Building zones are available even before a destination is selected.
-  // The same radius is used by the route risk calculation, so the map and
-  // live alert describe one consistent danger area.
+  // Зоны зданий доступны и до выбора точки назначения. Достаёт ли отражённый
+  // луч до глаз водителя, определяется трассировкой луча (computeSpecularGlare)
+  // с учётом высоты фасада и высоты солнца — радиус не фиксирован.
+  const sun = getSunPosition(new Date(), ASTANA.lat, ASTANA.lng);
   let warningFound = false;
-  for (const building of buildings) {
-    if (building.level !== 'danger' && building.level !== 'warning') continue;
-    if (haversine(position.lat, position.lng, building.lat, building.lng) <= ROUTE_CONFIG.searchRadius) {
-      if (building.level === 'danger') return 'danger';
-      warningFound = true;
+  if (sun.altitude > 0) {
+    for (const building of buildings) {
+      if (building.level !== 'danger' && building.level !== 'warning') continue;
+      const eyeEastM = (position.lng - building.lng) * metersPerDegLng(building.lat);
+      const eyeNorthM = (position.lat - building.lat) * METERS_PER_DEG_LAT;
+
+      let glare;
+      const normals = getFacadeNormals(building);
+      if (building.omnidirectional === true || normals.length === 0) {
+        const dist = Math.hypot(eyeEastM, eyeNorthM);
+        const reach = (facadeHeightM(building) - DRIVER_EYE_HEIGHT_M) /
+          Math.tan(sun.altitude * Math.PI / 180);
+        glare = reach > 0 && dist <= reach * 1.1 ? { factor: DIFFUSE_GLARE_FLOOR + 0.45 } : { factor: 0 };
+      } else {
+        glare = computeSpecularGlare(building, sun.altitude, sun.azimuth, eyeEastM, eyeNorthM);
+      }
+
+      if (glare.factor > 0.05) {
+        if (building.level === 'danger') return 'danger';
+        warningFound = true;
+      }
     }
   }
 
@@ -1245,7 +1338,7 @@ function renderRouteOnMap() {
       html += `<div class="route-tooltip-row"><span>${rt('distance')}</span><span>${p.buildingDist} ${tr.meters}</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('exposureTime')}</span><span>${p.exposureTime}s</span></div>`;
       html += `<div class="route-tooltip-row"><span>${rt('visibilityCoef')}</span><span>${visStatus.label}</span></div>`;
-      html += `<div class="route-tooltip-reason">${rt('directionMatch')} (±${ROUTE_CONFIG.sunAngleTolerance}°)</div>`;
+      html += `<div class="route-tooltip-reason">${rt('directionMatch')}</div>`;
     } else {
       html += `<div class="route-tooltip-row">${rt('noRiskZones')}</div>`;
     }
