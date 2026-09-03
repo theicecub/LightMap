@@ -90,9 +90,12 @@ const I18N = {
     currentWeatherAdjusted: 'Сейчас (с учётом погоды)',
     dangerWindow: 'Опасное время',
     glassType: 'Тип стекла',
+    glassReflectance: 'Отражательная способность',
+    buildingHeight: 'Высота фасада',
     currentWeather: 'Погода сейчас',
     weatherGlareFactor: 'Погодный фактор бликов',
     luxUnit: 'лк',
+    metersShort: 'м',
     // WMO weather codes
     wmo: {
       0:  'Ясно',
@@ -169,9 +172,12 @@ const I18N = {
     currentWeatherAdjusted: 'Current (weather-adjusted)',
     dangerWindow: 'Danger window',
     glassType: 'Glass type',
+    glassReflectance: 'Reflectance',
+    buildingHeight: 'Facade height',
     currentWeather: 'Current weather',
     weatherGlareFactor: 'Weather glare factor',
     luxUnit: 'lx',
+    metersShort: 'm',
     // WMO weather codes
     wmo: {
       0:  'Clear',
@@ -242,9 +248,12 @@ const I18N = {
     currentWeatherAdjusted: 'Ағымдағы (ауа райын ескере отырып)',
     dangerWindow: 'Қауіпті уақыт аралығы',
     glassType: 'Әйнек түрі',
+    glassReflectance: 'Шағылысу қабілеті',
+    buildingHeight: 'Қасбет биіктігі',
     currentWeather: 'Қазіргі ауа райы',
     weatherGlareFactor: 'Ауа райының жарық факторі',
     luxUnit: 'лк',
+    metersShort: 'м',
     wmo: {
       0:  'Ашық',
       1:  'Аздап бұлтты',
@@ -549,6 +558,13 @@ function normalizeDegrees(value) {
   return ((value % 360) + 360) % 360;
 }
 
+// Модуль углового расстояния между двумя азимутами (0..180°).
+function angleDiffDeg(a, b) {
+  let d = Math.abs(a - b) % 360;
+  if (d > 180) d = 360 - d;
+  return d;
+}
+
 function getSunPosition(date, lat, lng) {
   const rad = Math.PI / 180;
   const deg = 180 / Math.PI;
@@ -593,86 +609,312 @@ function getSunPosition(date, lat, lng) {
 
 
 // ════════════════════════════════════════════════════════════════════════════
-//  КОЭФФИЦИЕНТ ОПАСНОСТИ: время + погода + ориентация
+//  ФИЗИЧЕСКАЯ МОДЕЛЬ БЛИКА: Солнце → фасад → отражённый луч → глаз водителя
 // ════════════════════════════════════════════════════════════════════════════
+//
+//  Цепочка расчёта:
+//    1) положение Солнца (астрономическая модель, see getSunPosition);
+//    2) освещённость фасада: прямое солнце × оптическая масса атмосферы ×
+//       френелевское отражение стекла × косинус угла падения;
+//    3) трассировка зеркального луча от фасада в глаз водителя (3D):
+//       проверяется, попадает ли отражённый луч в точку глаз и лежит ли точка
+//       отражения в пределах реальной плоскости фасада (ширина × высота);
+//    4) ослабление на дистанции (атмосфера) и погода.
+//
+//  Итоговая величина — ОСВЕЩЁННОСТЬ В ГЛАЗУ ВОДИТЕЛЯ (люкс), физическая
+//  величина; пороги «опасно/внимание» задаются в люксах.
 
-// НОВОЕ: погодный множитель — раньше weatherState загружался и показывался
-// в UI, но никак не влиял на расчёт люксов. Теперь дождь/снег/туман реально
-// гасят блик, а облачность плавно его ослабляет.
-function computeWeatherMultiplier() {
-  if (!weatherState.loaded || weatherState.error) return 1; // нет данных — не искажаем расчёт
-
-  const code = weatherState.weatherCode;
-
-  // Туман/изморозь — сильное рассеивание, солнце едва пробивается
-  const fogCodes = new Set([45, 48]);
-  if (fogCodes.has(code)) return 0.15;
-
-  // Осадки любой интенсивности и грозы — прямого солнца практически нет
-  const precipCodes = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
-  if (precipCodes.has(code)) return 0.05;
-
-  // Ясно / переменная облачность — линейное затухание по проценту облачности
-  const cloud = weatherState.cloudCover ?? 0;
-  return Math.max(0.1, 1 - (cloud / 100) * 0.9);
+// Высота глаз водителя над дорогой. GPS даёт только широту/долготу/точность,
+// высоту кабины не возвращает — используем номинал легкового автомобиля.
+const DRIVER_EYE_HEIGHT_M = 1.4;
+// Показатель преломления стекла (флоат/крон) для формул Френеля.
+const GLASS_REFRACTIVE_INDEX = 1.5;
+// Полуширина зеркального лепестка отражения (градусы): угловой диаметр Солнца
+// (~0.53°) плюс волнистость/кривизна фасадных панелей. Это УГЛОВОЙ разброс
+// отражённого луча: водитель, чей идеальный луч не попадает в край фасада,
+// всё же видит частичный блик, пока угловое отклонение меньше этой величины.
+const SPECULAR_SPREAD_DEG = 2;
+// Минимальная доля диффузной (рассеянной) засветки от освещённого фасада.
+const DIFFUSE_GLARE_FLOOR = 0.05;
+// Высота и ширина фасада по умолчанию (м), если в данных нет полей
+// height/width (для здания нет полигона фасада — используем типовые размеры).
+const DEFAULT_FACADE_HEIGHT_M = 40;
+const DEFAULT_FACADE_WIDTH_M = 60;
+// Метры в одном градусе — для локальных ENU-смещений (East/North/Up).
+const METERS_PER_DEG_LAT = 111194.9;
+function metersPerDegLng(lat) {
+  return 111194.9 * Math.cos(lat * Math.PI / 180);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Оптическая масса воздуха (Kasten–Young). Используется для ослабления
+// прямого солнечного света у горизонта.
+function airMass(altitudeDeg) {
+  const alt = Math.max(0, altitudeDeg) * Math.PI / 180;
+  if (alt <= 0) return Infinity;
+  return 1 / (Math.sin(alt) + 0.50572 * Math.pow(altitudeDeg + 6.07995, -1.6364));
+}
+
+// Доля прямого солнечного света, дошедшая через атмосферу (0..1).
+function directNormalFraction(altitudeDeg) {
+  if (altitudeDeg <= 0) return 0;
+  const am = airMass(altitudeDeg);
+  return Math.pow(0.7, Math.pow(am, 0.678));
+}
+
+// Коэффициент отражения неполяризованного света на границе воздух–стекло
+// (формулы Френеля). Угол падения задаётся от нормали к стеклу.
+function fresnelReflectance(incidenceDeg) {
+  const n1 = 1.0;
+  const n2 = GLASS_REFRACTIVE_INDEX;
+  const theta = Math.max(0, Math.min(90, incidenceDeg)) * Math.PI / 180;
+  const sinT = (n1 / n2) * Math.sin(theta);
+  if (sinT >= 1) return 1;
+  const cosT = Math.sqrt(1 - sinT * sinT);
+  const cosI = Math.cos(theta);
+  if (cosI <= 1e-6) return 1; // скользящее падение
+  const Rs = Math.pow((n1 * cosI - n2 * cosT) / (n1 * cosI + n2 * cosT), 2);
+  const Rp = Math.pow((n1 * cosT - n2 * cosI) / (n1 * cosT + n2 * cosI), 2);
+  return (Rs + Rp) / 2;
+}
+
+// Геометрический фактор «Солнце → фасад» (0..1): произведение прямого
+// излучения (убывает к горизонту из-за оптической массы), френелевского
+// отражения стекла (растёт при скользящем падении) и косинуса угла падения
+// (облучённость фасада). Нормируется так, чтобы максимум — низкое солнце,
+// фасад смотрит прямо на солнце — был равен 1 (это калибровочная точка
+// baseLux).
+let _solarGlarePeak = null;
+function solarGlareFactor(altitudeDeg, incidenceDeg) {
+  if (!(altitudeDeg > 0)) return 0;
+  if (!(incidenceDeg >= 0) || incidenceDeg >= 90) return 0;
+  const raw = directNormalFraction(altitudeDeg) *
+    fresnelReflectance(incidenceDeg) *
+    Math.cos(incidenceDeg * Math.PI / 180);
+  if (_solarGlarePeak == null) {
+    let peak = 0;
+    for (let a = 0.25; a <= 90; a += 0.25) {
+      // при наилучшей ориентации фасада угол падения = 90 − a (скользящее)
+      const v = directNormalFraction(a) *
+        fresnelReflectance(90 - a) *
+        Math.cos((90 - a) * Math.PI / 180);
+      if (v > peak) peak = v;
+    }
+    _solarGlarePeak = peak || 1;
+  }
+  return Math.min(1, raw / _solarGlarePeak);
+}
+
+// Направление на Солнце как единичный вектор в ENU (East, North, Up).
+function sunDirectionVector(altitudeDeg, azimuthDeg) {
+  const a = altitudeDeg * Math.PI / 180;
+  const z = azimuthDeg * Math.PI / 180;
+  return { e: Math.cos(a) * Math.sin(z), n: Math.cos(a) * Math.cos(z), u: Math.sin(a) };
+}
+
+// Нормали фасадов здания (градусы, азимут от севера по часовой стрелке).
+// Возвращает массив: одиночное число, массив чисел или пустой массив для
+// всенаправленных форм (сфера/конус/пирамида).
+function getFacadeNormals(building) {
+  if (!building) return [];
+  if (Array.isArray(building.orientation)) {
+    return building.orientation.filter(n => Number.isFinite(n));
+  }
+  if (Number.isFinite(building.orientation)) return [building.orientation];
+  return [];
+}
+
+function facadeHeightM(building) {
+  return Number.isFinite(building && building.height) && building.height > 0
+    ? building.height
+    : DEFAULT_FACADE_HEIGHT_M;
+}
+function facadeWidthM(building) {
+  return Number.isFinite(building && building.width) && building.width > 0
+    ? building.width
+    : DEFAULT_FACADE_WIDTH_M;
+}
+
+// Пиковая освещённость фасада прямым солнцем, заложенная в калибровку:
+//   baseLux = incidentPeakLux × reflectance_used.
+// Вынося её отдельно, мы делаем коэффициент отражения стекла ПРЯМЫМ
+// множителем в модели (тип стекла непосредственно определяет отражённый свет).
+function buildingIncidentPeakLux(building) {
+  const refl = building.reflectance_used;
+  if (Number.isFinite(refl) && refl > 0) return building.baseLux / refl;
+  return building.baseLux;
+}
+function buildingReflectance(building) {
+  const refl = building.reflectance_used;
+  return Number.isFinite(refl) && refl > 0 ? refl : 1;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ЗЕРКАЛЬНАЯ ТРАССИРОВКА ЛУЧА (3D): Солнце → фасад → глаз водителя.
+//
+// Фасад моделируется как вертикальная плоскость, проходящая через точку
+// здания, с нормалью orientation, шириной width и высотой height.
+//   eyeEastM/eyeNorthM — смещение глаз водителя относительно здания (метры).
+// Возвращает { factor, dist, incidence }:
+//   factor    — доля пикового блика, дошедшая до глаза (0..1);
+//   dist      — длина луча от точки отражения до глаз (м);
+//   incidence — угол падения солнца на грань (градусы от нормали).
+function computeSpecularGlare(building, sunAltDeg, sunAzDeg, eyeEastM, eyeNorthM) {
+  const normals = getFacadeNormals(building);
+  if (normals.length === 0) return { factor: 0, dist: null, incidence: null };
+
+  const H = facadeHeightM(building);
+  const W = facadeWidthM(building);
+  const S = sunDirectionVector(sunAltDeg, sunAzDeg);
+
+  let best = null;
+  for (const theta of normals) {
+    const t = theta * Math.PI / 180;
+    const Ne = Math.sin(t); // East-компонента нормали фасада
+    const Nn = Math.cos(t); // North-компонента
+
+    const cosInc = Ne * S.e + Nn * S.n; // = N·S (нормаль вертикальна)
+    if (cosInc <= 0) continue;          // фасад в тени
+
+    // Направление отражённого луча R = 2(N·S)N − S. Для вертикального фасада
+    // вертикальная компонента = −sin(alt): блик уходит вниз, к дороге.
+    const R = {
+      e: 2 * cosInc * Ne - S.e,
+      n: 2 * cosInc * Nn - S.n,
+      u: -S.u,
+    };
+
+    // Идеальный луч, проходящий через глаз E, пересекает плоскость фасада в
+    // точке P: E = P + d·R  =>  P = E − d·R;  плоскость N·P = 0  =>  d = (N·E)/cosInc.
+    const nDotE = Ne * eyeEastM + Nn * eyeNorthM;
+    if (nDotE <= 0) continue; // водитель за плоскостью фасада
+    const d = nDotE / cosInc;
+    if (!(d > 0)) continue;
+
+    const P = {
+      e: eyeEastM - d * R.e,
+      n: eyeNorthM - d * R.n,
+      u: DRIVER_EYE_HEIGHT_M - d * R.u, // = eyeHeight + d·sin(alt)
+    };
+
+    // Поперечная координата вдоль фасада (азимут θ+90°).
+    const along = -Math.cos(t) * P.e + Math.sin(t) * P.n;
+
+    // Ближайшая к идеальной точке P точка Q реального фасада (прямоугольник
+    // шириной W и высотой H). Геометрический предел задаётся строго: точка
+    // отражения обязана лежать в пределах фасада.
+    const Q = {
+      u: Math.max(0, Math.min(H, P.u)),
+      along: Math.max(-W / 2, Math.min(W / 2, along)),
+    };
+    const missM = Math.hypot(P.u - Q.u, along - Q.along); // промах идеального луча, м
+
+    // Угловое отклонение реального луча (Q → E) от идеального R ≈ missM / d.
+    const devDeg = (Math.atan2(missM, d) * 180) / Math.PI;
+    if (devDeg > SPECULAR_SPREAD_DEG) continue; // вне зеркального лепестка
+
+    // Профиль лепестка: 1 при точном попадании, плавно к краю → 0.
+    const lobe = missM <= 0 ? 1 : Math.pow(1 - devDeg / SPECULAR_SPREAD_DEG, 2);
+    if (lobe <= 0) continue;
+
+    const candidate = {
+      factor: lobe,
+      dist: d,
+      incidence: Math.acos(cosInc) * 180 / Math.PI,
+    };
+    if (!best || candidate.factor > best.factor) best = candidate;
+  }
+  return best || { factor: 0, dist: null, incidence: null };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Погодный множитель (0..1): ослабление ПРЯМОГО солнечного света облаками,
+// туманом и осадками. Применяется как общий коэффициент ко всем бликам.
+function computeWeatherMultiplier() {
+  if (!weatherState.loaded || weatherState.error) return 1; // нет данных — не искажаем
+
+  const code = weatherState.weatherCode;
+  const cloud = Number.isFinite(weatherState.cloudCover) ? weatherState.cloudCover : 0;
+
+  // Осадки любой интенсивности и грозы — прямого солнца практически нет.
+  const precipCodes = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
+  if (precipCodes.has(code)) return 0.02;
+
+  // Туман/изморозь — сильное рассеивание, солнце едва пробивается.
+  if (code === 45 || code === 48) return 0.10;
+
+  // Сплошная облачность (WMO 3) — прямые лучи практически отсутствуют.
+  if (code === 3) return 0.08;
+
+  // Ясно/переменная облачность: доля прошедшего прямого света падает
+  // нелинейно, быстрее при почти сплошной облачности.
+  const beamFraction = Math.pow(1 - cloud / 100, 1.5);
+  return Math.max(0.08, beamFraction);
+}
+
+// Потенциальная "сила" блика здания прямо сейчас (0..1), БЕЗ учёта положения
+// конкретного наблюдателя. Используется для раскраски маркеров: здание
+// «потенциально опасно», если оно освещено низким солнцем и его фасад
+// смотрит на солнце. Конкретная геометрия наблюдателя (попадание луча в глаз)
+// считается отдельно в route.js через computeSpecularGlare, чтобы не
+// задваивать одни и те же факторы.
 function computeTimeSunMultiplier(building) {
   const now = new Date();
   const sun = getSunPosition(now, ASTANA.lat, ASTANA.lng);
 
-  // Seasonal windows are the calibrated building data. The physical model
-  // refines intensity only while that building can produce glare.
+  // Сезонное калиброванное "окно опасности" — вне него блика не бывает.
   if (!isBuildingGlareActive(building, now) || sun.altitude <= 0) return 0;
 
-  // Наиболее опасны низкие углы солнца (< 30°) — слепят водителей на уровне глаз
-  let altMul;
-  if (sun.altitude < 5) altMul = 0.7;        // Солнце слишком низко, блик в сторону
-  else if (sun.altitude < 15) altMul = 1.0;   // Самый опасный угол
-  else if (sun.altitude < 30) altMul = 0.85;  // Всё ещё опасно
-  else if (sun.altitude < 50) altMul = 0.5;   // Умеренно
-  else altMul = 0.25;                          // Солнце высоко — блик уходит вниз
+  const normals = getFacadeNormals(building);
 
-  // Ориентация фасада vs азимут солнца
-  if (building.orientation != null) {
-    // Отражение максимально когда солнце светит прямо на фасад.
-    // orientation может быть числом (один фасад) или массивом чисел
-    // (несколько граней здания, каждая смотрит в свою сторону) —
-    // берём ту грань, что сейчас ближе всего к солнцу.
-    const orientations = Array.isArray(building.orientation)
-      ? building.orientation
-      : [building.orientation];
-
-    let angleDiff = Infinity;
-    orientations.forEach(orient => {
-      let diff = Math.abs(sun.azimuth - orient);
-      if (diff > 180) diff = 360 - diff;
-      if (diff < angleDiff) angleDiff = diff;
-    });
-
-    // Окно отражения ±90° от нормали фасада. За пределами 90° солнце светит
-    // на здание сзади/сбоку — эта грань физически не может отразить его в
-    // сторону наблюдателя, поэтому множитель обнуляется, а не просто падает.
-    let orientMul;
-    if (angleDiff < 30)       orientMul = 1.0;
-    else if (angleDiff < 60)  orientMul = 0.6;
-    else if (angleDiff < 90)  orientMul = 0.3;
-    else                      orientMul = 0;
-
-    altMul *= orientMul;
+  if (building.omnidirectional === true || normals.length === 0) {
+    // Сфера/конус/пирамида: всегда есть грань, смотрящая на солнце, но
+    // отражение размазывается по всем направлениям — пик ниже.
+    return solarGlareFactor(sun.altitude, 90 - sun.altitude) * 0.85;
   }
 
-  return altMul;
+  // Направленный фасад должен быть освещён. Истинный угол падения на
+  // вертикальный фасад: cos(inc) = cos(alt)·cos(Δазимут). Берём грань с
+  // максимальным фактором «Солнце → фасад».
+  let best = 0;
+  for (const normal of normals) {
+    const litDiff = angleDiffDeg(sun.azimuth, normal);
+    if (litDiff >= 90) continue;
+    const cosInc = Math.cos(sun.altitude * Math.PI / 180) * Math.cos(litDiff * Math.PI / 180);
+    if (cosInc <= 0) continue;
+    const inc = Math.acos(cosInc) * 180 / Math.PI;
+    const f = solarGlareFactor(sun.altitude, inc);
+    if (f > best) best = f;
+  }
+
+  return best;
 }
 
+// Отражённая освещённость в глазу водителя (лк) — итог полной цепочки:
+//   E_eye = incidentPeakLux × reflectance_used × G_solar × G_specular × G_atm × W
+// где G_solar — геометрия солнце→фасад, G_specular — попадание луча в глаз,
+// G_atm — атмосферное ослабление на дистанции, W — погодный множитель.
+function computeEyeIlluminance(building, weatherMul, solarFactor, specularFactor, distM) {
+  const incident = buildingIncidentPeakLux(building);
+  const reflectance = buildingReflectance(building);
+  const atmospheric = Number.isFinite(distM) && distM != null
+    ? Math.exp(-distM / 10000)
+    : 1;
+  return incident * reflectance * solarFactor * specularFactor * atmospheric * weatherMul;
+}
+
+// Потенциальная освещённость для маркера (лк) — без наблюдателя.
 function computeEffectiveLux(building, weatherMul) {
   const timeSunMul = computeTimeSunMultiplier(building);
   return Math.round(building.baseLux * timeSunMul * weatherMul);
 }
 
 function levelOf(lux) {
-  if (lux > 50000) return 'danger';
-  if (lux >= 10000) return 'warning';
+  // Пороги откалиброваны под шкалу baseLux (до ~44 000 лк при идеальных
+  // условиях). "Опасно" — зеркальные фасады при низком солнце; "Внимание" —
+  // заметный блик, требующий снижения скорости/повышенного внимания.
+  if (lux >= 20000) return 'danger';
+  if (lux >= 5000) return 'warning';
   return 'safe';
 }
 function levelLabel(level) {
@@ -1142,6 +1384,10 @@ function popupHTML(b) {
   const bName = getLocalizedBuildingLabel(bData || b, b.name);
   const bAddress = getLocalizedBuildingField(bData || b, 'address', currentLang, b.address);
   const bGlass = getLocalizedBuildingField(bData || b, 'glass', currentLang, b.glass);
+  const bHeight = bData && Number.isFinite(bData.height) && bData.height > 0
+    ? bData.height
+    : DEFAULT_FACADE_HEIGHT_M;
+  const bReflectance = bData ? buildingReflectance(bData) : 1;
 
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
@@ -1158,6 +1404,8 @@ function popupHTML(b) {
     <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.currentWeatherAdjusted)}</span><span class="popup-field-value lux">${Number(effLux).toLocaleString(tr.locale)} ${escapeHtml(tr.luxUnit)}</span></div>
     <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.dangerWindow)}</span><span class="popup-field-value">${escapeHtml(dangerTime)}</span></div>
     <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.glassType)}</span><span class="popup-field-value">${escapeHtml(bGlass)}</span></div>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.glassReflectance)}</span><span class="popup-field-value">${Math.round(bReflectance * 100)}%</span></div>
+    <div class="popup-field"><span class="popup-field-label">${escapeHtml(tr.buildingHeight)}</span><span class="popup-field-value">≈ ${Number(bHeight).toLocaleString(tr.locale)} ${escapeHtml(tr.metersShort)}</span></div>
     ${weatherLine}
   `;
 }
