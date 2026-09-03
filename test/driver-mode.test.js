@@ -24,3 +24,20 @@ test('enabling driver mode keeps built route layers visible', () => {
   assert.doesNotMatch(setDriverModeSource, /setLayoutProperty\(/);
   assert.doesNotMatch(setDriverModeSource, /route-(?:alt|safe|warning|danger|points)/);
 });
+
+test('no-danger status uses a compact driver-mode value style', () => {
+  assert.match(source, /classList\.toggle\('driver-danger-value--safe', distance == null\)/);
+
+  const styles = fs.readFileSync(path.resolve(__dirname, '..', 'styles.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.driver-danger-value\.driver-danger-value--safe\s*\{\s*font-size:\s*16px;/,
+  );
+});
+
+test('driver mode manages a screen wake lock while active', () => {
+  assert.match(source, /navigator\.wakeLock\.request\('screen'\)/);
+  assert.match(source, /requestDriverWakeLock\(\);/);
+  assert.match(source, /releaseDriverWakeLock\(\);/);
+  assert.match(source, /document\.visibilityState === 'visible'/);
+});

@@ -803,6 +803,8 @@ const driverModeState = {
   userPosition: null,
   userMarker: null,
   hasCenteredMap: false,
+  wakeLock: null,
+  wakeLockRequest: null,
 };
 
 function driverHaversine(lat1, lng1, lat2, lng2) {
@@ -850,12 +852,14 @@ function updateDriverModeStatus() {
       ? tr.driverWaitingForGps
       : tr.driverLocationUnavailable;
     dangerValue.textContent = '—';
+    dangerValue.classList.remove('driver-danger-value--safe');
     return;
   }
 
   locationValue.textContent = tr.driverLocationActive;
   const distance = getNearestDangerDistance(driverModeState.userPosition);
   dangerValue.textContent = distance == null ? tr.driverNoDanger : formatDriverDistance(distance);
+  dangerValue.classList.toggle('driver-danger-value--safe', distance == null);
 }
 
 function updateDriverUserMarker() {
@@ -920,6 +924,45 @@ function stopDriverLocationWatch() {
   driverModeState.watchId = null;
 }
 
+function requestDriverWakeLock() {
+  if (!driverModeState.active || driverModeState.wakeLock ||
+      driverModeState.wakeLockRequest || !navigator.wakeLock) {
+    return;
+  }
+
+  const request = navigator.wakeLock.request('screen')
+    .then(lock => {
+      if (!driverModeState.active) {
+        return lock.release();
+      }
+
+      driverModeState.wakeLock = lock;
+      lock.addEventListener('release', () => {
+        if (driverModeState.wakeLock === lock) driverModeState.wakeLock = null;
+      });
+    })
+    .catch(error => {
+      console.warn('[Driver mode] Screen Wake Lock unavailable:', error);
+    })
+    .finally(() => {
+      if (driverModeState.wakeLockRequest === request) {
+        driverModeState.wakeLockRequest = null;
+      }
+    });
+
+  driverModeState.wakeLockRequest = request;
+}
+
+function releaseDriverWakeLock() {
+  const lock = driverModeState.wakeLock;
+  driverModeState.wakeLock = null;
+  if (lock) {
+    lock.release().catch(error => {
+      console.warn('[Driver mode] Could not release Screen Wake Lock:', error);
+    });
+  }
+}
+
 function setDriverMode(active) {
   const toggle = document.getElementById('driverModeToggle');
   const overlay = document.getElementById('driverModeOverlay');
@@ -933,8 +976,10 @@ function setDriverMode(active) {
     updateDriverModeStatus();
     startDriverLocationWatch();
     updateDriverUserMarker();
+    requestDriverWakeLock();
   } else {
     stopDriverLocationWatch();
+    releaseDriverWakeLock();
     if (driverModeState.userMarker) {
       driverModeState.userMarker.remove();
       driverModeState.userMarker = null;
@@ -948,6 +993,9 @@ function initDriverMode() {
   if (!toggle || toggle.dataset.ready === 'true') return;
   toggle.dataset.ready = 'true';
   toggle.addEventListener('click', () => setDriverMode(!driverModeState.active));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestDriverWakeLock();
+  });
   updateDriverModeLabels();
 }
 

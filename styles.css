@@ -687,6 +687,10 @@ body,
   font-size: 24px;
 }
 
+.driver-danger-value.driver-danger-value--safe {
+  font-size: 16px;
+}
+
 .driver-user-marker {
   width: 20px;
   height: 20px;
