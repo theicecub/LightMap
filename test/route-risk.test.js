@@ -223,6 +223,71 @@ test('driver forward view weights glare: building ahead matters, building behind
 // 4. Сезонное окно опасности
 // ─────────────────────────────────────────────────────────────────────────────
 
+test('popup weather icon is wrapped in a dedicated element so it can be sized correctly', () => {
+  const section = sourceBetween(
+    scriptSource,
+    'function popupHTML',
+    'function featureProperties',
+  );
+
+  const context = {
+    Date,
+    Math,
+    Intl,
+    Object,
+    Number,
+    RegExp,
+    currentLang: 'ru',
+    I18N: {
+      ru: {
+        currentWeather: 'Погода сейчас',
+        cloudCover: 'облачность',
+        locale: 'ru-RU',
+        luxUnit: 'люкс',
+        maxIlluminance: 'Макс. освещённость',
+        currentWeatherAdjusted: 'Сейчас (с учётом погоды)',
+        dangerWindow: 'Окно опасности',
+        glassType: 'Тип стекла',
+        glassReflectance: 'Отражение стекла',
+        buildingHeight: 'Высота здания',
+        metersShort: 'м',
+        wmo: { 0: 'Ясно' },
+        unknown: 'Неизвестно',
+      },
+    },
+    buildings: [{
+      id: 1,
+      name: 'Test',
+      address: 'Test Address',
+      baseLux: 1000,
+      lux: 800,
+      level: 'warning',
+      glass: 'Glass',
+      height: 30,
+      reflectance_used: 0.5,
+      dangerTime_by_season: { winter: '10:00-12:00' },
+    }],
+    weatherState: { loaded: true, error: false, weatherCode: 0, cloudCover: 20 },
+    getLocalizedBuildingLabel: () => 'Test',
+    getLocalizedBuildingField: () => 'Test Address',
+    levelOf: () => 'warning',
+    levelLabel: () => 'Warning',
+    getDangerTimeForBuilding: () => '10:00-12:00',
+    buildingReflectance: () => 0.5,
+    escapeHtml: (s) => s,
+    getWMO: () => ({ text: 'Ясно', icon: '<svg viewBox="0 0 24 24"></svg>' }),
+  };
+
+  vm.runInNewContext(`
+    ${section}
+    globalThis.popupTestApi = { popupHTML };
+  `, context);
+
+  const html = context.popupTestApi.popupHTML({ id: 1, name: 'Test', address: 'Test Address' });
+  assert.match(html, /popup-weather-icon/);
+  assert.match(html, /<span class="popup-weather-icon"/);
+});
+
 test('danger window is derived from season data instead of returning undefined', () => {
   const section = seasonalGlareSource + sourceBetween(
     scriptSource,
