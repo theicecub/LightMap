@@ -76,6 +76,11 @@ function loadRiskFunctions({ now = new Date('2024-03-21T07:15:00.000Z'), buildin
       angleDiff,
       estimateExposureTime,
       evaluateRoute,
+      specularReachM,
+      computeOmniGlare,
+      isOmnidirectionalBuilding,
+      glareSearchRadius,
+      getTallestFacadeHeight,
     };
   `, context);
 
@@ -415,4 +420,230 @@ test('evaluateRoute advances the sun along the route when node durations are pro
   assert.ok(Number.isFinite(result.totalRiskScore));
   assert.ok(result.totalRiskScore >= 0);
   assert.equal(result.segments.length, 1);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. Согласованность «что посчитали» и «что показали»
+// ─────────────────────────────────────────────────────────────────────────────
+
+function loadRouteRiskStatus() {
+  const section = sourceBetween(routeSource, 'function getRouteRiskStatus', '\n// ═══');
+  const context = {
+    rt: (key) => key,
+  };
+  vm.runInNewContext(`${section}\nglobalThis.statusApi = { getRouteRiskStatus };`, context);
+  return context.statusApi.getRouteRiskStatus;
+}
+
+test('route status mirrors the coloured segments instead of a length-dependent dose', () => {
+  const getRouteRiskStatus = loadRouteRiskStatus();
+
+  // Длинная поездка со слабой засветкой набирает большую суммарную дозу
+  // (лк·с), но ни один участок не окрашен — маршрут не должен называться
+  // опасным, иначе панель противоречит карте.
+  assert.equal(
+    getRouteRiskStatus({ dangerZoneCount: 0, warningZoneCount: 0, totalRiskScore: 900000 }).level,
+    'safe',
+  );
+  assert.equal(
+    getRouteRiskStatus({ dangerZoneCount: 0, warningZoneCount: 1, totalRiskScore: 0 }).level,
+    'warning',
+  );
+  assert.equal(
+    getRouteRiskStatus({ dangerZoneCount: 1, warningZoneCount: 9, totalRiskScore: 0 }).level,
+    'danger',
+  );
+  assert.equal(getRouteRiskStatus(null).level, 'safe');
+});
+
+test('evaluateRoute reports the worst single glare, not only the accumulated dose', () => {
+  const { api, context } = loadRiskFunctions();
+  context.buildings = [];
+
+  const coords = [[71.430, 51.128], [71.432, 51.128]];
+  const distance = api.haversine(51.128, 71.430, 51.128, 71.432);
+  const result = api.evaluateRoute({ coordinates: coords }, 60, distance, null, Date.now());
+
+  assert.equal(result.peakLux, 0);
+  assert.equal(result.dangerZoneCount, 0);
+  assert.equal(result.warningZoneCount, 0);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Геометрический предел дальности блика
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('specularReachM follows (height - eye) / tan(altitude) and vanishes below the horizon', () => {
+  const { api } = loadRiskFunctions();
+
+  // 101.4 м фасада − 1.4 м глаз = 100 м подъёма; при 45° блик достаёт на 100 м.
+  assert.ok(Math.abs(api.specularReachM({ height: 101.4 }, 45) - 100) < 0.01);
+  // Вдвое более низкое солнце — примерно вдвое дальше.
+  assert.ok(api.specularReachM({ height: 101.4 }, 10) > 500);
+  assert.equal(api.specularReachM({ height: 101.4 }, 0), 0);
+  assert.equal(api.specularReachM({ height: 101.4 }, -5), 0);
+});
+
+test('omnidirectional glare stops at its geometric reach instead of the full search radius', () => {
+  const { api } = loadRiskFunctions();
+
+  // Сфера высотой 80 м при солнце 15°: блик физически не уходит дальше
+  // (80 − 1.4)/tan(15°) ≈ 293 м, а раньше маршрут учитывал её и за километр.
+  const sphere = { lat: 51.128, lng: 71.430, height: 80, omnidirectional: true };
+  const reach = api.specularReachM(sphere, 15);
+  assert.ok(reach > 280 && reach < 300, `reach=${reach}`);
+
+  assert.ok(api.computeOmniGlare(sphere, 15, 90, 200, 0).factor > 0);
+  assert.equal(api.computeOmniGlare(sphere, 15, 90, 1000, 0).factor, 0);
+});
+
+test('evaluateRoute ignores an omnidirectional building parked beyond its reach', () => {
+  const { api, context } = loadRiskFunctions();
+
+  const now = new Date('2024-03-21T07:15:00.000Z');
+  const sun = api.getSunPosition(now, 51.128, 71.430);
+  const alwaysActive = {
+    winter: '00:00-23:59', spring: '00:00-23:59', summer: '00:00-23:59', autumn: '00:00-23:59',
+  };
+
+  function runAt(distM) {
+    // Водитель едет прямо на здание, солнце за спиной — идеальная геометрия.
+    const dLat = (distM * Math.cos(sun.azimuth * Math.PI / 180)) / 111194.9;
+    const dLng = (distM * Math.sin(sun.azimuth * Math.PI / 180)) /
+      (111194.9 * Math.cos(51.128 * Math.PI / 180));
+    const far = { lat: 51.128 + dLat * 1.4, lng: 71.430 + dLng * 1.4 };
+    const near = { lat: 51.128 + dLat, lng: 71.430 + dLng };
+    const coordinates = [[far.lng, far.lat], [near.lng, near.lat]];
+    const distance = api.haversine(far.lat, far.lng, near.lat, near.lng);
+    return api.evaluateRoute({ coordinates }, 60, distance, null, now.valueOf());
+  }
+
+  context.buildings = [{
+    id: 'sphere', lat: 51.128, lng: 71.430, baseLux: 1000000,
+    height: 80, omnidirectional: true, dangerTime_by_season: alwaysActive,
+  }];
+
+  const reach = api.specularReachM(context.buildings[0], sun.altitude);
+  assert.ok(reach > 0 && reach < 1200, `reach=${reach}`);
+
+  assert.equal(runAt(Math.round(reach * 0.5)).segments[0].nearbyBuildings.length, 1);
+  assert.equal(runAt(1100).segments[0].nearbyBuildings.length, 0);
+});
+
+test('a tall facade is still evaluated beyond the base 1200 m candidate radius', () => {
+  const { api, context } = loadRiskFunctions();
+
+  // Раннее утро: солнце в 6° над горизонтом, отражённый луч уходит далеко.
+  const now = new Date('2024-03-21T02:00:00.000Z');
+  const sun = api.getSunPosition(now, 51.128, 71.430);
+  const tower = {
+    id: 'tower',
+    lat: 51.128,
+    lng: 71.430,
+    baseLux: 100000,
+    orientation: sun.azimuth, // фасад смотрит прямо на солнце
+    height: 320,
+    width: 200,
+    reflectance_used: 0.5,
+    dangerTime_by_season: {
+      winter: '00:00-23:59', spring: '00:00-23:59', summer: '00:00-23:59', autumn: '00:00-23:59',
+    },
+  };
+  context.buildings = [tower];
+
+  // Радиус поиска кандидатов должен подстраиваться под высоту солнца:
+  // при низком солнце высотка «стреляет» намного дальше фиксированных 1200 м.
+  const reach = api.specularReachM(tower, sun.altitude);
+  assert.ok(reach > 1400, `reach=${reach}`);
+  assert.ok(api.glareSearchRadius(sun.altitude) > 1200);
+
+  const distM = 1400;
+  const dLat = (distM * Math.cos(sun.azimuth * Math.PI / 180)) / 111194.9;
+  const dLng = (distM * Math.sin(sun.azimuth * Math.PI / 180)) /
+    (111194.9 * Math.cos(51.128 * Math.PI / 180));
+  const far = { lat: 51.128 + dLat * 1.1, lng: 71.430 + dLng * 1.1 };
+  const near = { lat: 51.128 + dLat, lng: 71.430 + dLng };
+  const coordinates = [[far.lng, far.lat], [near.lng, near.lat]];
+  const distance = api.haversine(far.lat, far.lng, near.lat, near.lng);
+
+  const result = api.evaluateRoute({ coordinates }, 30, distance, null, now.valueOf());
+  assert.equal(result.segments[0].nearbyBuildings.length, 1);
+  assert.ok(result.segments[0].nearbyBuildings[0].distance > 1200);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. Раскладка времени вдоль маршрута
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('without OSRM annotations the travel time is spread by distance, not by node count', () => {
+  const { api, context } = loadRiskFunctions();
+  context.buildings = [];
+
+  // Геометрия OSRM неравномерна: четыре плотные точки в повороте (120 м на
+  // всех) и одна длинная прямая. Раскладка «по точкам» отдавала бы повороту
+  // 4/5 всей поездки; правильная — пропорциональна пройденному расстоянию.
+  const lat = 51.1280;
+  const lngAt = (metres) => 71.4300 + metres / (111194.9 * Math.cos(lat * Math.PI / 180));
+  const coords = [
+    [lngAt(0), lat],
+    [lngAt(40), lat],
+    [lngAt(80), lat],
+    [lngAt(120), lat],
+    [lngAt(3000), lat],
+  ];
+  const distance = api.haversine(lat, coords[0][0], lat, coords[4][0]);
+  const start = new Date('2024-06-21T02:00:00.000Z').valueOf();
+  const durationS = 3600;
+
+  const result = api.evaluateRoute({ coordinates: coords }, durationS, distance, null, start);
+  assert.equal(result.segments.length, 2);
+
+  const [turn, straight] = result.segments;
+  const turnOffsetS = (turn.midTimeMs - start) / 1000;
+  const straightOffsetS = (straight.midTimeMs - start) / 1000;
+
+  // Поворот длиной 120 м из 3000 м — это ~2,4% часа, а не 40%.
+  assert.ok(turnOffsetS > 0 && turnOffsetS < 120, `turn=${turnOffsetS}`);
+  assert.ok(straightOffsetS > 1500 && straightOffsetS < 3600, `straight=${straightOffsetS}`);
+});
+
+test('multi-leg OSRM annotations are concatenated so detours keep per-node timing', () => {
+  const section = sourceBetween(routeSource, 'function concatLegDurations', '\nasync function fetchOsrmRoute');
+  const context = { Array, Number };
+  vm.runInNewContext(`${section}\nglobalThis.legApi = { concatLegDurations };`, context);
+  const { concatLegDurations } = context.legApi;
+
+  assert.deepEqual(
+    [...concatLegDurations([
+      { annotation: { duration: [1, 2] } },
+      { annotation: { duration: [3, 4, 5] } },
+    ])],
+    [1, 2, 3, 4, 5],
+  );
+  assert.equal(concatLegDurations([{ annotation: { duration: [1] } }, {}]), null);
+  assert.equal(concatLegDurations([]), null);
+  assert.equal(concatLegDurations(null), null);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. Отрисовка опасных участков
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('map interaction handlers and the segment tooltip are created once, outside the render', () => {
+  const renderSource = sourceBetween(routeSource, 'function renderRouteOnMap', '\n// ═══');
+
+  // Повторный рендер (смена темы/языка, новый GPS-фикс) не должен вешать
+  // ещё один комплект обработчиков и плодить всплывающие подсказки.
+  assert.doesNotMatch(renderSource, /map\.on\(/);
+  assert.doesNotMatch(renderSource, /new maplibregl\.Popup\(/);
+  assert.match(renderSource, /ensureRouteMapHandlers\(\)/);
+
+  // Камера подгоняется только по явному запросу.
+  assert.match(renderSource, /if \(fitBounds\) \{/);
+  assert.match(routeSource, /function renderRouteOnMap\(\{ fitBounds = false \} = \{\}\)/);
+  assert.match(routeSource, /buildSafeRoute\(\{ fitBounds: false \}\)/);
+
+  // Подсказка снимается вместе со слоями маршрута.
+  const removeSource = sourceBetween(routeSource, 'function removeRouteLayers', '\nfunction buildSegmentTooltipHtml');
+  assert.match(removeSource, /hideRouteTooltip\(\)/);
 });

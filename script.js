@@ -735,6 +735,20 @@ function facadeWidthM(building) {
     : DEFAULT_FACADE_WIDTH_M;
 }
 
+// Максимальная дальность зеркального блика (м) по чистой геометрии: точка
+// отражения не может быть выше самого здания, а отражённый луч спускается к
+// дороге под углом высоты Солнца. Отсюда
+//   dist = (H − h_глаз) / tan(alt).
+// Чем ниже Солнце и выше фасад — тем дальше «достаёт» блик. Используется и для
+// плоских фасадов (как быстрый отсев кандидатов), и для всенаправленных форм,
+// где трассировать нечего.
+function specularReachM(building, sunAltitudeDeg) {
+  if (!(sunAltitudeDeg > 0)) return 0;
+  const rise = facadeHeightM(building) - DRIVER_EYE_HEIGHT_M;
+  if (rise <= 0) return 0;
+  return rise / Math.tan(sunAltitudeDeg * Math.PI / 180);
+}
+
 // Пиковая освещённость фасада прямым солнцем, заложенная в калибровку:
 //   baseLux = incidentPeakLux × reflectance_used.
 // Вынося её отдельно, мы делаем коэффициент отражения стекла ПРЯМЫМ
@@ -825,6 +839,36 @@ function computeSpecularGlare(building, sunAltDeg, sunAzDeg, eyeEastM, eyeNorthM
     if (!best || candidate.factor > best.factor) best = candidate;
   }
   return best || { factor: 0, dist: null, incidence: null };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Всенаправленные формы (сфера/конус/пирамида): единой плоскости остекления
+// нет, зеркальный луч трассировать не по чему. Приближение — рассеянная
+// засветка плюс слабое зеркальное пятно, когда Солнце находится «за спиной»
+// наблюдателя (направление на Солнце совпадает с направлением «здание →
+// наблюдатель»). Геометрический предел тот же, что и у плоского фасада:
+// отражающая точка не может быть выше здания, поэтому дальше specularReachM
+// блик не достаёт. Раньше маршрут этот предел не учитывал, и сфера высотой
+// 80 м «слепила» водителя за километр — теперь обе ветки (маршрут и зона
+// вокруг водителя) считают по одной формуле.
+//   eyeEastM/eyeNorthM — смещение наблюдателя относительно здания (метры, ENU).
+function computeOmniGlare(building, sunAltDeg, sunAzDeg, eyeEastM, eyeNorthM) {
+  const dist = Math.hypot(eyeEastM, eyeNorthM);
+  const reach = specularReachM(building, sunAltDeg);
+  if (!(reach > 0) || dist > reach * 1.1) return { factor: 0, dist, incidence: null };
+
+  const toObserverAz = normalizeDegrees(Math.atan2(eyeEastM, eyeNorthM) * 180 / Math.PI);
+  const alignment = Math.max(0, Math.cos(angleDiffDeg(sunAzDeg, toObserverAz) * Math.PI / 180));
+  return {
+    factor: DIFFUSE_GLARE_FLOOR + 0.45 * alignment,
+    dist,
+    incidence: 90 - sunAltDeg,
+  };
+}
+
+// Здание не имеет ориентированного фасада (или помечено как всенаправленное).
+function isOmnidirectionalBuilding(building) {
+  return building?.omnidirectional === true || getFacadeNormals(building).length === 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1392,8 +1436,10 @@ function popupHTML(b) {
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
+    // Иконка живёт в отдельном span — иначе inline-SVG растягивается на всю
+    // ширину значения поля.
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value"><span class="popup-weather-icon" aria-hidden="true">${wmo.icon}</span>${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
   }
 
   return `

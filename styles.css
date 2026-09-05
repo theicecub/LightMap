@@ -998,6 +998,22 @@ body,
   font-variant-numeric: tabular-nums;
 }
 
+.popup-weather-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+
+.popup-weather-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .maplibregl-ctrl-attrib {
   background: var(--map-attrib-bg) !important;
   color: var(--text-dim) !important;
