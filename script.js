@@ -640,6 +640,18 @@ const DIFFUSE_GLARE_FLOOR = 0.05;
 // height/width (для здания нет полигона фасада — используем типовые размеры).
 const DEFAULT_FACADE_HEIGHT_M = 40;
 const DEFAULT_FACADE_WIDTH_M = 60;
+// Пороги опасности по освещённости в глазу (лк). Единственное место, где они
+// заданы: и раскраска маркеров (levelOf), и уровень участка маршрута берут их
+// отсюда, иначе карта и панель начинают расходиться.
+const GLARE_DANGER_LUX = 20000;   // сопоставимо с прямым взглядом на низкое солнце
+const GLARE_WARNING_LUX = 5000;   // заметное ослепление, нужно сбросить скорость
+function glareLevelOf(lux) {
+  if (lux >= GLARE_DANGER_LUX) return 'danger';
+  if (lux >= GLARE_WARNING_LUX) return 'warning';
+  return 'safe';
+}
+// Характерная длина атмосферного ослабления блика (м): I = I0 · exp(−d/L).
+const ATMOSPHERIC_EXTINCTION_M = 10000;
 // Метры в одном градусе — для локальных ENU-смещений (East/North/Up).
 const METERS_PER_DEG_LAT = 111194.9;
 function metersPerDegLng(lat) {
@@ -678,30 +690,44 @@ function fresnelReflectance(incidenceDeg) {
   return (Rs + Rp) / 2;
 }
 
-// Геометрический фактор «Солнце → фасад» (0..1): произведение прямого
-// излучения (убывает к горизонту из-за оптической массы), френелевского
-// отражения стекла (растёт при скользящем падении) и косинуса угла падения
-// (облучённость фасада). Нормируется так, чтобы максимум — низкое солнце,
-// фасад смотрит прямо на солнце — был равен 1 (это калибровочная точка
-// baseLux).
+// Геометрический фактор «Солнце → фасад» (0..1) для ЗЕРКАЛЬНОГО блика.
+//
+// Освещённость в глазу от зеркального отражения — это яркость изображения
+// Солнца, умноженная на телесный угол этого изображения:
+//   E = L_солнца · R(θ) · Ω = DNI · R(θ),
+// где DNI — прямая нормальная освещённость (ослабевает к горизонту из-за
+// оптической массы), R(θ) — френелевское отражение стекла (растёт при
+// скользящем падении).
+//
+// Косинуса угла падения здесь НЕТ, и это важно: cos(θ) описывает облучённость
+// ПЛОЩАДКИ фасада и нужен для диффузного отражения. Яркость зеркального
+// изображения Солнца от угла падения не зависит — при наклоне блик просто
+// «растягивается» по фасаду, а не тускнеет. Раньше cos(θ) домножался, и модель
+// давала максимум опасности при солнце ~20° над горизонтом; без него максимум
+// приходится на ~7°, что соответствует и физике, и утренним/вечерним окнам
+// опасности в данных.
+//
+// Нормируется так, чтобы максимум (низкое солнце, скользящее падение) равнялся
+// 1 — это калибровочная точка baseLux.
 let _solarGlarePeak = null;
 function solarGlareFactor(altitudeDeg, incidenceDeg) {
   if (!(altitudeDeg > 0)) return 0;
   if (!(incidenceDeg >= 0) || incidenceDeg >= 90) return 0;
-  const raw = directNormalFraction(altitudeDeg) *
-    fresnelReflectance(incidenceDeg) *
-    Math.cos(incidenceDeg * Math.PI / 180);
+  const raw = directNormalFraction(altitudeDeg) * fresnelReflectance(incidenceDeg);
   if (_solarGlarePeak == null) {
     let peak = 0;
     for (let a = 0.25; a <= 90; a += 0.25) {
       // при наилучшей ориентации фасада угол падения = 90 − a (скользящее)
-      const v = directNormalFraction(a) *
-        fresnelReflectance(90 - a) *
-        Math.cos((90 - a) * Math.PI / 180);
+      const v = directNormalFraction(a) * fresnelReflectance(90 - a);
       if (v > peak) peak = v;
     }
     _solarGlarePeak = peak || 1;
   }
+  // Калибровочная точка — «фасад смотрит прямо на низкое солнце». При
+  // скользящем падении по азимуту (солнце почти в плоскости фасада) сырое
+  // значение её превышает, и фактор насыщается на 1. Это не потеря: такие
+  // случаи ограничивает уже геометрия — изображение солнца растягивается вдоль
+  // фасада и должно поместиться в его габариты (см. computeSpecularGlare).
   return Math.min(1, raw / _solarGlarePeak);
 }
 
@@ -729,10 +755,46 @@ function facadeHeightM(building) {
     ? building.height
     : DEFAULT_FACADE_HEIGHT_M;
 }
+// Ширина фасада (м) задаёт, на каком протяжении дороги водитель видит блик:
+// у 200-метровой «пластины» опасный участок втрое длиннее, чем у башни.
+// Это самое грубое допущение модели, поэтому известная и подставленная по
+// умолчанию ширина различаются явно.
+function hasKnownFacadeWidth(building) {
+  return Number.isFinite(building && building.width) && building.width > 0;
+}
 function facadeWidthM(building) {
-  return Number.isFinite(building && building.width) && building.width > 0
-    ? building.width
-    : DEFAULT_FACADE_WIDTH_M;
+  return hasKnownFacadeWidth(building) ? building.width : DEFAULT_FACADE_WIDTH_M;
+}
+
+// Разовый аудит набора: какие здания считаются по типовой ширине. Молчаливая
+// подстановка константы скрывала, что геометрия половины набора — догадка.
+let _facadeWidthAuditDone = false;
+function auditFacadeWidths() {
+  if (_facadeWidthAuditDone || !Array.isArray(buildings) || buildings.length === 0) return;
+  _facadeWidthAuditDone = true;
+  const missing = buildings.filter(b => !hasKnownFacadeWidth(b) && !b.omnidirectional);
+  if (missing.length > 0) {
+    console.warn(
+      `[LightMap] Ширина фасада не задана у ${missing.length} из ${buildings.length} зданий — ` +
+      `используется типовая ${DEFAULT_FACADE_WIDTH_M} м, длина опасного участка приблизительна. ` +
+      `Заполните поле "width" (метры) в buildings.json: ` +
+      missing.map(b => b.id).join(', ')
+    );
+  }
+}
+
+// Максимальная дальность зеркального блика (м) по чистой геометрии: точка
+// отражения не может быть выше самого здания, а отражённый луч спускается к
+// дороге под углом высоты Солнца. Отсюда
+//   dist = (H − h_глаз) / tan(alt).
+// Чем ниже Солнце и выше фасад — тем дальше «достаёт» блик. Используется и для
+// плоских фасадов (как быстрый отсев кандидатов), и для всенаправленных форм,
+// где трассировать нечего.
+function specularReachM(building, sunAltitudeDeg) {
+  if (!(sunAltitudeDeg > 0)) return 0;
+  const rise = facadeHeightM(building) - DRIVER_EYE_HEIGHT_M;
+  if (rise <= 0) return 0;
+  return rise / Math.tan(sunAltitudeDeg * Math.PI / 180);
 }
 
 // Пиковая освещённость фасада прямым солнцем, заложенная в калибровку:
@@ -828,6 +890,36 @@ function computeSpecularGlare(building, sunAltDeg, sunAzDeg, eyeEastM, eyeNorthM
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Всенаправленные формы (сфера/конус/пирамида): единой плоскости остекления
+// нет, зеркальный луч трассировать не по чему. Приближение — рассеянная
+// засветка плюс слабое зеркальное пятно, когда Солнце находится «за спиной»
+// наблюдателя (направление на Солнце совпадает с направлением «здание →
+// наблюдатель»). Геометрический предел тот же, что и у плоского фасада:
+// отражающая точка не может быть выше здания, поэтому дальше specularReachM
+// блик не достаёт. Раньше маршрут этот предел не учитывал, и сфера высотой
+// 80 м «слепила» водителя за километр — теперь обе ветки (маршрут и зона
+// вокруг водителя) считают по одной формуле.
+//   eyeEastM/eyeNorthM — смещение наблюдателя относительно здания (метры, ENU).
+function computeOmniGlare(building, sunAltDeg, sunAzDeg, eyeEastM, eyeNorthM) {
+  const dist = Math.hypot(eyeEastM, eyeNorthM);
+  const reach = specularReachM(building, sunAltDeg);
+  if (!(reach > 0) || dist > reach * 1.1) return { factor: 0, dist, incidence: null };
+
+  const toObserverAz = normalizeDegrees(Math.atan2(eyeEastM, eyeNorthM) * 180 / Math.PI);
+  const alignment = Math.max(0, Math.cos(angleDiffDeg(sunAzDeg, toObserverAz) * Math.PI / 180));
+  return {
+    factor: DIFFUSE_GLARE_FLOOR + 0.45 * alignment,
+    dist,
+    incidence: 90 - sunAltDeg,
+  };
+}
+
+// Здание не имеет ориентированного фасада (или помечено как всенаправленное).
+function isOmnidirectionalBuilding(building) {
+  return building?.omnidirectional === true || getFacadeNormals(building).length === 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Погодный множитель (0..1): ослабление ПРЯМОГО солнечного света облаками,
 // туманом и осадками. Применяется как общий коэффициент ко всем бликам.
 function computeWeatherMultiplier() {
@@ -898,7 +990,7 @@ function computeEyeIlluminance(building, weatherMul, solarFactor, specularFactor
   const incident = buildingIncidentPeakLux(building);
   const reflectance = buildingReflectance(building);
   const atmospheric = Number.isFinite(distM) && distM != null
-    ? Math.exp(-distM / 10000)
+    ? Math.exp(-distM / ATMOSPHERIC_EXTINCTION_M)
     : 1;
   return incident * reflectance * solarFactor * specularFactor * atmospheric * weatherMul;
 }
@@ -910,12 +1002,9 @@ function computeEffectiveLux(building, weatherMul) {
 }
 
 function levelOf(lux) {
-  // Пороги откалиброваны под шкалу baseLux (до ~44 000 лк при идеальных
-  // условиях). "Опасно" — зеркальные фасады при низком солнце; "Внимание" —
-  // заметный блик, требующий снижения скорости/повышенного внимания.
-  if (lux >= 20000) return 'danger';
-  if (lux >= 5000) return 'warning';
-  return 'safe';
+  // Пороги живут в одном месте — glareLevelOf (см. GLARE_DANGER_LUX /
+  // GLARE_WARNING_LUX). Их же использует оценка участков маршрута.
+  return glareLevelOf(lux);
 }
 function levelLabel(level) {
   const tr = I18N[currentLang];
@@ -923,6 +1012,7 @@ function levelLabel(level) {
 }
 
 function recalcDanger() {
+  auditFacadeWidths();
   const weatherMul = computeWeatherMultiplier();
   buildings.forEach(b => {
     b.lux        = computeEffectiveLux(b, weatherMul);
@@ -1392,8 +1482,10 @@ function popupHTML(b) {
   let weatherLine = '';
   if (weatherState.loaded && !weatherState.error) {
     const wmo = getWMO(weatherState.weatherCode);
+    // Иконка живёт в отдельном span — иначе inline-SVG растягивается на всю
+    // ширину значения поля.
     weatherLine = `
-      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value">${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
+      <div class="popup-field"><span class="popup-field-label">${tr.currentWeather}</span><span class="popup-field-value"><span class="popup-weather-icon" aria-hidden="true">${wmo.icon}</span>${wmo.text}, ${tr.cloudCover.toLowerCase()} ${weatherState.cloudCover}%</span></div>`;
   }
 
   return `
