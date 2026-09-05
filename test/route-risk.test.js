@@ -81,6 +81,19 @@ function loadRiskFunctions({ now = new Date('2024-03-21T07:15:00.000Z'), buildin
       isOmnidirectionalBuilding,
       glareSearchRadius,
       getTallestFacadeHeight,
+      glareIlluminanceRangeM,
+      driverFovCoef,
+      buildGlareSamples,
+      glareLevelOf,
+      hasKnownFacadeWidth,
+      fresnelReflectance,
+      directNormalFraction,
+      thresholds: {
+        danger: GLARE_DANGER_LUX,
+        warning: GLARE_WARNING_LUX,
+        extinction: ATMOSPHERIC_EXTINCTION_M,
+        lineOfSight: GLARE_LINE_OF_SIGHT_LIMIT_M,
+      },
     };
   `, context);
 
@@ -646,4 +659,272 @@ test('map interaction handlers and the segment tooltip are created once, outside
   // Подсказка снимается вместе со слоями маршрута.
   const removeSource = sourceBetween(routeSource, 'function removeRouteLayers', '\nfunction buildSegmentTooltipHtml');
   assert.match(removeSource, /hideRouteTooltip\(\)/);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. Зеркальная фотометрия: без косинуса угла падения
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('specular glare grows with grazing incidence instead of being damped by cos', () => {
+  const { api } = loadRiskFunctions();
+
+  // Освещённость от зеркального блика = DNI × R(θ). Косинус угла падения
+  // описывает облучённость площадки и относится к диффузному отражению, а
+  // яркость отражённого изображения Солнца от наклона не зависит.
+  // Следствие: при фиксированной высоте Солнца фактор монотонно РАСТЁТ с углом
+  // падения — ровно как френелевское отражение стекла.
+  const alt = 10;
+  let previous = -1;
+  for (const incidence of [10, 30, 50, 70, 80]) {
+    const value = api.solarGlareFactor(alt, incidence);
+    assert.ok(value > previous, `inc=${incidence} value=${value} prev=${previous}`);
+    previous = value;
+  }
+  // За калибровочной геометрией фактор насыщается на 1: там опасность
+  // ограничивает уже не фотометрия, а размеры фасада (см. computeSpecularGlare).
+  assert.ok(api.solarGlareFactor(alt, 85) >= previous);
+  assert.equal(api.solarGlareFactor(alt, 89), 1);
+
+  // Отношение факторов должно совпадать с отношением френелевских
+  // коэффициентов — никаких лишних множителей в цепочке не осталось.
+  const ratio = api.solarGlareFactor(alt, 80) / api.solarGlareFactor(alt, 20);
+  const fresnelRatio = api.fresnelReflectance(80) / api.fresnelReflectance(20);
+  assert.ok(Math.abs(ratio - fresnelRatio) < 1e-9, `${ratio} vs ${fresnelRatio}`);
+});
+
+test('the glare model peaks at a low sun, matching morning and evening danger windows', () => {
+  const { api } = loadRiskFunctions();
+
+  let bestAltitude = 0;
+  let bestValue = 0;
+  for (let altitude = 1; altitude <= 80; altitude += 0.5) {
+    const value = api.solarGlareFactor(altitude, 90 - altitude);
+    if (value > bestValue) { bestValue = value; bestAltitude = altitude; }
+  }
+
+  // Максимум приходится на низкое солнце (было ~20° из-за косинуса).
+  assert.ok(bestAltitude > 4 && bestAltitude < 14, `peak at ${bestAltitude}°`);
+  assert.ok(Math.abs(bestValue - 1) < 1e-3, `peak value ${bestValue}`);
+  // Полуденное солнце в зените слепит через фасад заметно слабее.
+  assert.ok(api.solarGlareFactor(60, 30) < 0.4);
+  assert.equal(api.solarGlareFactor(-1, 45), 0);
+  assert.equal(api.solarGlareFactor(10, 90), 0);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. Поле зрения без ступенек
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('driver field of view falls off continuously instead of jumping between steps', () => {
+  const { api } = loadRiskFunctions();
+
+  assert.ok(Math.abs(api.driverFovCoef(0) - 1) < 1e-9);
+  assert.ok(api.driverFovCoef(180) < 0.05);
+
+  let maxStep = 0;
+  let previous = api.driverFovCoef(0);
+  for (let angle = 0.5; angle <= 180; angle += 0.5) {
+    const value = api.driverFovCoef(angle);
+    assert.ok(value <= previous + 1e-12, `не монотонно на ${angle}°`);
+    maxStep = Math.max(maxStep, previous - value);
+    previous = value;
+  }
+
+  // Прежняя ступенька давала скачок 0.5 на границе 45° — соседние участки
+  // маршрута из-за долей градуса прыгали через цвет.
+  assert.ok(maxStep < 0.02, `maxStep=${maxStep}`);
+
+  // Опорные значения остались близки к прежним ступеням 1 / 0.5 / 0.1 / 0.02.
+  assert.ok(api.driverFovCoef(45) > 0.7 && api.driverFovCoef(45) < 0.95);
+  assert.ok(api.driverFovCoef(90) > 0.35 && api.driverFovCoef(90) < 0.55);
+  assert.ok(api.driverFovCoef(135) > 0.05 && api.driverFovCoef(135) < 0.2);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 12. Локальное время экспозиции
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('exposure time comes from the segment own timing, not the route average speed', () => {
+  const { api, context } = loadRiskFunctions();
+
+  const now = new Date('2024-03-21T07:15:00.000Z');
+  const sun = api.getSunPosition(now, 51.128, 71.430);
+  context.buildings = [{
+    id: 'nearby', lat: 51.128, lng: 71.430, baseLux: 1000000,
+    orientation: sun.azimuth, height: 200, reflectance_used: 0.5,
+    dangerTime_by_season: {
+      winter: '00:00-23:59', spring: '00:00-23:59', summer: '00:00-23:59', autumn: '00:00-23:59',
+    },
+  }];
+
+  const dLat = (150 * Math.cos(sun.azimuth * Math.PI / 180)) / 111194.9;
+  const dLng = (150 * Math.sin(sun.azimuth * Math.PI / 180)) /
+    (111194.9 * Math.cos(51.128 * Math.PI / 180));
+  const far = { lat: 51.128 + dLat * 1.5, lng: 71.430 + dLng * 1.5 };
+  const near = { lat: 51.128 + dLat, lng: 71.430 + dLng };
+  const coordinates = [[far.lng, far.lat], [near.lng, near.lat]];
+  const distance = api.haversine(far.lat, far.lng, near.lat, near.lng);
+
+  // Маршрут «в среднем» проезжается за 12 с, но именно этот участок стоит в
+  // пробке 600 с — доза ослепления должна считаться по локальному времени.
+  const result = api.evaluateRoute({ coordinates }, 12, distance, [600], now.valueOf());
+  const exposed = result.segments[0].nearbyBuildings[0];
+
+  assert.equal(exposed.exposureTime, 600);
+  assert.ok(
+    Math.abs(exposed.contribution - exposed.lux * 600) < exposed.lux,
+    `contribution=${exposed.contribution} lux=${exposed.lux}`,
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. Извилистый участок считается по подотрезкам, а не по хорде
+// ─────────────────────────────────────────────────────────────────────────────
+
+function metresToLngLat(baseLat, baseLng, eastM, northM) {
+  return {
+    lat: baseLat + northM / 111194.9,
+    lng: baseLng + eastM / (111194.9 * Math.cos(baseLat * Math.PI / 180)),
+  };
+}
+
+test('buildGlareSamples keeps the real heading of every leg inside a segment', () => {
+  const { api } = loadRiskFunctions();
+
+  const base = { lat: 51.128, lng: 71.430 };
+  const corner = metresToLngLat(base.lat, base.lng, 0, 60);
+  const end = metresToLngLat(base.lat, base.lng, 60, 60);
+  const seg = {
+    coords: [[base.lng, base.lat], [corner.lng, corner.lat], [end.lng, end.lat]],
+    startIdx: 0,
+    endIdx: 2,
+  };
+
+  const samples = api.buildGlareSamples(seg, [0, 10000, 20000]);
+  assert.equal(samples.length, 2);
+  assert.equal(samples[0].durationS, 10);
+  assert.equal(samples[1].durationS, 10);
+
+  const headings = samples.map(s =>
+    Math.round(api.bearing(s.start.lat, s.start.lng, s.end.lat, s.end.lng)));
+  assert.deepEqual([...headings], [0, 90]);
+
+  // Хорда «начало → конец» смотрит на северо-восток — направления, по которому
+  // водитель не проезжает ни метра.
+  const chord = Math.round(api.bearing(base.lat, base.lng, end.lat, end.lng));
+  assert.ok(chord > 40 && chord < 50, `chord=${chord}`);
+});
+
+test('glare on a turn is found even when the segment chord misses the facade', () => {
+  const { api, context } = loadRiskFunctions();
+
+  // Фасад смотрит на восток (нормаль 90°), солнце на востоке и невысоко —
+  // отражённый луч уходит строго на восток и спускается к дороге.
+  const building = {
+    id: 'facade', lat: 51.128, lng: 71.430, baseLux: 400000,
+    orientation: 90, height: 200, width: 60, reflectance_used: 0.5,
+    dangerTime_by_season: {
+      winter: '00:00-23:59', spring: '00:00-23:59', summer: '00:00-23:59', autumn: '00:00-23:59',
+    },
+  };
+  context.buildings = [building];
+
+  const now = new Date('2024-03-21T02:20:00.000Z');
+  const sun = api.getSunPosition(now, building.lat, building.lng);
+  const sunAlt = sun.altitude;
+
+  // Г-образный участок: сначала 60 м на запад (прямо на здание) по линии
+  // блика, затем 100 м на юг. Хорда «начало → конец» уводит наблюдателя на
+  // 50 м вдоль фасада — за его край.
+  const legStart = metresToLngLat(building.lat, building.lng, 300, 0);
+  const corner = metresToLngLat(building.lat, building.lng, 240, 0);
+  const legEnd = metresToLngLat(building.lat, building.lng, 240, -100);
+
+  const chordGlare = api.computeDriverGlareCoef(building, legStart, legEnd, sunAlt, 90);
+  const legGlare = api.computeDriverGlareCoef(building, legStart, corner, sunAlt, 90);
+
+  assert.equal(chordGlare.factor, 0, 'хорда обязана промахиваться мимо фасада');
+  assert.ok(legGlare.factor > 0.5, `leg=${legGlare.factor}`);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. Общие пороги и осмысленные потолки радиуса
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('segment level and building marker level share one set of thresholds', () => {
+  const { api } = loadRiskFunctions();
+  const { danger, warning } = api.thresholds;
+
+  assert.equal(api.glareLevelOf(danger), 'danger');
+  assert.equal(api.glareLevelOf(danger - 1), 'warning');
+  assert.equal(api.glareLevelOf(warning), 'warning');
+  assert.equal(api.glareLevelOf(warning - 1), 'safe');
+  assert.equal(api.glareLevelOf(0), 'safe');
+
+  // route.js больше не хранит собственных копий порогов.
+  const riskSection = sourceBetween(routeSource, 'function evaluateRoute', '\n// ═══');
+  assert.doesNotMatch(riskSection, /\b20000\b/);
+  assert.doesNotMatch(riskSection, /\b5000\b/);
+  assert.match(riskSection, /glareLevelOf\(segPeakLux\)/);
+
+  // script.js тоже делегирует, а не дублирует.
+  assert.match(scriptSource, /function levelOf\(lux\) \{\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*return glareLevelOf\(lux\);/);
+});
+
+test('search radius is capped by line of sight and by the illuminance threshold', () => {
+  const { api, context } = loadRiskFunctions();
+  const { warning, extinction, lineOfSight } = api.thresholds;
+
+  // Тусклый набор: считать дальше, чем блик доживает до порога, бессмысленно.
+  context.buildings = [{ lat: 51.128, lng: 71.430, height: 400, baseLux: warning * Math.E }];
+  assert.ok(Math.abs(api.glareIlluminanceRangeM() - extinction) < 1, api.glareIlluminanceRangeM());
+  assert.ok(api.glareSearchRadius(1) <= extinction + 1);
+
+  // Совсем тусклый — радиус нулевой.
+  context.buildings = [{ lat: 51.128, lng: 71.430, height: 400, baseLux: warning - 1 }];
+  assert.equal(api.glareSearchRadius(10), 0);
+
+  // Яркий и очень высокий: у горизонта геометрия даёт десятки километров,
+  // но модель не знает о промежуточной застройке — режем по прямой видимости.
+  context.buildings = [{ lat: 51.128, lng: 71.430, height: 400, baseLux: 1e9 }];
+  assert.equal(api.glareSearchRadius(0.2), lineOfSight);
+  assert.equal(api.glareSearchRadius(0), 0);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. Ширина фасада — известная против типовой
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('facade width is reported as known only when the dataset actually provides it', () => {
+  const { api } = loadRiskFunctions();
+
+  assert.equal(api.hasKnownFacadeWidth({ width: 180 }), true);
+  assert.equal(api.hasKnownFacadeWidth({ width: 0 }), false);
+  assert.equal(api.hasKnownFacadeWidth({}), false);
+  assert.equal(api.hasKnownFacadeWidth(null), false);
+
+  // Ширина реально управляет длиной опасного участка: широкий фасад ловит
+  // водителя там, где узкий уже промахивается.
+  const narrow = { lat: 51.128, lng: 71.430, orientation: 90, height: 200, width: 40 };
+  const wide = { lat: 51.128, lng: 71.430, orientation: 90, height: 200, width: 260 };
+  const eyeEast = 300;
+  const eyeNorth = 80; // сдвиг вдоль фасада
+
+  assert.equal(api.computeSpecularGlare(narrow, 10, 90, eyeEast, eyeNorth).factor, 0);
+  assert.ok(api.computeSpecularGlare(wide, 10, 90, eyeEast, eyeNorth).factor > 0.5);
+});
+
+test('the dataset declares its facade widths, or the audit says which ones are missing', () => {
+  const buildings = JSON.parse(fs.readFileSync(path.join(rootDir, 'buildings.json'), 'utf8'));
+  const directional = buildings.filter(b => !b.omnidirectional);
+  const missing = directional.filter(b => !(Number.isFinite(b.width) && b.width > 0));
+
+  // Пока ширины нет, модель обязана об этом СООБЩАТЬ, а не молча подставлять
+  // константу: длина опасного участка у 200-метровой «пластины» и у башни
+  // отличается втрое.
+  if (missing.length > 0) {
+    assert.match(scriptSource, /function auditFacadeWidths\(\)/);
+    assert.match(scriptSource, /Ширина фасада не задана/);
+    assert.match(scriptSource, /auditFacadeWidths\(\);/);
+  }
 });

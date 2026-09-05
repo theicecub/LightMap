@@ -648,6 +648,19 @@ function fmtETA(durationS) {
 // RISK SCORING
 // ════════════════════════════════════════════════════════════════════════════
 
+// Доля блика, доходящая до водителя, в зависимости от угла между курсом и
+// направлением на источник (0..180°). Раньше это была ступенька
+// 1 / 0.5 / 0.1 / 0.02 с границами 45/90/135°: соседние участки маршрута
+// прыгали через цвет из-за долей градуса. Косинусная форма повторяет те же
+// опорные значения (≈1 / 0.83 / 0.45 / 0.12 / 0.02), но непрерывна.
+const FOV_MIRROR_FLOOR = 0.02;   // блик сзади — только через зеркала
+const FOV_FALLOFF_POWER = 1.2;
+function driverFovCoef(lookDiffDeg) {
+  const forward = (1 + Math.cos(lookDiffDeg * Math.PI / 180)) / 2; // 1 впереди → 0 сзади
+  return FOV_MIRROR_FLOOR +
+    (1 - FOV_MIRROR_FLOOR) * Math.pow(Math.max(0, forward), FOV_FALLOFF_POWER);
+}
+
 // Наблюдательная геометрия блика для конкретного водителя на конкретном
 // сегменте. Строит цепочку «Солнце → фасад → отражённый луч → глаз водителя»
 // через computeSpecularGlare (3D-трассировка), плюс поле зрения: взгляд
@@ -664,14 +677,9 @@ function computeDriverGlareCoef(building, segStart, segEnd, sunAlt, sunAz) {
   const eyeNorthM = (midLat - building.lat) * METERS_PER_DEG_LAT;
 
   // Поле зрения: зрачок направлен по курсу движения. Блик в центре обзора
-  // опаснее, чем в периферии; позади — только через зеркала.
+  // опаснее периферийного; позади — только через зеркала.
   const toBuilding = bearing(midLat, midLng, building.lat, building.lng);
-  const lookDiff = angleDiff(moveBearing, toBuilding);
-  let fovCoef;
-  if (lookDiff <= 45) fovCoef = 1;
-  else if (lookDiff <= 90) fovCoef = 0.5;
-  else if (lookDiff <= 135) fovCoef = 0.1;
-  else fovCoef = 0.02;
+  const fovCoef = driverFovCoef(angleDiff(moveBearing, toBuilding));
 
   if (isOmnidirectionalBuilding(building)) {
     const omni = computeOmniGlare(building, sunAlt, sunAz, eyeEastM, eyeNorthM);
@@ -682,10 +690,43 @@ function computeDriverGlareCoef(building, segStart, segEnd, sunAlt, sunAz) {
   return { factor: ray.factor * fovCoef, dist: ray.dist, incidence: ray.incidence };
 }
 
+// Запасной способ оценить время проезда участка, если поточечных времён нет
+// (нулевая или отсутствующая длительность маршрута).
 function estimateExposureTime(segLengthM, routeDurationS, routeDistanceM) {
   if (routeDistanceM === 0) return 0;
   const avgSpeed = routeDistanceM / routeDurationS;
   return segLengthM / avgSpeed;
+}
+
+// Сколько раз внутри одного участка (~100 м) пересчитывать геометрию блика.
+const MAX_GLARE_SAMPLES_PER_SEGMENT = 8;
+
+// Опорные подотрезки участка: собственная точка наблюдения, собственный курс и
+// собственное время проезда. Раньше блик считался один раз по хорде
+// «начало участка → конец участка»: на повороте эта хорда смотрит не туда,
+// куда реально едет водитель, а её середина может лежать вне проезжей части.
+function buildGlareSamples(seg, timesMs) {
+  const legCount = seg.coords.length - 1;
+  if (legCount <= 0) return [];
+
+  const groups = Math.min(MAX_GLARE_SAMPLES_PER_SEGMENT, legCount);
+  const samples = [];
+  for (let g = 0; g < groups; g++) {
+    const fromLocal = Math.floor((g * legCount) / groups);
+    const toLocal = Math.floor(((g + 1) * legCount) / groups);
+    if (toLocal <= fromLocal) continue;
+
+    const a = seg.coords[fromLocal];
+    const b = seg.coords[toLocal];
+    const startMs = timesMs[seg.startIdx + fromLocal];
+    const endMs = timesMs[seg.startIdx + toLocal];
+    samples.push({
+      start: { lat: a[1], lng: a[0] },
+      end: { lat: b[1], lng: b[0] },
+      durationS: Math.max(0, (endMs - startMs) / 1000),
+    });
+  }
+  return samples;
 }
 
 // Buildings are static for the lifetime of a loaded dataset. Indexing them once
@@ -693,44 +734,63 @@ function estimateExposureTime(segLengthM, routeDurationS, routeDistanceM) {
 const BUILDING_GRID_CELL_SIZE = 300;
 const BUILDING_GRID_LAT_METERS = 110574;
 const BUILDING_GRID_LNG_METERS = 111320 * Math.cos(ASTANA.lat * Math.PI / 180);
-// Жёсткий предел радиуса поиска кандидатов (м). При Солнце у горизонта
-// геометрическая дальность блика стремится к бесконечности, поэтому обрезаем
-// её: дальше блик всё равно съедает атмосфера и застройка.
-const MAX_GLARE_SEARCH_RADIUS_M = 6000;
+// Предел прямой видимости (м). Модель трассирует луч в пустом пространстве и
+// ничего не знает о промежуточной застройке; в городе непрерывный обзор на
+// несколько километров — уже исключение, поэтому дальше не считаем.
+const GLARE_LINE_OF_SIGHT_LIMIT_M = 4000;
 let buildingSpatialIndex = { source: null, size: 0, cells: null };
-let tallestFacadeCache = { source: null, size: 0, height: 0 };
+let facadeStatsCache = { source: null, size: 0, tallest: 0, brightest: 0 };
 
 function buildingGridKey(x, y) {
   return `${x}:${y}`;
 }
 
-function getTallestFacadeHeight() {
-  if (tallestFacadeCache.source === buildings &&
-    tallestFacadeCache.size === buildings.length) {
-    return tallestFacadeCache.height;
+function getFacadeStats() {
+  if (facadeStatsCache.source === buildings &&
+    facadeStatsCache.size === buildings.length) {
+    return facadeStatsCache;
   }
 
-  let height = 0;
+  let tallest = 0;
+  let brightest = 0;
   for (const building of buildings) {
     const h = facadeHeightM(building);
-    if (h > height) height = h;
+    if (h > tallest) tallest = h;
+    const lux = Number(building && building.baseLux);
+    if (Number.isFinite(lux) && lux > brightest) brightest = lux;
   }
 
-  tallestFacadeCache = { source: buildings, size: buildings.length, height };
-  return height;
+  facadeStatsCache = { source: buildings, size: buildings.length, tallest, brightest };
+  return facadeStatsCache;
+}
+
+function getTallestFacadeHeight() {
+  return getFacadeStats().tallest;
+}
+
+// Дальность, на которой САМЫЙ яркий фасад набора при идеальной геометрии ещё
+// дотягивает до порога «внимание». Из E = baseLux · exp(−d/L) следует
+// d = L · ln(baseLux / порог). Дальше искать нечего по определению.
+function glareIlluminanceRangeM() {
+  const brightest = getFacadeStats().brightest;
+  if (!(brightest > GLARE_WARNING_LUX)) return 0;
+  return ATMOSPHERIC_EXTINCTION_M * Math.log(brightest / GLARE_WARNING_LUX);
 }
 
 // Радиус поиска кандидатов зависит от высоты Солнца: чем оно ниже, тем дальше
 // «стреляет» отражённый луч ((H − h_глаз)/tan(alt)). Фиксированные 1200 м
 // отсекали реальные блики от высоток (Abu Dhabi Plaza, 311 м, при Солнце в 5°
-// достаёт на ~3,5 км), поэтому радиус считается по самому высокому зданию
-// набора и лишь ограничивается снизу/сверху.
+// достаёт на ~3,5 км). Сверху радиус ограничен двумя физическими причинами:
+// прямой видимостью в городе и порогом освещённости.
 function glareSearchRadius(sunAltitudeDeg) {
   if (!(sunAltitudeDeg > 0)) return 0;
+  const cap = Math.min(GLARE_LINE_OF_SIGHT_LIMIT_M, glareIlluminanceRangeM());
   const reach = (getTallestFacadeHeight() - DRIVER_EYE_HEIGHT_M) /
     Math.tan(sunAltitudeDeg * Math.PI / 180);
-  if (!Number.isFinite(reach) || reach <= 0) return ROUTE_CONFIG.searchRadius;
-  return Math.min(MAX_GLARE_SEARCH_RADIUS_M, Math.max(ROUTE_CONFIG.searchRadius, reach * 1.1));
+  const wanted = Number.isFinite(reach) && reach > 0
+    ? Math.max(ROUTE_CONFIG.searchRadius, reach * 1.1)
+    : ROUTE_CONFIG.searchRadius;
+  return Math.min(cap, wanted);
 }
 
 function getBuildingSpatialIndex() {
@@ -884,7 +944,16 @@ function evaluateRoute(routeGeojson, durationS, distanceM, nodeDurationsSec, sta
       let segDose = 0;
       let segPeakLux = 0;
 
+      // Время проезда участка берётся из его собственных отметок времени —
+      // это локальная скорость, а не средняя по всему маршруту (пробка на
+      // одном перекрёстке растягивает экспозицию именно там).
+      let segExposureS = (timesMs[currentSeg.endIdx] - timesMs[currentSeg.startIdx]) / 1000;
+      if (!(segExposureS > 0)) {
+        segExposureS = estimateExposureTime(currentSeg.length, durationS, distanceM);
+      }
+
       if (sunAltitude > 0) {
+        const samples = buildGlareSamples(currentSeg, timesMs);
         const searchRadius = glareSearchRadius(sunAltitude);
         const nearbyCandidates = getSegmentBuildingCandidates(
           currentSeg.coords,
@@ -908,33 +977,51 @@ function evaluateRoute(routeGeojson, durationS, distanceM, nodeDurationsSec, sta
           // Вне сезонного окна опасности здание не бликует.
           if (!isBuildingGlareActive(b, new Date(midTime))) continue;
 
-          // Геометрия наблюдателя: попадает ли отражённый луч в глаз водителя.
-          const glare = computeDriverGlareCoef(b, segStart, segEnd, sunAltitude, sunAzimuth);
-          if (glare.factor <= 0) continue;
+          // Доза интегрируется по подотрезкам, уровень — по худшей точке.
+          let peakLux = 0;
+          let peakDist = null;
+          let peakFactor = 0;
+          let contribution = 0;
 
-          // Геометрия «Солнце → фасад». Для всенаправленных форм угол падения
-          // приходит из той же модели (90 − высота Солнца).
-          const incidence = glare.incidence != null ? glare.incidence : (90 - sunAltitude);
-          const solarFactor = solarGlareFactor(sunAltitude, incidence);
-          if (solarFactor <= 0) continue;
+          for (const sample of samples) {
+            // Геометрия наблюдателя: попадает ли отражённый луч в глаз.
+            const glare = computeDriverGlareCoef(
+              b, sample.start, sample.end, sunAltitude, sunAzimuth,
+            );
+            if (glare.factor <= 0) continue;
 
-          // Освещённость в глазу водителя (лк) — итог полной оптической цепочки.
-          const eyeLux = computeEyeIlluminance(b, weatherMul, solarFactor, glare.factor, glare.dist);
-          if (eyeLux <= 0) continue;
+            // Геометрия «Солнце → фасад». Для всенаправленных форм угол
+            // падения приходит из той же модели (90 − высота Солнца).
+            const incidence = glare.incidence != null ? glare.incidence : (90 - sunAltitude);
+            const solarFactor = solarGlareFactor(sunAltitude, incidence);
+            if (solarFactor <= 0) continue;
 
-          const exposureTime = estimateExposureTime(currentSeg.length, durationS, distanceM);
-          const contribution = eyeLux * exposureTime; // лк·с — доза ослепления
+            // Освещённость в глазу водителя (лк) — итог оптической цепочки.
+            const eyeLux = computeEyeIlluminance(
+              b, weatherMul, solarFactor, glare.factor, glare.dist,
+            );
+            if (eyeLux <= 0) continue;
+
+            contribution += eyeLux * sample.durationS; // лк·с — доза ослепления
+            if (eyeLux > peakLux) {
+              peakLux = eyeLux;
+              peakDist = glare.dist;
+              peakFactor = glare.factor;
+            }
+          }
+
+          if (peakLux <= 0) continue;
 
           segDose += contribution;
-          if (eyeLux > segPeakLux) segPeakLux = eyeLux;
+          if (peakLux > segPeakLux) segPeakLux = peakLux;
 
           currentSeg.nearbyBuildings.push({
             building: b,
-            distance: Math.round(glare.dist != null ? glare.dist : minDist),
-            lux: Math.round(eyeLux),
-            exposureTime: Math.round(exposureTime),
-            visibilityCoef: glare.factor,
-            falloff: Math.exp(-(glare.dist || 0) / 10000),
+            distance: Math.round(peakDist != null ? peakDist : minDist),
+            lux: Math.round(peakLux),
+            exposureTime: Math.round(segExposureS),
+            visibilityCoef: peakFactor,
+            falloff: Math.exp(-(peakDist || 0) / ATMOSPHERIC_EXTINCTION_M),
             contribution: Math.round(contribution),
           });
         }
@@ -949,12 +1036,9 @@ function evaluateRoute(routeGeojson, durationS, distanceM, nodeDurationsSec, sta
       currentSeg.sunAltitude = sunAltitude;
       currentSeg.sunAzimuth = sunAzimuth;
 
-      // Уровень сегмента — по ПИКОВОЙ освещённости в глазу (физический порог):
-      // 20 000 лк — сопоставимо с прямым взглядом на низкое солнце (опасно),
-      // 5 000 лк — заметное ослепление (внимание).
-      if (segPeakLux >= 20000) currentSeg.level = 'danger';
-      else if (segPeakLux >= 5000) currentSeg.level = 'warning';
-      else currentSeg.level = 'safe';
+      // Уровень участка — по ПИКОВОЙ освещённости в глазу, по тем же порогам,
+      // что и маркеры зданий (GLARE_DANGER_LUX / GLARE_WARNING_LUX).
+      currentSeg.level = glareLevelOf(segPeakLux);
 
       segments.push(currentSeg);
       currentSeg = {
