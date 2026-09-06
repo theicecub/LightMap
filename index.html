@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightMap</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><polygon points='12,2 14.8,9.2 22,12 14.8,14.8 12,22 9.2,14.8 2,12 9.2,9.2' fill='%231D9E75'/></svg>">
+<meta name="description" content="Интерактивная карта опасных световых бликов от фасадов зданий Астаны для водителей">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+<script>
+(function () {
+    let theme = 'dark';
+    try {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') theme = saved;
+    } catch (err) {
+      console.warn('[Theme] localStorage error:', err);
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <polygon
+    points="12,2 14.8,9.2 22,12 14.8,14.8 12,22 9.2,14.8 2,12 9.2,9.2"
+    fill="var(--icon-color, #000)"
+  />
+</svg>
+        </div>
+        <div>
+          <h1>LightMap</h1>
+        </div>
+      </div>
+
+      <div class="weather-strip" id="weatherStrip">
+        <div class="weather-strip-loading">
+          <span class="weather-spinner"></span>
+          <span>Загрузка погоды…</span>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <button class="driver-mode-toggle" id="driverModeToggle" type="button" aria-pressed="false" aria-label="Режим вождения" title="Режим вождения">
+          <svg class="driver-mode-legacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75s-7.5-2.608-7.5-9.75a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+          <svg class="driver-mode-wheel-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M12 14l0 7" />
+            <path d="M10 12l-6.75 -2" />
+            <path d="M14 12l6.75 -2" />
+          </svg>
+          <span id="driverModeLabel">Режим вождения</span>
+        </button>
+        <div class="lang-switcher" id="langSwitcher">
+          <button class="lang-select" id="langSwitcherButton" type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">
+            <span id="langSwitcherValue">🇷🇺 РУС</span>
+          </button>
+          <div class="lang-menu" id="langMenu" role="listbox" aria-label="Language" hidden>
+            <button class="lang-menu-option" type="button" role="option" data-lang="ru" aria-selected="true">🇷🇺 РУС</button>
+            <button class="lang-menu-option" type="button" role="option" data-lang="en" aria-selected="false">🇬🇧 ENG</button>
+            <button class="lang-menu-option" type="button" role="option" data-lang="kk" aria-selected="false">🇰🇿 ҚАЗ</button>
+          </div>
+        </div>
+
+        <label class="switch" id="themeToggle">
+	<input class="switch__input" type="checkbox" role="switch" />
+	<span class="switch__icon">
+		<span class="switch__icon-part switch__icon-part--1"></span>
+		<span class="switch__icon-part switch__icon-part--2"></span>
+		<span class="switch__icon-part switch__icon-part--3"></span>
+		<span class="switch__icon-part switch__icon-part--4"></span>
+		<span class="switch__icon-part switch__icon-part--5"></span>
+		<span class="switch__icon-part switch__icon-part--6"></span>
+		<span class="switch__icon-part switch__icon-part--7"></span>
+		<span class="switch__icon-part switch__icon-part--8"></span>
+		<span class="switch__icon-part switch__icon-part--9"></span>
+		<span class="switch__icon-part switch__icon-part--10"></span>
+		<span class="switch__icon-part switch__icon-part--11"></span>
+	</span>
+	<span class="switch__sr">Dark Mode</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="map-wrap">
+    <div id="map"></div>
+
+    <div class="driver-mode-overlay" id="driverModeOverlay" hidden aria-live="polite">
+      <div class="driver-mode-card driver-location-card">
+        <span class="driver-mode-card-icon driver-location-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75s-7.5-2.608-7.5-9.75a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+        </span>
+        <div>
+          <span class="driver-mode-card-label" id="driverLocationLabel">Геолокация</span>
+          <strong class="driver-mode-card-value" id="driverLocationValue">Ожидание GPS…</strong>
+        </div>
+      </div>
+      <div class="driver-mode-card driver-danger-card">
+        <span class="driver-mode-card-icon driver-danger-icon" aria-hidden="true">!</span>
+        <div>
+          <span class="driver-mode-card-label" id="driverDangerLabel">До ближайшей опасности</span>
+          <strong class="driver-mode-card-value driver-danger-value" id="driverDangerValue">—</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Safe Route Panel — Redesigned Compact Version -->
+    <div class="route-panel" id="routePanel">
+      <div class="route-panel-inner">
+        <button class="route-panel-toggle" id="routePanelToggle" type="button" aria-label="Свернуть панель маршрута" title="Свернуть панель маршрута">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"></path></svg>
+        </button>
+        <div class="route-panel-content">
+          <!-- Input Group -->
+          <div class="route-input-group">
+          <!-- From Field -->
+          <div class="route-input-field">
+            <button class="route-input-button" id="routeInputABtn" data-field="A" aria-label="Откуда">
+              <span class="route-field-label">Откуда</span>
+              <span class="route-field-value" id="routeFieldValueA"></span>
+            </button>
+            <div class="route-field-menu" id="routeFieldMenuA" role="listbox" aria-label="Способ ввода: откуда">
+              <button class="route-menu-item" data-action="address" data-field="A" title="Ввести адрес">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <span>Ввести адрес</span>
+              </button>
+              <button class="route-menu-item" data-action="geolocation" data-field="A" title="Использовать геолокацию">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M12 1C6.48 1 2 5.48 2 11c0 8 10 13 10 13s10-5 10-13c0-5.52-4.48-10-10-10zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"></path></svg>
+                <span>Мое местоположение</span>
+              </button>
+              <button class="route-menu-item" data-action="map" data-field="A" title="Выбрать на карте">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z"></path><circle cx="12" cy="10.5" r="2.25"></circle></svg>
+                <span>Выбрать на карте</span>
+              </button>
+            </div>
+            <div class="route-address-search" id="routeAddressSearchA" role="dialog" aria-modal="false" aria-label="Поиск адреса" hidden>
+              <div class="route-address-search__input-row">
+                <svg class="route-address-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input class="route-address-search__input" id="routeAddressInputA" type="search" autocomplete="off" autocapitalize="words" spellcheck="false" aria-autocomplete="list" aria-controls="routeAddressSuggestionsA">
+                <button class="route-address-search__close" type="button" data-close-address-search="A" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                </button>
+              </div>
+              <div class="route-address-search__status" id="routeAddressStatusA" aria-live="polite"></div>
+              <div class="route-address-search__suggestions" id="routeAddressSuggestionsA" role="listbox"></div>
+            </div>
+            <button class="route-clear-btn" id="routeClearA" title="Очистить поле" aria-label="Очистить откуда">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>
+            </button>
+          </div>
+
+          <!-- To Field -->
+          <div class="route-input-field">
+            <button class="route-input-button" id="routeInputBBtn" data-field="B" aria-label="Куда">
+              <span class="route-field-label">Куда</span>
+              <span class="route-field-value" id="routeFieldValueB"></span>
+            </button>
+            <div class="route-field-menu" id="routeFieldMenuB" role="listbox" aria-label="Способ ввода: куда">
+              <button class="route-menu-item" data-action="address" data-field="B" title="Ввести адрес">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <span>Ввести адрес</span>
+              </button>
+              <button class="route-menu-item" data-action="geolocation" data-field="B" title="Использовать геолокацию">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M12 1C6.48 1 2 5.48 2 11c0 8 10 13 10 13s10-5 10-13c0-5.52-4.48-10-10-10zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"></path></svg>
+                <span>Мое местоположение</span>
+              </button>
+              <button class="route-menu-item" data-action="map" data-field="B" title="Выбрать на карте">
+                <svg class="route-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.75s7.5-4.11 7.5-11.25a7.5 7.5 0 1 0-15 0c0 7.14 7.5 11.25 7.5 11.25Z"></path><circle cx="12" cy="10.5" r="2.25"></circle></svg>
+                <span>Выбрать на карте</span>
+              </button>
+            </div>
+            <div class="route-address-search" id="routeAddressSearchB" role="dialog" aria-modal="false" aria-label="Поиск адреса" hidden>
+              <div class="route-address-search__input-row">
+                <svg class="route-address-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input class="route-address-search__input" id="routeAddressInputB" type="search" autocomplete="off" autocapitalize="words" spellcheck="false" aria-autocomplete="list" aria-controls="routeAddressSuggestionsB">
+                <button class="route-address-search__close" type="button" data-close-address-search="B" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                </button>
+              </div>
+              <div class="route-address-search__status" id="routeAddressStatusB" aria-live="polite"></div>
+              <div class="route-address-search__suggestions" id="routeAddressSuggestionsB" role="listbox"></div>
+            </div>
+            <button class="route-clear-btn" id="routeClearB" title="Очистить поле" aria-label="Очистить куда">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-9l-1 1H5v2h14V4z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+          <!-- Action Button -->
+          <button class="route-action-btn" id="routeBuildBtn" title="Построить маршрут" aria-label="Построить маршрут">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 5l-7 7h4v5h6v-5h4l-7-7z"></path></svg>
+          </button>
+
+          <!-- Results Area (Hidden by default) -->
+          <div class="route-results" id="routeResults" style="display:none;">
+            <div class="route-error" id="routeError" style="display:none;"></div>
+            <div class="route-panel-body" id="routePanelBody"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="ui-utils.js"></script>
+<script src="glare-window.js"></script>
+<script src="glare-audio.js"></script>
+<script src="script.js"></script>
+<script src="route.js"></script>
+</body>
+</html>
