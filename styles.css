@@ -985,13 +985,19 @@ body,
 
 .popup-field-label {
   color: var(--text-dim);
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   transition-property: color;
 }
 
 .popup-field-value {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 48%;
   font-weight: 600;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .popup-field-value.lux {

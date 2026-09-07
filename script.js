@@ -95,6 +95,8 @@ const I18N = {
     currentWeather: 'Погода сейчас',
     weatherGlareFactor: 'Погодный фактор бликов',
     luxUnit: 'лк',
+    meters: 'м',
+    km: 'км',
     metersShort: 'м',
     // WMO weather codes
     wmo: {
@@ -177,6 +179,8 @@ const I18N = {
     currentWeather: 'Current weather',
     weatherGlareFactor: 'Weather glare factor',
     luxUnit: 'lx',
+    meters: 'm',
+    km: 'km',
     metersShort: 'm',
     // WMO weather codes
     wmo: {
@@ -253,6 +257,8 @@ const I18N = {
     currentWeather: 'Қазіргі ауа райы',
     weatherGlareFactor: 'Ауа райының жарық факторі',
     luxUnit: 'лк',
+    meters: 'м',
+    km: 'км',
     metersShort: 'м',
     wmo: {
       0:  'Ашық',
@@ -1165,12 +1171,20 @@ function formatDriverDistance(distance) {
 }
 
 function getNearestDangerDistance(position) {
-  if (!position) return null;
-  const dangerousBuildings = buildings.filter(building => building.level === 'danger');
-  if (!dangerousBuildings.length) return null;
-  return Math.min(...dangerousBuildings.map(building =>
-    driverHaversine(position.lat, position.lng, building.lat, building.lng)
-  ));
+  if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lng)) return null;
+
+  let nearestDistance = Infinity;
+  for (const building of buildings) {
+    if (building.level !== 'danger' ||
+        !Number.isFinite(building.lat) || !Number.isFinite(building.lng)) {
+      continue;
+    }
+
+    const distance = driverHaversine(position.lat, position.lng, building.lat, building.lng);
+    if (distance < nearestDistance) nearestDistance = distance;
+  }
+
+  return Number.isFinite(nearestDistance) ? nearestDistance : null;
 }
 
 function updateDriverModeStatus() {
@@ -1245,7 +1259,7 @@ function startDriverLocationWatch() {
   driverModeState.watchId = navigator.geolocation.watchPosition(
     handleDriverLocation,
     handleDriverLocationError,
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
   );
 }
 
