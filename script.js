@@ -1134,7 +1134,8 @@ function updateLegendNote() {
 }
 
 // Драйверский режим показывает только GPS и расстояние до ближайшей
-// опасной точки. Расстояние считается локально по координатам зданий.
+// опасной точки. Опасными считаются оба активных уровня: danger и warning.
+// Расстояние считается локально по координатам зданий.
 const driverModeState = {
   active: false,
   watchId: null,
@@ -1175,7 +1176,7 @@ function getNearestDangerDistance(position) {
 
   let nearestDistance = Infinity;
   for (const building of buildings) {
-    if (building.level !== 'danger' ||
+    if ((building.level !== 'danger' && building.level !== 'warning') ||
         !Number.isFinite(building.lat) || !Number.isFinite(building.lng)) {
       continue;
     }

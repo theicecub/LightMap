@@ -72,6 +72,33 @@ test('nearest danger is recalculated from the latest GPS position', () => {
   assert.notEqual(firstDistance, secondDistance);
 });
 
+test('nearest danger includes a nearby warning-level building', () => {
+  const nearestDangerSource = sourceBetween(
+    source,
+    'function driverHaversine',
+    '\nfunction updateDriverModeStatus',
+  );
+  const context = {
+    Math,
+    Number,
+    buildings: [
+      { level: 'danger', lat: 51.127, lng: 71.43 },
+      { level: 'warning', lat: 51.102, lng: 71.4 },
+    ],
+  };
+
+  vm.runInNewContext(`${nearestDangerSource}\nglobalThis.driverTestApi = { driverHaversine, getNearestDangerDistance };`, context);
+
+  const position = { lat: 51.1, lng: 71.4 };
+  const distance = context.driverTestApi.getNearestDangerDistance(position);
+  const warningDistance = context.driverTestApi.driverHaversine(
+    position.lat, position.lng, 51.102, 71.4,
+  );
+
+  assert.equal(distance, warningDistance);
+  assert.ok(distance > 200 && distance < 300);
+});
+
 test('popup values remain within the available popup width', () => {
   const styles = fs.readFileSync(path.resolve(__dirname, '..', 'styles.css'), 'utf8');
   assert.match(styles, /\.popup-field-label\s*\{[^}]*min-width:\s*0;/s);
