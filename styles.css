@@ -1568,14 +1568,16 @@ html.language-pending #app {
   height: 14px;
 }
 
-.route-clear-btn:hover {
-  background: rgba(255, 80, 80, 0.12);
-  border-color: rgba(255, 80, 80, 0.3);
-  color: #ff5050;
-}
-
 .route-clear-btn:active {
   transform: scale(0.95);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .route-clear-btn:hover {
+    background: rgba(255, 80, 80, 0.12);
+    border-color: rgba(255, 80, 80, 0.3);
+    color: #ff5050;
+  }
 }
 
 /* Action Button */

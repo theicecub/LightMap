@@ -26,3 +26,8 @@ test('green hover feedback is disabled for touch-only devices', () => {
   assert.match(styles, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*\.safe-points-toggle:hover[\s\S]*\.driver-mode-toggle:hover/);
   assert.doesNotMatch(styles, /\.driver-mode-toggle:hover,\s*\.driver-mode-toggle:active/);
 });
+
+test('clear buttons keep red hover feedback off touch-only devices', () => {
+  assert.match(styles, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*\.route-clear-btn:hover/);
+  assert.doesNotMatch(styles, /\.route-clear-btn:hover\s*\{[\s\S]*?\}\s*\.route-clear-btn:active/);
+});
