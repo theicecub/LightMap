@@ -305,13 +305,7 @@ const I18N = {
   },
 };
 
-let currentLang = 'kk';
-try {
-  const savedLang = localStorage.getItem('lang');
-  if (savedLang === 'ru' || savedLang === 'en' || savedLang === 'kk') currentLang = savedLang;
-} catch (err) {
-  console.warn('[Lang] Could not read localStorage:', err);
-}
+let currentLang = window.__initialLang || 'kk';
 
 let safePointsVisible = false;
 try {
@@ -1386,6 +1380,7 @@ function initUi() {
   };
 
   updateLanguageSwitcher(currentLang);
+  if (typeof applyRouteLangText === 'function') applyRouteLangText();
   if (langSwitcherButton && langMenu) {
     langSwitcherButton.addEventListener('click', () => {
       const isOpen = !langMenu.hidden;
@@ -1414,6 +1409,7 @@ function initUi() {
   initDriverMode();
   renderWeatherStrip();
   updateLegendNote();
+  document.documentElement.classList.remove('language-pending');
 }
 
 function initMap() {
@@ -1732,6 +1728,8 @@ applyTheme(initialTheme);
 // ════════════════════════════════════════════════════════════════════════════
 
 async function bootstrap() {
+  initUi();
+
   try {
     await loadBuildings();
   } catch (err) {
@@ -1739,12 +1737,11 @@ async function bootstrap() {
     buildings = [];
   }
 
-  initUi();
   initMap();
 }
 
-if (document.readyState === 'complete') {
-  bootstrap();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
 } else {
-  window.addEventListener('load', bootstrap, { once: true });
+  bootstrap();
 }

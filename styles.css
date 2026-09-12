@@ -105,6 +105,10 @@ body,
   animation: app-in .4s ease;
 }
 
+html.language-pending #app {
+  visibility: hidden;
+}
+
 @keyframes app-in {
   from {
     opacity: 0;
@@ -194,7 +198,6 @@ body,
   display: block;
 }
 
-.safe-points-toggle:hover,
 .safe-points-toggle:active,
 .safe-points-toggle[aria-pressed="true"] {
   background: rgba(50, 210, 171, 0.14);
@@ -217,7 +220,6 @@ body,
   display: none;
 }
 
-.driver-mode-toggle:hover,
 .driver-mode-toggle:active {
   background: rgba(50, 210, 171, 0.14);
   border-color: rgba(50, 210, 171, 0.52);
@@ -227,6 +229,20 @@ body,
 .driver-mode-toggle:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(50, 210, 171, 0.22);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .safe-points-toggle:hover {
+    background: rgba(50, 210, 171, 0.14);
+    border-color: rgba(50, 210, 171, 0.52);
+    color: var(--clear);
+  }
+
+  .driver-mode-toggle:hover {
+    background: rgba(50, 210, 171, 0.14);
+    border-color: rgba(50, 210, 171, 0.52);
+    color: var(--clear);
+  }
 }
 
 .lang-switcher {
