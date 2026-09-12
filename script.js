@@ -305,7 +305,7 @@ const I18N = {
   },
 };
 
-let currentLang = 'ru';
+let currentLang = 'kk';
 try {
   const savedLang = localStorage.getItem('lang');
   if (savedLang === 'ru' || savedLang === 'en' || savedLang === 'kk') currentLang = savedLang;
@@ -364,7 +364,7 @@ function updateLanguageSwitcher(lang) {
     kk: '🇰🇿 ҚАЗ',
   };
   const value = document.getElementById('langSwitcherValue');
-  if (value) value.textContent = labels[lang] || labels.ru;
+  if (value) value.textContent = labels[lang] || labels.kk;
 
   document.querySelectorAll('.lang-menu-option').forEach((option) => {
     option.setAttribute('aria-selected', String(option.dataset.lang === lang));
