@@ -37,6 +37,20 @@ test('building text is valid UTF-8 rather than mojibake from a legacy code page'
   }
 });
 
+test('safe points control renders safe buildings only when enabled', () => {
+  const script = fs.readFileSync(path.resolve(__dirname, '..', 'script.js'), 'utf8');
+  assert.match(script, /safePointsVisible && b\.level === 'safe'/);
+  assert.match(script, /localStorage\.setItem\('safePointsVisible'/);
+  assert.match(script, /toggle\.setAttribute\('aria-pressed', String\(safePointsVisible\)\)/);
+});
+
+test('building popup and route field labels use Inter in every language', () => {
+  const styles = fs.readFileSync(path.resolve(__dirname, '..', 'styles.css'), 'utf8');
+  assert.match(styles, /\.popup-title\s*\{[^}]*font-family:\s*'Inter', sans-serif;/s);
+  assert.match(styles, /\.popup-field\s*\{[^}]*font-family:\s*'Inter', sans-serif;/s);
+  assert.match(styles, /\.route-field-label\s*\{[^}]*font-family:\s*'Inter', sans-serif;/s);
+});
+
 test('voice-alert module uses only the warning MP3 asset for every supported language', () => {
   const audioSource = fs.readFileSync(path.resolve(__dirname, '..', 'glare-audio.js'), 'utf8');
   for (const lang of ['ru', 'en', 'kk']) {

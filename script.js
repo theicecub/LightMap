@@ -58,6 +58,9 @@ const I18N = {
     subtitle: 'Карта опасных световых зон от фасадов зданий для водителей',
     darkMode: 'Dark Mode',
     driverMode: 'Режим вождения',
+    safePoints: 'Безопасные точки',
+    showSafePoints: 'Показать безопасные точки',
+    hideSafePoints: 'Скрыть безопасные точки',
     driverLocation: 'Геолокация',
     driverWaitingForGps: 'Ожидание GPS…',
     driverLocationActive: 'Геолокация активна',
@@ -142,6 +145,9 @@ const I18N = {
     subtitle: 'Map of hazardous glare zones from building facades for drivers',
     darkMode: 'Dark Mode',
     driverMode: 'Driving mode',
+    safePoints: 'Safe points',
+    showSafePoints: 'Show safe points',
+    hideSafePoints: 'Hide safe points',
     driverLocation: 'Location',
     driverWaitingForGps: 'Waiting for GPS…',
     driverLocationActive: 'Location active',
@@ -224,6 +230,9 @@ const I18N = {
     subtitle: 'Жүргізушілерге арналған ғимарат қасбеттерінен түсетін қауіпті жарық аймақтарының картасы',
     darkMode: 'Қараңғы режим',
     driverMode: 'Жүргізу режимі',
+    safePoints: 'Қауіпсіз нүктелер',
+    showSafePoints: 'Қауіпсіз нүктелерді көрсету',
+    hideSafePoints: 'Қауіпсіз нүктелерді жасыру',
     driverLocation: 'Геолокация',
     driverWaitingForGps: 'GPS күтілуде…',
     driverLocationActive: 'Геолокация қосулы',
@@ -304,6 +313,13 @@ try {
   console.warn('[Lang] Could not read localStorage:', err);
 }
 
+let safePointsVisible = false;
+try {
+  safePointsVisible = localStorage.getItem('safePointsVisible') === 'true';
+} catch (err) {
+  console.warn('[Safe points] Could not read localStorage:', err);
+}
+
 function getLocalizedBuildingLabel(building, fallback = '') {
   if (!building) return fallback;
   if (currentLang === 'en') return building.name_en || building.name || fallback;
@@ -377,6 +393,7 @@ function applyLangToStaticText() {
     driverModeToggle.setAttribute('aria-label', tr.driverMode);
     driverModeToggle.title = tr.driverMode;
   }
+  updateSafePointsToggle();
   updateDriverModeLabels();
 
   // Weather strip loading
@@ -1393,6 +1410,7 @@ function initUi() {
   }
 
   recalcDanger();
+  initSafePointsToggle();
   initDriverMode();
   renderWeatherStrip();
   updateLegendNote();
@@ -1537,8 +1555,9 @@ function featureProperties(b) {
 }
 
 function buildGeoJson() {
-  // Filter out safe buildings — they disappear when glare is not dangerous
-  const visible = buildings.filter(b => b.level === 'danger' || b.level === 'warning');
+  const visible = buildings.filter(b =>
+    b.level === 'danger' || b.level === 'warning' || (safePointsVisible && b.level === 'safe')
+  );
   return {
     type: 'FeatureCollection',
     features: visible.map(b => ({
@@ -1550,6 +1569,38 @@ function buildGeoJson() {
       properties: featureProperties(b),
     })),
   };
+}
+
+function updateSafePointsToggle() {
+  const toggle = document.getElementById('safePointsToggle');
+  const label = document.getElementById('safePointsToggleLabel');
+  if (!toggle) return;
+
+  const tr = I18N[currentLang];
+  const actionLabel = safePointsVisible ? tr.hideSafePoints : tr.showSafePoints;
+  toggle.setAttribute('aria-pressed', String(safePointsVisible));
+  toggle.setAttribute('aria-label', actionLabel);
+  toggle.title = actionLabel;
+  if (label) label.textContent = tr.safePoints;
+}
+
+function setSafePointsVisible(visible) {
+  safePointsVisible = Boolean(visible);
+  try {
+    localStorage.setItem('safePointsVisible', String(safePointsVisible));
+  } catch (err) {
+    console.warn('[Safe points] Could not save localStorage:', err);
+  }
+  updateSafePointsToggle();
+  if (map?.getSource('points')) renderMarkers();
+}
+
+function initSafePointsToggle() {
+  const toggle = document.getElementById('safePointsToggle');
+  if (!toggle || toggle.dataset.ready === 'true') return;
+  toggle.dataset.ready = 'true';
+  toggle.addEventListener('click', () => setSafePointsVisible(!safePointsVisible));
+  updateSafePointsToggle();
 }
 
 function renderMarkers() {

@@ -161,6 +161,52 @@ body,
   transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
+.safe-points-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.safe-points-toggle__icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
+.safe-points-toggle__icon--hide,
+.safe-points-toggle[aria-pressed="true"] .safe-points-toggle__icon--show {
+  display: none;
+}
+
+.safe-points-toggle[aria-pressed="true"] .safe-points-toggle__icon--hide {
+  display: block;
+}
+
+.safe-points-toggle:hover,
+.safe-points-toggle:active,
+.safe-points-toggle[aria-pressed="true"] {
+  background: rgba(50, 210, 171, 0.14);
+  border-color: rgba(50, 210, 171, 0.52);
+  color: var(--clear);
+}
+
+.safe-points-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(50, 210, 171, 0.22);
+}
+
 .driver-mode-toggle svg {
   width: 17px;
   height: 17px;
@@ -721,6 +767,7 @@ body,
 
 .driver-mode .brand,
 .driver-mode .weather-strip,
+.driver-mode .safe-points-toggle,
 .driver-mode .lang-switcher,
 .driver-mode #themeToggle,
 .driver-mode .route-panel,
@@ -733,6 +780,19 @@ body,
 }
 
 @media (max-width: 640px) {
+  .safe-points-toggle {
+    width: 38px;
+    min-width: 38px;
+    height: 36px;
+    min-height: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .safe-points-toggle > span {
+    display: none;
+  }
+
   .driver-mode-toggle {
     width: 38px;
     min-width: 38px;
@@ -954,7 +1014,7 @@ body,
 }
 
 .popup-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15.5px;
   font-weight: 700;
   margin: 0 0 4px;
@@ -975,6 +1035,7 @@ body,
   padding: 7px 0;
   border-top: 1px solid var(--border);
   font-size: 12.5px;
+  font-family: 'Inter', sans-serif;
   transition-property: border-color, color;
 }
 
@@ -1452,6 +1513,7 @@ body,
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
   margin: 0;
 }
 
